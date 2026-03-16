@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/Franco/Downloads/telares_app_v4_8.html -->
+<!-- saved from url=(0055)file:///C:/Users/Franco/Downloads/telares_app_v4_9.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -300,7 +300,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
     <div id="rResumen"></div>
   </div>
   <div style="margin-top:12px;text-align:center;">
-    <a id="sheetLink" href="file:///C:/Users/Franco/Downloads/telares_app_v4_8.html#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent2);text-decoration:none;border-bottom:1px solid var(--accent2);">Abrir Google Sheets →</a>
+    <a id="sheetLink" href="file:///C:/Users/Franco/Downloads/telares_app_v4_9.html#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent2);text-decoration:none;border-bottom:1px solid var(--accent2);">Abrir Google Sheets →</a>
   </div>
   <div class="actions" style="margin-top:16px;">
     <button class="btn-s" onclick="nuevoDia()">+ Nuevo día</button>
@@ -761,10 +761,15 @@ Si algún campo no es legible usá null. NO inventes datos.`;
       }]
     })
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`HTTP ${res.status}: ${errText.substring(0,200)}`);
+  }
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
+  console.log('Respuesta IA raw:', JSON.stringify(data).substring(0, 500));
   const raw = data.content.map(b => b.text||'').join('').trim();
+  console.log('Raw text:', raw.substring(0, 500));
   // Limpiar markdown y extraer JSON aunque venga con texto alrededor
   let clean = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
   // Buscar el JSON dentro del texto si no empieza con {
