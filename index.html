@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/Franco/Downloads/telares_app_v4_7.html -->
+<!-- saved from url=(0055)file:///C:/Users/Franco/Downloads/telares_app_v4_8.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -300,7 +300,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
     <div id="rResumen"></div>
   </div>
   <div style="margin-top:12px;text-align:center;">
-    <a id="sheetLink" href="file:///C:/Users/Franco/Downloads/telares_app_v4_7.html#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent2);text-decoration:none;border-bottom:1px solid var(--accent2);">Abrir Google Sheets →</a>
+    <a id="sheetLink" href="file:///C:/Users/Franco/Downloads/telares_app_v4_8.html#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent2);text-decoration:none;border-bottom:1px solid var(--accent2);">Abrir Google Sheets →</a>
   </div>
   <div class="actions" style="margin-top:16px;">
     <button class="btn-s" onclick="nuevoDia()">+ Nuevo día</button>
@@ -657,7 +657,7 @@ async function leerTodas() {
       resultados.push({ datos, nombre: t.nombre });
     } catch(err) {
       console.error('Error lectura:', err);
-      setFileSt(t.archId, 'err', '❌ error lectura');
+      setFileSt(t.archId, 'err', '❌ ' + err.message.substring(0,50)); showSB('error', '❌ ' + err.message.substring(0,150));
       resultados.push({ datos: null, nombre: t.nombre, error: err.message });
     }
     document.getElementById('progBar').style.width = `${((i+1) / tareas.length) * 100}%`;
@@ -765,8 +765,19 @@ Si algún campo no es legible usá null. NO inventes datos.`;
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   const raw = data.content.map(b => b.text||'').join('').trim();
-  const clean = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-  return JSON.parse(clean);
+  // Limpiar markdown y extraer JSON aunque venga con texto alrededor
+  let clean = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+  // Buscar el JSON dentro del texto si no empieza con {
+  if (!clean.startsWith('{')) {
+    const match = clean.match(/\{[\s\S]*\}/);
+    if (match) clean = match[0];
+    else throw new Error('No se encontró JSON en la respuesta: ' + clean.substring(0, 200));
+  }
+  try {
+    return JSON.parse(clean);
+  } catch(e) {
+    throw new Error('JSON inválido: ' + e.message + ' | Respuesta: ' + clean.substring(0, 300));
+  }
 }
 
 // ═══════════════════════════════════════════════════
