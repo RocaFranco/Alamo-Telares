@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0053)file:///C:/Users/Franco/Downloads/telares_app_v4.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Álamo Telares</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="./index_files/css2" rel="stylesheet">
 <style>
 :root{
   --bg:#f5f2eb; --ink:#1a1a18; --surface:#ffffff; --surface2:#ede9e0;
@@ -238,7 +238,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
       </div>
       <div id="quinceSelector" style="margin-top:14px;">
         <div style="font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Quincena a cargar</div>
-        <div class="quinc-row" id="quinceRow"></div>
+        <div class="quinc-row" id="quinceRow"><button class="qbtn active">2da Quincena Febrero 2026</button></div>
         <button class="sc-btn" onclick="mostrarModalQuince()" style="margin-top:4px;">+ Agregar quincena</button>
       </div>
     </div>
@@ -247,8 +247,8 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
   <!-- Upload planillas -->
   <div class="card primary">
     <div class="ctitle">📋 Planillas del día</div>
-    <div class="drop" id="dropZone" onclick="document.getElementById('fInput').click()">
-      <input type="file" id="fInput" accept="image/*,.pdf" multiple style="display:none" onchange="handleFiles(event)">
+    <div class="drop" id="dropZone" onclick="document.getElementById(&#39;fInput&#39;).click()">
+      <input type="file" id="fInput" accept="image/*,.pdf" multiple="" style="display:none" onchange="handleFiles(event)">
       <div class="drop-icon">📋</div>
       <h3>Subí todas las planillas del día</h3>
       <p>Un PDF con todas las páginas, o fotos sueltas, o ambas cosas juntas</p>
@@ -259,7 +259,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
   </div>
 
   <div class="actions">
-    <button class="btn-p" id="btnLeer" onclick="leerTodas()" disabled>✨ Leer con IA →</button>
+    <button class="btn-p" id="btnLeer" onclick="leerTodas()" disabled="">✨ Leer con IA →</button>
   </div>
 </div>
 
@@ -300,7 +300,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
     <div id="rResumen"></div>
   </div>
   <div style="margin-top:12px;text-align:center;">
-    <a id="sheetLink" href="#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent2);text-decoration:none;border-bottom:1px solid var(--accent2);">Abrir Google Sheets →</a>
+    <a id="sheetLink" href="file:///C:/Users/Franco/Downloads/telares_app_v4.html#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent2);text-decoration:none;border-bottom:1px solid var(--accent2);">Abrir Google Sheets →</a>
   </div>
   <div class="actions" style="margin-top:16px;">
     <button class="btn-s" onclick="nuevoDia()">+ Nuevo día</button>
@@ -387,39 +387,50 @@ function checkTokenFromURL() {
   if (hash.includes('access_token')) {
     const params = new URLSearchParams(hash.substring(1));
     gToken = params.get('access_token');
+    const expiresIn = parseInt(params.get('expires_in') || '3600');
+    const expiry = Date.now() + (expiresIn - 60) * 1000;
     localStorage.setItem('alamo_gtoken', gToken);
+    localStorage.setItem('alamo_gtoken_expiry', expiry.toString());
     window.history.replaceState({}, document.title, window.location.pathname);
-    mostrarConectado();
+    mostrarConectado(true);
     return true;
   }
   const saved = localStorage.getItem('alamo_gtoken');
-  if (saved) { gToken = saved; mostrarConectado(); return true; }
+  const expiry = parseInt(localStorage.getItem('alamo_gtoken_expiry') || '0');
+  if (saved && Date.now() < expiry) {
+    gToken = saved;
+    mostrarConectado(false);
+    return true;
+  }
+  // Token expirado o no existe — limpiar silenciosamente
+  localStorage.removeItem('alamo_gtoken');
+  localStorage.removeItem('alamo_gtoken_expiry');
   return false;
 }
 
-async function mostrarConectado() {
+async function mostrarConectado(verificar) {
   document.getElementById('notConnected').classList.add('hidden');
   document.getElementById('isConnected').classList.remove('hidden');
   document.getElementById('hConnStatus').textContent = '● Conectado';
   document.getElementById('hConnStatus').style.color = 'var(--accent2)';
+  hideStatus();
   renderQuincenas();
 
-  // Verificar token
-  try {
-    const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: `Bearer ${gToken}` }
-    });
-    if (r.ok) {
-      const u = await r.json();
-      document.getElementById('connUser').textContent = u.email || '';
-    } else {
-      // Token expirado
-      gToken = null; localStorage.removeItem('alamo_gtoken');
-      document.getElementById('notConnected').classList.remove('hidden');
-      document.getElementById('isConnected').classList.add('hidden');
-      showSB('error','Token expirado. Volvé a conectar con Google.');
-    }
-  } catch(e) {}
+  if (verificar) {
+    try {
+      const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${gToken}` }
+      });
+      if (r.ok) {
+        const u = await r.json();
+        document.getElementById('connUser').textContent = u.email || '';
+        if (u.email) localStorage.setItem('alamo_user_email', u.email);
+      }
+    } catch(e) {}
+  } else {
+    const email = localStorage.getItem('alamo_user_email');
+    if (email) document.getElementById('connUser').textContent = email;
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1061,5 +1072,6 @@ function setStep(n){ for(let i=1;i<=4;i++){ const el=document.getElementById(`s$
 checkTokenFromURL();
 renderQuincenas();
 </script>
-</body>
-</html>
+
+
+</div></body></html>
