@@ -1175,7 +1175,7 @@ async function publicarSheets() {
 
       // Leer cuántas filas ya hay en la hoja
       const readRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(leg + '!B:B')}`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(leg + '!C:C')}`,
         { headers: { Authorization: `Bearer ${gToken}` } }
       );
       if (!readRes.ok) {
@@ -1184,10 +1184,12 @@ async function publicarSheets() {
       }
       const readData = await readRes.json();
       const rows = readData.values || [];
-      // Encontrar primera fila vacía (filas 1-4 son headers, datos desde fila 5)
+      // Encontrar primera fila vacía mirando columna C (telar), datos desde fila 5
       let firstEmptyRow = 5;
       for (let i = 4; i < rows.length; i++) {
-        if (rows[i] && rows[i][0]) firstEmptyRow = i + 2; // +1 por 0-index, +1 por la siguiente
+        if (rows[i] && rows[i][0] && rows[i][0].toString().trim() !== '') {
+          firstEmptyRow = i + 2;
+        }
       }
 
       const fecha = new Date((m.fecha||new Date().toISOString().split('T')[0])+'T12:00:00');
@@ -1227,7 +1229,7 @@ async function publicarSheets() {
           t.numero,                                    // C telar
           t.mts_iniciales,                             // D entrada
           t.mts_finales,                               // E salida
-          t.er||'',                                    // F E/R
+          t.er ? String(t.er).replace('.',',') : '', // F E/R
           `=IF(AND(D${f}>63000,E${f}<3000),(65535-D${f})+E${f},E${f}-D${f})`, // G total fórmula
           np||'',                                      // H min no prod
           (idx===0&&m.mtsExtra>0)?m.mtsExtra:'',       // I mts extra
