@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)https://rocafranco.github.io/Alamo-Telares/ -->
-<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="es">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Álamo Telares</title>
-<link href="./index_files/css2" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f5f2eb; --ink:#1a1a18; --surface:#ffffff; --surface2:#ede9e0;
@@ -127,10 +127,16 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
 
 /* PARADAS */
 .plist{display:flex;flex-direction:column;gap:5px;}
-.prow{display:grid;grid-template-columns:62px 80px 80px 1fr 30px;gap:5px;align-items:center;}
+.prow{display:grid;grid-template-columns:56px 92px 92px 46px 1fr 30px;gap:6px;align-items:center;}
 @media(max-width:560px){.prow{grid-template-columns:1fr 1fr;gap:4px;}}
 .btn-rp{background:rgba(192,48,48,.08);border:1px solid rgba(192,48,48,.2);border-radius:4px;color:var(--danger);cursor:pointer;font-size:13px;height:30px;width:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .btn-rp:hover{background:rgba(192,48,48,.15);}
+.pmin{font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 6px;border-radius:4px;text-align:center;background:var(--surface2);color:var(--text2);border:1px solid var(--border);white-space:nowrap;}
+.pmin.low{background:rgba(42,95,63,.1);color:var(--accent2);border-color:rgba(42,95,63,.3);}
+.pmin.med{background:rgba(201,146,10,.1);color:var(--warn);border-color:rgba(201,146,10,.3);}
+.pmin.high{background:rgba(192,48,48,.1);color:var(--danger);border-color:rgba(192,48,48,.3);}
+.palert{background:rgba(192,48,48,.06);border:1px solid rgba(192,48,48,.2);border-radius:5px;padding:8px 12px;margin-bottom:8px;font-size:11px;font-family:var(--mono);color:var(--danger);}
+.palert-title{font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;color:var(--danger);}
 .btn-add{background:rgba(212,82,26,.06);border:1px dashed rgba(212,82,26,.3);border-radius:4px;color:var(--accent);cursor:pointer;font-family:var(--mono);font-size:11px;padding:7px 12px;width:100%;text-align:center;transition:all .2s;margin-top:6px;}
 .btn-add:hover{background:rgba(212,82,26,.12);border-style:solid;}
 
@@ -195,7 +201,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
   </div>
   <div class="hright" id="hright">
     <span style="color:var(--text3)">Google Sheets</span><br>
-    <span id="hConnStatus" style="color: var(--accent2);">● Conectado</span>
+    <span id="hConnStatus" style="color:var(--danger)">● No conectado</span>
   </div>
 </header>
 
@@ -215,7 +221,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
   <!-- Google Sheets config -->
   <div class="card">
     <div class="ctitle">🔗 Conexión Google Sheets</div>
-    <div id="notConnected" class="hidden">
+    <div id="notConnected">
       <p style="font-size:13px;color:var(--text2);font-family:var(--mono);margin-bottom:12px;">Conectá tu Google Sheets para que los datos se guarden automáticamente.</p>
       <div class="fgrid">
         <div class="fg">
@@ -229,7 +235,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
       </div>
       <button class="btn-p" onclick="conectarGoogle()" style="margin-top:4px;">🔐 Conectar con Google →</button>
     </div>
-    <div id="isConnected" class="">
+    <div id="isConnected" class="hidden">
       <div class="sc-connected">
         <div class="sc-dot"></div>
         <span style="font-family:var(--mono);font-size:13px;">Conectado a Google Sheets</span>
@@ -238,7 +244,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
       </div>
       <div id="quinceSelector" style="margin-top:14px;">
         <div style="font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Quincena a cargar</div>
-        <div class="quinc-row" id="quinceRow"><div style="display: flex; align-items: center; gap: 4px;"><button class="qbtn active">1Q MARZO</button><button class="sc-btn" title="Editar" style="padding: 5px 8px; font-size: 12px;">✏️</button><button class="sc-btn" title="Eliminar" style="padding: 5px 8px; font-size: 12px; color: var(--danger); border-color: rgba(192, 48, 48, 0.3);">🗑️</button></div></div>
+        <div class="quinc-row" id="quinceRow"></div>
         <button class="sc-btn" onclick="mostrarModalQuince()" style="margin-top:4px;">+ Agregar quincena</button>
       </div>
     </div>
@@ -247,8 +253,8 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
   <!-- Upload planillas -->
   <div class="card primary">
     <div class="ctitle">📋 Planillas del día</div>
-    <div class="drop" id="dropZone" onclick="document.getElementById(&#39;fInput&#39;).click()">
-      <input type="file" id="fInput" accept="image/*,.pdf" multiple="" style="display:none" onchange="handleFiles(event)">
+    <div class="drop" id="dropZone" onclick="document.getElementById('fInput').click()">
+      <input type="file" id="fInput" accept="image/*,.pdf" multiple style="display:none" onchange="handleFiles(event)">
       <div class="drop-icon">📋</div>
       <h3>Subí todas las planillas del día</h3>
       <p>Un PDF con todas las páginas, o fotos sueltas, o ambas cosas juntas</p>
@@ -259,7 +265,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
   </div>
 
   <div class="actions">
-    <button class="btn-p" id="btnLeer" onclick="leerTodas()" disabled="">✨ Leer con IA →</button>
+    <button class="btn-p" id="btnLeer" onclick="leerTodas()" disabled>✨ Leer con IA →</button>
   </div>
 </div>
 
@@ -300,7 +306,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
     <div id="rResumen"></div>
   </div>
   <div style="margin-top:12px;text-align:center;">
-    <a id="sheetLink" href="file:///C:/Users/Franco/Downloads/telares_app_v4_9.html#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent2);text-decoration:none;border-bottom:1px solid var(--accent2);">Abrir Google Sheets →</a>
+    <a id="sheetLink" href="#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent2);text-decoration:none;border-bottom:1px solid var(--accent2);">Abrir Google Sheets →</a>
   </div>
   <div class="actions" style="margin-top:16px;">
     <button class="btn-s" onclick="nuevoDia()">+ Nuevo día</button>
@@ -333,6 +339,7 @@ let gToken = null;          // OAuth access token
 let archivos = [];          // archivos cargados
 let maquinistas = [];       // datos procesados
 let quinceActual = null;    // {nombre, sheetId}
+let legajosValidos = [];    // se carga desde la primera pestaña del Sheet
 let quincenas = JSON.parse(localStorage.getItem('alamo_quincenas') || '[]');
 
 // Agregar quincena default si no hay ninguna
@@ -415,6 +422,7 @@ async function mostrarConectado(verificar) {
   document.getElementById('hConnStatus').style.color = 'var(--accent2)';
   hideStatus();
   renderQuincenas();
+  if (quinceActual) cargarLegajosDelSheet(quinceActual.sheetId);
 
   if (verificar) {
     try {
@@ -438,6 +446,23 @@ async function mostrarConectado(verificar) {
 // ═══════════════════════════════════════════════════
 let editandoIdx = null; // índice de quincena que se está editando
 
+async function cargarLegajosDelSheet(sheetId) {
+  if (!gToken || !sheetId) return;
+  try {
+    const r = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Prod. General!A3:A20')}`,
+      { headers: { Authorization: `Bearer ${gToken}` } }
+    );
+    if (!r.ok) return;
+    const data = await r.json();
+    const rows = data.values || [];
+    legajosValidos = rows.map(r => String(r[0]).trim()).filter(v => v && !isNaN(v));
+    console.log('Legajos cargados:', legajosValidos);
+  } catch(e) {
+    console.error('Error cargando legajos:', e);
+  }
+}
+
 function renderQuincenas() {
   const row = document.getElementById('quinceRow');
   row.innerHTML = '';
@@ -448,7 +473,11 @@ function renderQuincenas() {
     const b = document.createElement('button');
     b.className = 'qbtn' + (quinceActual?.nombre === q.nombre ? ' active' : '');
     b.textContent = q.nombre;
-    b.onclick = () => { quinceActual = q; renderQuincenas(); };
+    b.onclick = () => {
+      quinceActual = q;
+      renderQuincenas();
+      cargarLegajosDelSheet(q.sheetId);
+    };
 
     const btnEdit = document.createElement('button');
     btnEdit.className = 'sc-btn';
@@ -689,9 +718,17 @@ ENCABEZADO (parte superior):
   * "Turno: Tarde / 3 a 11:30" → turno tarde normal → "tarde" (540 min)
   * "Turno: Tarde / 15 a 3" o "15:30 a 4:00" → 12 horas → "extra" (720 min)
   * Si hay 12 horas de diferencia entre inicio y fin → SIEMPRE es "extra"
-- "Telares: X / Y" → números de telares asignados
-- "Fecha: DD/MM/AAAA" o "DD/M/AA" → leé con cuidado cada dígito
-- "N° Legajo Maquinista" seguido del número → es un número de 3-4 dígitos (ej: 405, 408, 441)
+- "Telares: X / Y" → números de telares asignados separados por /
+- "Fecha: DD/MM/AAAA" o "DD/M/AA" o "DD/M" → leé con cuidado cada dígito
+  * Si dice "13:03" o "13/3" en el campo fecha → es 13/03/2026 (asumí el año actual 2026)
+  * Si el campo fecha está vacío o ilegible → usá null
+- "N° Legajo Maquinista" seguido del número → SOLO puede ser uno de estos valores exactos:
+  ${legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441'}
+  * IMPORTANTE: Si leés un número que NO está en esa lista, es un error de lectura.
+  * En ese caso buscá el número de esa lista que más se parezca visualmente al que leíste.
+  * Ejemplo: si leés "1698" → el más parecido es 408 (los dígitos 4-0-8 aparecen en 1698).
+  * Ejemplo: si leés "44l" → es 441. Si leés "4O8" → es 408.
+  * NUNCA devuelvas un legajo que no esté en esa lista.
 - "N° Legajo Auxiliar" → puede estar vacío
 
 TABLA DE PRODUCCIÓN (columnas de izquierda a derecha):
@@ -709,6 +746,9 @@ TABLA DE PRODUCCIÓN (columnas de izquierda a derecha):
 
 Los primeros 4 telares son los "asignados" (es_extra: false).
 Si hay 5 o más telares en la tabla → los adicionales son "extra" (es_extra: true).
+  * Para saber cuáles son los 4 asignados: mirá el campo "Telares: X/Y/Z/W" en el encabezado.
+  * Los telares listados ahí son los asignados. Cualquier otro telar en la tabla es extra.
+  * Ejemplo: si dice "Telares: 5-6-7-8" y en la tabla aparece el telar 9 → telar 9 es extra.
 
 SECCIÓN TIEMPO PERDIDO (parte inferior izquierda):
 Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
@@ -913,9 +953,124 @@ function buildBlock(m, mi) {
   return wrap;
 }
 
+function normHora(h) {
+  if (!h) return '';
+  const p = h.split(':');
+  if (p.length !== 2) return h;
+  const hh = p[0].padStart(2,'0');
+  const mm = p[1].padStart(2,'0');
+  return `${hh}:${mm}`;
+}
+
+function calcMinutos(desde, hasta) {
+  if (!desde || !hasta) return null;
+  const [dh,dm] = desde.split(':').map(Number);
+  const [hh,hm] = hasta.split(':').map(Number);
+  let d = dh*60+dm, h = hh*60+hm;
+  if (h < d) h += 1440;
+  return h - d;
+}
+
+function minLabel(min) {
+  if (min === null) return {txt: '--', cls: ''};
+  if (min >= 30) return {txt: min+'m', cls: 'high'};   // rojo
+  if (min >= 16) return {txt: min+'m', cls: 'med'};    // amarillo
+  return {txt: min+'m', cls: 'low'};                   // verde
+}
+
 function prow(p, mi) {
   const opts = MOTIVOS.map(m=>{ const k=m.split(' ')[0]; return `<option value="${k}" ${(p.motivo&&p.motivo.toUpperCase()===k)?'selected':''}>${m}</option>`; }).join('');
-  return `<div class="prow" data-mi="${mi}"><input type="number" placeholder="Telar" value="${p.telar||''}" class="p-t" oninput="reval(${mi})"><input type="time" value="${p.desde||''}" class="p-d" onchange="reval(${mi})"><input type="time" value="${p.hasta||''}" class="p-h" onchange="reval(${mi})"><select class="motsel">${opts}</select><button class="btn-rp" onclick="this.parentElement.remove();reval(${mi})">✕</button></div>`;
+  const desde = normHora(p.desde);
+  const hasta = normHora(p.hasta);
+  const min = calcMinutos(desde, hasta);
+  const lbl = minLabel(min);
+  return `<div class="prow" data-mi="${mi}">
+    <input type="number" placeholder="Telar" value="${p.telar||''}" class="p-t" oninput="revalProw(this,${mi})">
+    <input type="time" value="${desde}" class="p-d" onchange="revalProw(this,${mi})">
+    <input type="time" value="${hasta}" class="p-h" onchange="revalProw(this,${mi})">
+    <span class="pmin ${lbl.cls}" id="pmin-${mi}-${Math.random().toString(36).substr(2,5)}">${lbl.txt}</span>
+    <select class="motsel">${opts}</select>
+    <button class="btn-rp" onclick="this.parentElement.remove();reval(${mi})">✕</button>
+  </div>`;
+}
+
+function revalProw(el, mi) {
+  // Actualizar el label de minutos de esa fila
+  const row = el.closest('.prow');
+  const desde = row.querySelector('.p-d').value;
+  const hasta = row.querySelector('.p-h').value;
+  const min = calcMinutos(desde, hasta);
+  const lbl = minLabel(min);
+  const pmin = row.querySelector('.pmin');
+  if (pmin) { pmin.textContent = lbl.txt; pmin.className = 'pmin ' + lbl.cls; }
+  reval(mi);
+  // Mostrar alertas de paradas sospechosas
+  mostrarAlertasParadas(mi);
+}
+
+function mostrarAlertasParadas(mi) {
+  const prows = document.querySelectorAll(`#pl-${mi} .prow`);
+  const paradas = Array.from(prows).map(pr => ({
+    telar: parseInt(pr.querySelector('.p-t').value)||null,
+    desde: pr.querySelector('.p-d').value,
+    hasta: pr.querySelector('.p-h').value,
+    motivo: pr.querySelector('.motsel').value,
+    min: calcMinutos(pr.querySelector('.p-d').value, pr.querySelector('.p-h').value)
+  })).filter(p => p.telar && p.desde && p.hasta);
+
+  const alertas = [];
+
+  // Paradas muy largas (≥30 min)
+  paradas.filter(p => p.min >= 30).forEach(p => {
+    alertas.push(`⏱ Telar ${p.telar}: parada de ${p.min} min (${p.desde}–${p.hasta}) — ${p.motivo}. ¿Es correcta?`);
+  });
+
+  // Motivo repetitivo en el mismo telar (3+ veces)
+  const motCount = {};
+  paradas.forEach(p => {
+    const k = `${p.telar}-${p.motivo}`;
+    motCount[k] = (motCount[k]||0) + 1;
+  });
+  Object.entries(motCount).filter(([k,v])=>v>=3).forEach(([k,v]) => {
+    const [tel, mot] = k.split('-');
+    alertas.push(`🔁 Telar ${tel}: ${mot} se repite ${v} veces. Verificar con el maquinista.`);
+  });
+
+  // Paradas superpuestas en el MISMO telar (esto sí es un error)
+  const telaresUnicos = [...new Set(paradas.map(p => p.telar))];
+  telaresUnicos.forEach(tel => {
+    const pTel = paradas.filter(p => p.telar === tel && p.min !== null);
+    pTel.forEach((p1, i) => {
+      pTel.slice(i+1).forEach(p2 => {
+        const [d1h,d1m] = p1.desde.split(':').map(Number);
+        const [h1h,h1m] = p1.hasta.split(':').map(Number);
+        const [d2h,d2m] = p2.desde.split(':').map(Number);
+        const [h2h,h2m] = p2.hasta.split(':').map(Number);
+        let ini1=d1h*60+d1m, fin1=h1h*60+h1m;
+        let ini2=d2h*60+d2m, fin2=h2h*60+h2m;
+        if (fin1 < ini1) fin1 += 1440;
+        if (fin2 < ini2) fin2 += 1440;
+        // Se superponen si ini2 < fin1 Y fin2 > ini1
+        if (ini2 < fin1 && fin2 > ini1) {
+          alertas.push(`🚫 Telar ${tel}: paradas superpuestas (${p1.desde}–${p1.hasta} y ${p2.desde}–${p2.hasta}). Esto es un error — corregir.`);
+        }
+      });
+    });
+  });
+
+  let palertDiv = document.getElementById(`palert-${mi}`);
+  if (alertas.length > 0) {
+    if (!palertDiv) {
+      palertDiv = document.createElement('div');
+      palertDiv.id = `palert-${mi}`;
+      palertDiv.className = 'palert';
+      const pl = document.getElementById(`pl-${mi}`);
+      pl.parentElement.insertBefore(palertDiv, pl);
+    }
+    palertDiv.innerHTML = `<div class="palert-title">⚠️ Paradas sospechosas — revisá antes de publicar</div>` + alertas.map(a=>`<div style="padding:2px 0;border-bottom:1px solid rgba(192,48,48,.1);">${a}</div>`).join('');
+  } else if (palertDiv) {
+    palertDiv.remove();
+  }
 }
 
 function addP(mi) {
@@ -987,6 +1142,16 @@ async function publicarSheets() {
   if (!gToken) { showSB('error','No estás conectado a Google. Volvé al paso 1.'); return; }
   if (!quinceActual) { showSB('error','Seleccioná una quincena primero.'); return; }
   syncDom();
+
+  // Validar legajos antes de publicar
+  if (legajosValidos.length > 0) {
+    const legajosInvalidos = maquinistas.filter(m => !legajosValidos.includes(String(m.legajo)));
+    if (legajosInvalidos.length > 0) {
+      const nombres = legajosInvalidos.map(m => m.legajo).join(', ');
+      showSB('error', `❌ Legajos no válidos: ${nombres}. Corregílos antes de publicar. Legajos válidos: ${legajosValidos.join(', ')}`);
+      return;
+    }
+  }
   document.getElementById('btnPublicar').disabled = true;
   showSB('loading', `⚡ Publicando en "${quinceActual.nombre}"...`);
 
@@ -1034,6 +1199,7 @@ async function publicarSheets() {
       // Construir filas a escribir
       const writeRows = [];
       let firstTelar = true;
+      let filaActual = firstEmptyRow;
 
       m.telares.filter(t=>!t.es_extra).forEach((t, idx) => {
         if (isNaN(t.mts_iniciales)||isNaN(t.mts_finales)) return;
@@ -1041,12 +1207,10 @@ async function publicarSheets() {
         const mtsVal = Math.max(mts,0);
         totalMts += mtsVal;
         const np = mnp[t.numero]||0;
-        const minProd = Math.max(minTurno-np-plusPorTelar,1);
-        const metros100 = t.er?t.er*9*60:1;
-        const productividad = metros100>0?(mtsVal/metros100)*(540/minProd):0;
+        const f = filaActual; // fila actual para fórmulas
 
         // Col A vacía, B=fecha (solo primer telar), C=telar, D=ini, E=fin, F=er,
-        // G=total, H=minNP, I=mtsExtra(solo 1ro), J=plus, K=minProd, L=metros100, M=productividad, N=obs, O=alerta
+        // G=total fórmula, H=minNP, I=mtsExtra(solo 1ro), J=plus fórmula, K=minProd fórmula, L=metros100 fórmula, M=productividad fórmula, N=obs, O=alerta
         const alertaT = m.alertas.find(a=>a.telar===t.numero);
         const row = [
           '',                                          // A
@@ -1055,18 +1219,19 @@ async function publicarSheets() {
           t.mts_iniciales,                             // D entrada
           t.mts_finales,                               // E salida
           t.er||'',                                    // F E/R
-          mtsVal,                                      // G total (valor calculado)
+          `=IF(AND(D${f}>63000,E${f}<3000),(65535-D${f})+E${f},E${f}-D${f})`, // G total fórmula
           np||'',                                      // H min no prod
           (idx===0&&m.mtsExtra>0)?m.mtsExtra:'',       // I mts extra
-          plusPorTelar||'',                            // J plus
-          minProd,                                     // K min prod
-          metros100,                                   // L metros al 100%
-          productividad.toFixed(4),                    // M productividad
+          idx===0&&m.mtsExtra>0?`=ROUNDUP((I${f}/5.5)/4,0)`:'', // J plus fórmula
+          `=${minTurno}-H${f}-J${f}`,                 // K min prod fórmula
+          t.er?`=F${f}*9*60`:'',                      // L metros al 100% fórmula
+          `=IFERROR((G${f}/L${f})*(540/K${f}),0)`,    // M productividad fórmula
           (idx===0&&m.obs)?m.obs:'',                   // N observaciones
           alertaT?`⚠️ ${alertaT.msg}`:''              // O alerta
         ];
         writeRows.push(row);
         firstTelar = false;
+        filaActual++;
       });
 
       if (writeRows.length === 0) continue;
@@ -1161,6 +1326,5 @@ function setStep(n){ for(let i=1;i<=4;i++){ const el=document.getElementById(`s$
 checkTokenFromURL();
 renderQuincenas();
 </script>
-
-
-</div></body></html>
+</body>
+</html>
