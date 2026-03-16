@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Álamo Telares</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f2eb; --ink:#1a1a18; --surface:#ffffff; --surface2:#ede9e0;
+  --border:#d4cfc3; --accent:#d4521a; --accent2:#2a5f3f; --warn:#c9920a;
+  --danger:#c03030; --text:#1a1a18; --text2:#6b6760; --text3:#a09c97;
+  --mono:'Space Mono',monospace; --sans:'Barlow',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+
+/* GRAIN OVERLAY */
+body::before{content:'';position:fixed;inset:0;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px;pointer-events:none;z-index:0;}
+
+.wrap{max-width:980px;margin:0 auto;padding:0 24px 80px;position:relative;z-index:1;}
+
+/* HEADER */
+header{padding:28px 0 20px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--ink);margin-bottom:28px;}
+.hlogo{display:flex;align-items:center;gap:14px;}
+.logo{width:48px;height:48px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;font-family:var(--mono);border-radius:4px;}
+.htxt h1{font-size:24px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.htxt p{font-size:12px;color:var(--text2);font-family:var(--mono);margin-top:3px;}
+.hright{font-size:11px;font-family:var(--mono);color:var(--text3);text-align:right;line-height:1.8;}
+
+/* STEPS */
+.steps{display:flex;align-items:center;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--surface);}
+.step{flex:1;padding:10px 14px;font-size:11px;font-family:var(--mono);color:var(--text3);border-right:1px solid var(--border);display:flex;align-items:center;gap:7px;transition:all .2s;}
+.step:last-child{border-right:none;}
+.step.active{background:var(--ink);color:#fff;}
+.step.done{background:var(--accent2);color:#fff;}
+.step-n{width:18px;height:18px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;}
+@media(max-width:600px){.step span{display:none;}}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px;}
+.card.primary{border-color:var(--accent);border-width:2px;}
+.ctitle{font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.ctitle::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* SHEETS CONFIG */
+.sheets-config{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.sc-label{font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.sc-val{font-size:13px;font-family:var(--mono);color:var(--accent2);font-weight:700;flex:1;}
+.sc-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--text2);cursor:pointer;font-family:var(--mono);font-size:11px;padding:5px 10px;transition:all .2s;white-space:nowrap;}
+.sc-btn:hover{border-color:var(--accent);color:var(--accent);}
+.sc-connected{display:flex;align-items:center;gap:7px;font-size:12px;font-family:var(--mono);}
+.sc-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);flex-shrink:0;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* QUINCENA SELECTOR */
+.quinc-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.qbtn{padding:7px 14px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .2s;}
+.qbtn.active{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700;}
+.qbtn:hover:not(.active){border-color:var(--accent);color:var(--accent);}
+
+/* UPLOAD */
+.drop{border:2px dashed var(--border);border-radius:6px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);}
+.drop:hover,.drop.over{border-color:var(--accent);background:rgba(212,82,26,.04);}
+.drop h3{font-size:15px;font-weight:700;margin-bottom:5px;}
+.drop p{font-size:12px;color:var(--text2);font-family:var(--mono);}
+.drop-icon{font-size:28px;margin-bottom:8px;}
+
+/* FILE LIST */
+.flist{display:flex;flex-direction:column;gap:5px;margin-top:10px;}
+.fitem{display:flex;align-items:center;gap:9px;padding:8px 12px;background:var(--surface);border-radius:4px;border:1px solid var(--border);}
+.fitem.proc{border-color:var(--warn);}
+.fitem.ok{border-color:var(--accent2);}
+.fitem.err{border-color:var(--danger);}
+.fi-name{flex:1;font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fi-st{font-size:11px;font-family:var(--mono);flex-shrink:0;}
+.fi-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 3px;}
+.fi-rm:hover{color:var(--danger);}
+.fspin{width:12px;height:12px;border:2px solid rgba(201,146,10,.3);border-top-color:var(--warn);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* PROGRESS */
+.prog{background:var(--surface2);border-radius:3px;height:3px;margin-top:8px;overflow:hidden;}
+.prog-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .4s;}
+
+/* MAQ BLOCKS */
+.mblock{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:12px;overflow:hidden;}
+.mblock.has-alerts{border-color:var(--warn);}
+.mhdr{padding:12px 16px;background:var(--surface2);display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);}
+.mhdr:hover{background:var(--border);}
+.mbadge{background:var(--ink);color:#fff;border-radius:3px;padding:3px 9px;font-size:11px;font-weight:700;font-family:var(--mono);flex-shrink:0;}
+.mname{font-size:13px;font-weight:700;flex:1;}
+.mmeta{font-size:11px;font-family:var(--mono);color:var(--text2);}
+.mtog{color:var(--text2);font-size:12px;transition:transform .2s;}
+.mbody{padding:16px;}
+
+/* FORM */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.fg label{font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:.5px;text-transform:uppercase;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:13px;padding:7px 10px;outline:none;transition:border-color .2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:52px;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:560px){.fgrid{grid-template-columns:1fr;}}
+.full{grid-column:1/-1;}
+
+/* TURNO */
+.trow{display:flex;gap:6px;flex-wrap:wrap;}
+.tb{flex:1;min-width:90px;padding:7px 6px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--mono);font-size:11px;text-align:center;transition:all .2s;}
+.tb.active{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700;}
+.ichip{display:inline-flex;align-items:center;gap:5px;background:rgba(212,82,26,.08);border:1px solid rgba(212,82,26,.2);border-radius:4px;padding:4px 9px;font-size:10px;font-family:var(--mono);color:var(--accent);margin-top:5px;}
+
+/* DIVIDER */
+.sdiv{height:1px;background:var(--border);margin:14px 0;position:relative;}
+.sdiv span{position:absolute;left:8px;top:-7px;background:var(--surface);padding:0 6px;font-size:9px;font-family:var(--mono);color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
+
+/* TABLE */
+.tt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+.tt th{color:var(--text2);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:5px 4px;text-align:left;border-bottom:1px solid var(--border);}
+.tt td{padding:3px 3px;border-bottom:1px solid rgba(0,0,0,.05);vertical-align:middle;}
+.tt td input{padding:5px 7px;font-size:12px;}
+.tnum{color:var(--accent);font-weight:700;padding:5px 6px!important;font-size:13px;width:26px;text-align:center;}
+input.warn{border-color:var(--warn)!important;background:rgba(201,146,10,.07)!important;}
+input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!important;}
+
+/* PARADAS */
+.plist{display:flex;flex-direction:column;gap:5px;}
+.prow{display:grid;grid-template-columns:62px 80px 80px 1fr 30px;gap:5px;align-items:center;}
+@media(max-width:560px){.prow{grid-template-columns:1fr 1fr;gap:4px;}}
+.btn-rp{background:rgba(192,48,48,.08);border:1px solid rgba(192,48,48,.2);border-radius:4px;color:var(--danger);cursor:pointer;font-size:13px;height:30px;width:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.btn-rp:hover{background:rgba(192,48,48,.15);}
+.btn-add{background:rgba(212,82,26,.06);border:1px dashed rgba(212,82,26,.3);border-radius:4px;color:var(--accent);cursor:pointer;font-family:var(--mono);font-size:11px;padding:7px 12px;width:100%;text-align:center;transition:all .2s;margin-top:6px;}
+.btn-add:hover{background:rgba(212,82,26,.12);border-style:solid;}
+
+/* ALERTS */
+.apanel{background:rgba(201,146,10,.06);border:1px solid rgba(201,146,10,.25);border-radius:5px;padding:10px 12px;margin-bottom:12px;}
+.aptitle{font-size:9px;font-family:var(--mono);color:var(--warn);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px;}
+.aitem{display:flex;align-items:flex-start;gap:6px;font-size:11px;font-family:var(--mono);color:var(--text2);padding:3px 0;line-height:1.5;}
+
+/* BUTTONS */
+.btn-p{background:var(--accent);border:none;border-radius:4px;color:#fff;cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:700;padding:11px 22px;transition:all .2s;display:inline-flex;align-items:center;gap:7px;}
+.btn-p:hover{background:#b8431a;transform:translateY(-1px);}
+.btn-p:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.btn-s{background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:600;padding:11px 18px;transition:all .2s;}
+.btn-s:hover{border-color:var(--ink);}
+.btn-ok{background:var(--accent2);border:none;border-radius:4px;color:#fff;cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:700;padding:11px 22px;transition:all .2s;display:inline-flex;align-items:center;gap:7px;}
+.btn-ok:hover{background:#1e4a2f;}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px;}
+
+/* STATUS */
+.sbar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:5px;font-size:12px;font-family:var(--mono);margin-bottom:14px;}
+.sbar.loading{background:rgba(201,146,10,.08);border:1px solid rgba(201,146,10,.25);color:var(--warn);}
+.sbar.success{background:rgba(42,95,63,.08);border:1px solid rgba(42,95,63,.25);color:var(--accent2);}
+.sbar.error{background:rgba(192,48,48,.08);border:1px solid rgba(192,48,48,.25);color:var(--danger);}
+.sbar.info{background:rgba(212,82,26,.08);border:1px solid rgba(212,82,26,.25);color:var(--accent);}
+.spin{width:13px;height:13px;border:2px solid rgba(201,146,10,.3);border-top-color:var(--warn);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+
+/* RESULT */
+.rcard{background:var(--accent2);border-radius:6px;padding:24px;text-align:center;margin-bottom:16px;color:#fff;}
+.rcard .rcheck{font-size:40px;margin-bottom:8px;}
+.rcard h2{font-size:22px;font-weight:800;margin-bottom:4px;}
+.rcard p{font-size:12px;font-family:var(--mono);opacity:.8;}
+.erow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px;}
+.erow:last-child{border-bottom:none;}
+.el{color:var(--text2);flex-shrink:0;}
+.ev{color:var(--text);font-weight:700;text-align:right;word-break:break-word;max-width:65%;}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--surface);border-radius:8px;padding:24px;max-width:480px;width:100%;border:2px solid var(--ink);}
+.modal h3{font-size:16px;font-weight:800;margin-bottom:6px;}
+.modal p{font-size:13px;color:var(--text2);font-family:var(--mono);margin-bottom:14px;line-height:1.6;}
+.modal input{margin-bottom:10px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+
+.hidden{display:none!important;}
+.motsel{font-size:11px;padding:5px 6px;}
+.tag{display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:2px 7px;font-size:10px;font-family:var(--mono);color:var(--text2);}
+.tag.green{border-color:var(--accent2);color:var(--accent2);background:rgba(42,95,63,.06);}
+.tag.orange{border-color:var(--accent);color:var(--accent);background:rgba(212,82,26,.06);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="hlogo">
+    <div class="logo">A</div>
+    <div class="htxt">
+      <h1>Álamo Telares</h1>
+      <p>Sistema de carga de productividad</p>
+    </div>
+  </div>
+  <div class="hright" id="hright">
+    <span style="color:var(--text3)">Google Sheets</span><br>
+    <span id="hConnStatus" style="color:var(--danger)">● No conectado</span>
+  </div>
+</header>
+
+<!-- STEPS -->
+<div class="steps">
+  <div class="step active" id="s1"><div class="step-n">1</div><span>Planillas</span></div>
+  <div class="step" id="s2"><div class="step-n">2</div><span>Revisar</span></div>
+  <div class="step" id="s3"><div class="step-n">3</div><span>Publicar</span></div>
+  <div class="step" id="s4"><div class="step-n">4</div><span>Listo</span></div>
+</div>
+
+<div id="statusBar" class="sbar loading hidden"></div>
+
+<!-- ═══ PASO 1 ═══ -->
+<div id="paso1">
+
+  <!-- Google Sheets config -->
+  <div class="card">
+    <div class="ctitle">🔗 Conexión Google Sheets</div>
+    <div id="notConnected">
+      <p style="font-size:13px;color:var(--text2);font-family:var(--mono);margin-bottom:12px;">Conectá tu Google Sheets para que los datos se guarden automáticamente.</p>
+      <div class="fgrid">
+        <div class="fg">
+          <label>ID de Spreadsheet</label>
+          <input type="text" id="cfgSheetId" placeholder="1wIHpu7ObkXkfprH..." value="1wIHpu7ObkXkfprHbrjCU58ajeZm_XQU99Vtg3KjJUe4">
+        </div>
+        <div class="fg">
+          <label>Client ID de Google</label>
+          <input type="text" id="cfgClientId" placeholder="844318342271-..." value="844318342271-7a62emkjn9vt9m574s59t8jmcbi0t1b4.apps.googleusercontent.com">
+        </div>
+      </div>
+      <button class="btn-p" onclick="conectarGoogle()" style="margin-top:4px;">🔐 Conectar con Google →</button>
+    </div>
+    <div id="isConnected" class="hidden">
+      <div class="sc-connected">
+        <div class="sc-dot"></div>
+        <span style="font-family:var(--mono);font-size:13px;">Conectado a Google Sheets</span>
+        <span id="connUser" style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-left:8px;"></span>
+        <button class="sc-btn" onclick="desconectar()" style="margin-left:auto;">Desconectar</button>
+      </div>
+      <div id="quinceSelector" style="margin-top:14px;">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Quincena a cargar</div>
+        <div class="quinc-row" id="quinceRow"></div>
+        <button class="sc-btn" onclick="mostrarModalQuince()" style="margin-top:4px;">+ Agregar quincena</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload planillas -->
+  <div class="card primary">
+    <div class="ctitle">📋 Planillas del día</div>
+    <div class="drop" id="dropZone" onclick="document.getElementById('fInput').click()">
+      <input type="file" id="fInput" accept="image/*,.pdf" multiple style="display:none" onchange="handleFiles(event)">
+      <div class="drop-icon">📋</div>
+      <h3>Subí todas las planillas del día</h3>
+      <p>Un PDF con todas las páginas, o fotos sueltas, o ambas cosas juntas</p>
+      <p style="margin-top:5px;font-size:11px;color:var(--text3);">PDF multipágina: cada hoja se procesa por separado automáticamente</p>
+    </div>
+    <div id="flist" class="flist"></div>
+    <div class="prog hidden" id="progWrap"><div class="prog-bar" id="progBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-p" id="btnLeer" onclick="leerTodas()" disabled>✨ Leer con IA →</button>
+  </div>
+</div>
+
+<!-- ═══ PASO 2 ═══ -->
+<div id="paso2" class="hidden">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+    <div id="p2sum" style="font-size:12px;color:var(--text2);font-family:var(--mono);"></div>
+    <button class="btn-s" style="font-size:12px;padding:7px 12px;" onclick="addMaqManual()">+ Agregar maquinista</button>
+  </div>
+  <div id="maqBlocks"></div>
+  <div class="actions" style="margin-top:16px;">
+    <button class="btn-s" onclick="back1()">← Volver</button>
+    <button class="btn-p" onclick="irP3()">Publicar en Sheets →</button>
+  </div>
+</div>
+
+<!-- ═══ PASO 3 ═══ -->
+<div id="paso3" class="hidden">
+  <div class="card primary">
+    <div class="ctitle">📤 Listo para publicar</div>
+    <div id="p3preview"></div>
+  </div>
+  <div class="actions">
+    <button class="btn-s" onclick="back2()">← Volver</button>
+    <button class="btn-p" id="btnPublicar" onclick="publicarSheets()">⚡ Publicar en Google Sheets →</button>
+  </div>
+</div>
+
+<!-- ═══ PASO 4 ═══ -->
+<div id="paso4" class="hidden">
+  <div class="rcard">
+    <div class="rcheck">✅</div>
+    <h2>¡Publicado!</h2>
+    <p id="rDesc"></p>
+  </div>
+  <div class="card">
+    <div class="ctitle">📋 Resumen del día</div>
+    <div id="rResumen"></div>
+  </div>
+  <div style="margin-top:12px;text-align:center;">
+    <a id="sheetLink" href="#" target="_blank" style="font-family:var(--mono);font-size:12px;color:var(--accent2);text-decoration:none;border-bottom:1px solid var(--accent2);">Abrir Google Sheets →</a>
+  </div>
+  <div class="actions" style="margin-top:16px;">
+    <button class="btn-s" onclick="nuevoDia()">+ Nuevo día</button>
+  </div>
+</div>
+
+<!-- MODAL QUINCENA -->
+<div class="modal-bg hidden" id="modalQuince">
+  <div class="modal">
+    <h3>Nueva quincena</h3>
+    <p>Ingresá el nombre de la quincena y el ID del Google Sheet correspondiente.</p>
+    <div class="fg"><label>Nombre (ej: 1era Quincena Marzo 2026)</label><input type="text" id="qNombre" placeholder="1era Quincena Marzo 2026"></div>
+    <div class="fg"><label>ID del Spreadsheet</label><input type="text" id="qSheetId" placeholder="1wIHpu7O..."></div>
+    <div class="modal-actions">
+      <button class="btn-s" onclick="cerrarModalQuince()">Cancelar</button>
+      <button class="btn-p" onclick="guardarQuince()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG & ESTADO
+// ═══════════════════════════════════════════════════
+const DEFAULT_CLIENT_ID = '844318342271-7a62emkjn9vt9m574s59t8jmcbi0t1b4.apps.googleusercontent.com';
+const DEFAULT_SHEET_ID  = '1wIHpu7ObkXkfprHbrjCU58ajeZm_XQU99Vtg3KjJUe4';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+
+let gToken = null;          // OAuth access token
+let archivos = [];          // archivos cargados
+let maquinistas = [];       // datos procesados
+let quinceActual = null;    // {nombre, sheetId}
+let quincenas = JSON.parse(localStorage.getItem('alamo_quincenas') || '[]');
+
+// Agregar quincena default si no hay ninguna
+if (quincenas.length === 0) {
+  quincenas.push({ nombre: '2da Quincena Febrero 2026', sheetId: DEFAULT_SHEET_ID });
+  guardarQuincenas();
+}
+
+const MOTIVOS = [
+  'P1 - Falta de Urdimbre','P2 - Falta de Trama','P3 - Falta de Aceite',
+  'P4 - Falta de Aro/Plato','P5 - Falta de Auxiliar','P6 - Falta de Cono',
+  'P7 - Falta de Herramienta','P8 - Falta de Tapas Trama','P9 - Mant. Preventivo',
+  'P10 - Capacitación','P11 - Cambio de FTO','P12 - Falla Sensor Trama',
+  'P13 - Falla Sensor Urdimbre','P14 - Falla Ultrasonido','P15 - Falla Eléctrica',
+  'P16 - Falla Mecánica','P17 - Falla de Trama','P18 - Falla de Urdimbre'
+];
+
+// ═══════════════════════════════════════════════════
+// GOOGLE AUTH
+// ═══════════════════════════════════════════════════
+function conectarGoogle() {
+  const clientId = document.getElementById('cfgClientId').value.trim() || DEFAULT_CLIENT_ID;
+  const sheetId  = document.getElementById('cfgSheetId').value.trim()  || DEFAULT_SHEET_ID;
+
+  // Guardar sheetId como primera quincena si no hay ninguna
+  if (quincenas.length === 0) {
+    quincenas.push({ nombre: 'Quincena actual', sheetId });
+    guardarQuincenas();
+  }
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: window.location.href.split('?')[0],
+    response_type: 'token',
+    scope: SCOPES,
+    prompt: 'select_account'
+  });
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
+
+function desconectar() {
+  gToken = null;
+  localStorage.removeItem('alamo_gtoken');
+  document.getElementById('notConnected').classList.remove('hidden');
+  document.getElementById('isConnected').classList.add('hidden');
+  document.getElementById('hConnStatus').textContent = '● No conectado';
+  document.getElementById('hConnStatus').style.color = 'var(--danger)';
+}
+
+function checkTokenFromURL() {
+  const hash = window.location.hash;
+  if (hash.includes('access_token')) {
+    const params = new URLSearchParams(hash.substring(1));
+    gToken = params.get('access_token');
+    localStorage.setItem('alamo_gtoken', gToken);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    mostrarConectado();
+    return true;
+  }
+  const saved = localStorage.getItem('alamo_gtoken');
+  if (saved) { gToken = saved; mostrarConectado(); return true; }
+  return false;
+}
+
+async function mostrarConectado() {
+  document.getElementById('notConnected').classList.add('hidden');
+  document.getElementById('isConnected').classList.remove('hidden');
+  document.getElementById('hConnStatus').textContent = '● Conectado';
+  document.getElementById('hConnStatus').style.color = 'var(--accent2)';
+  renderQuincenas();
+
+  // Verificar token
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: `Bearer ${gToken}` }
+    });
+    if (r.ok) {
+      const u = await r.json();
+      document.getElementById('connUser').textContent = u.email || '';
+    } else {
+      // Token expirado
+      gToken = null; localStorage.removeItem('alamo_gtoken');
+      document.getElementById('notConnected').classList.remove('hidden');
+      document.getElementById('isConnected').classList.add('hidden');
+      showSB('error','Token expirado. Volvé a conectar con Google.');
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════
+// QUINCENAS
+// ═══════════════════════════════════════════════════
+function renderQuincenas() {
+  const row = document.getElementById('quinceRow');
+  row.innerHTML = '';
+  quincenas.forEach((q, i) => {
+    const b = document.createElement('button');
+    b.className = 'qbtn' + (quinceActual?.nombre === q.nombre ? ' active' : '');
+    b.textContent = q.nombre;
+    b.onclick = () => { quinceActual = q; renderQuincenas(); };
+    row.appendChild(b);
+  });
+  if (!quinceActual && quincenas.length > 0) {
+    quinceActual = quincenas[quincenas.length - 1];
+    renderQuincenas();
+  }
+}
+
+function mostrarModalQuince() { document.getElementById('modalQuince').classList.remove('hidden'); }
+function cerrarModalQuince()  { document.getElementById('modalQuince').classList.add('hidden'); }
+
+function guardarQuince() {
+  const n  = document.getElementById('qNombre').value.trim();
+  const id = document.getElementById('qSheetId').value.trim();
+  if (!n || !id) { alert('Completá ambos campos'); return; }
+  quincenas.push({ nombre: n, sheetId: id });
+  guardarQuincenas();
+  quinceActual = { nombre: n, sheetId: id };
+  renderQuincenas();
+  cerrarModalQuince();
+}
+
+function guardarQuincenas() { localStorage.setItem('alamo_quincenas', JSON.stringify(quincenas)); }
+
+// ═══════════════════════════════════════════════════
+// DRAG & DROP ARCHIVOS
+// ═══════════════════════════════════════════════════
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); agregarFiles(e.dataTransfer.files); });
+function handleFiles(e) { agregarFiles(e.target.files); }
+
+function agregarFiles(files) {
+  Array.from(files).forEach(f => {
+    const id = Date.now() + Math.random();
+    const tipo = f.type.includes('pdf') ? 'pdf' : 'image';
+    archivos.push({ id, file: f, tipo, nombre: f.name, b64: null, paginas: null });
+    addFileRow(id, f.name, tipo);
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const a = archivos.find(x => x.id === id);
+      if (a) { a.b64 = ev.target.result.split(',')[1]; a.dataUrl = ev.target.result; }
+    };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById('btnLeer').disabled = archivos.length === 0;
+}
+
+function addFileRow(id, nombre, tipo) {
+  const row = document.createElement('div');
+  row.className = 'fitem'; row.id = `fi-${id}`;
+  row.innerHTML = `<span>${tipo==='pdf'?'📄':'🖼️'}</span><span class="fi-name">${nombre}</span><span class="fi-st" id="fs-${id}">pendiente</span><button class="fi-rm" onclick="quitarFile('${id}')">✕</button>`;
+  document.getElementById('flist').appendChild(row);
+}
+
+function quitarFile(id) {
+  archivos = archivos.filter(a => String(a.id) !== String(id));
+  document.getElementById(`fi-${id}`)?.remove();
+  document.getElementById('btnLeer').disabled = archivos.length === 0;
+}
+
+function setFileSt(id, cls, txt) {
+  const el = document.getElementById(`fi-${id}`);
+  const st = document.getElementById(`fs-${id}`);
+  if (!el||!st) return;
+  el.className = 'fitem ' + cls;
+  st.textContent = txt;
+  st.style.color = cls==='ok'?'var(--accent2)':cls==='err'?'var(--danger)':'var(--warn)';
+}
+
+// ═══════════════════════════════════════════════════
+// DIVIDIR PDF EN PÁGINAS (usando canvas)
+// ═══════════════════════════════════════════════════
+async function pdfAImagenes(dataUrl) {
+  // Cargamos pdf.js desde CDN
+  if (!window.pdfjsLib) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  const pdfDoc = await pdfjsLib.getDocument({ data: atob(dataUrl.split(',')[1]) }).promise;
+  const imagenes = [];
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const vp = page.getViewport({ scale: 2.2 }); // alta resolución para mejor OCR
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width; canvas.height = vp.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    const b64 = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+    imagenes.push({ b64, pagina: i, total: pdfDoc.numPages });
+  }
+  return imagenes;
+}
+
+// ═══════════════════════════════════════════════════
+// LEER TODAS LAS PLANILLAS
+// ═══════════════════════════════════════════════════
+async function leerTodas() {
+  document.getElementById('btnLeer').disabled = true;
+  document.getElementById('progWrap').classList.remove('hidden');
+
+  // Primero expandir PDFs multipágina
+  const tareas = []; // {b64, nombre, archId}
+  for (const a of archivos) {
+    if (!a.b64) { await new Promise(r => setTimeout(r, 300)); }
+    if (a.tipo === 'pdf') {
+      setFileSt(a.id, 'proc', '⏳ dividiendo páginas...');
+      try {
+        const imgs = await pdfAImagenes(a.dataUrl);
+        imgs.forEach((img, i) => {
+          tareas.push({ b64: img.b64, tipo: 'image', nombre: `${a.nombre} — pág ${img.pagina}/${img.total}`, archId: a.id, pagina: img.pagina });
+        });
+        setFileSt(a.id, 'proc', `⏳ ${imgs.length} pág.`);
+      } catch(err) {
+        setFileSt(a.id, 'err', '❌ error PDF');
+        tareas.push({ b64: a.b64, tipo: 'pdf', nombre: a.nombre, archId: a.id, pagina: 1 });
+      }
+    } else {
+      tareas.push({ b64: a.b64, tipo: 'image', nombre: a.nombre, archId: a.id, pagina: 1 });
+    }
+  }
+
+  // Leer cada página con IA
+  const resultados = [];
+  for (let i = 0; i < tareas.length; i++) {
+    const t = tareas[i];
+    setFileSt(t.archId, 'proc', `⏳ leyendo pág. ${t.pagina}...`);
+    document.getElementById('progBar').style.width = `${(i / tareas.length) * 100}%`;
+    try {
+      const datos = await leerPlanillaIA(t);
+      setFileSt(t.archId, 'ok', `✅ leg. ${datos.legajo_maquinista||'?'}`);
+      resultados.push({ datos, nombre: t.nombre });
+    } catch(err) {
+      console.error('Error lectura:', err);
+      setFileSt(t.archId, 'err', '❌ error lectura');
+      resultados.push({ datos: null, nombre: t.nombre, error: err.message });
+    }
+    document.getElementById('progBar').style.width = `${((i+1) / tareas.length) * 100}%`;
+  }
+
+  maquinistas = agruparPorLegajo(resultados);
+  calcAlertas();
+
+  document.getElementById('paso1').classList.add('hidden');
+  document.getElementById('paso2').classList.remove('hidden');
+  renderMaquinistas();
+  document.getElementById('p2sum').textContent = `${maquinistas.length} maquinista${maquinistas.length!==1?'s':''} · ${tareas.length} páginas procesadas`;
+  setStep(2);
+}
+
+// ═══════════════════════════════════════════════════
+// PROMPT IA MEJORADO
+// ═══════════════════════════════════════════════════
+async function leerPlanillaIA(tarea) {
+  const prompt = `Sos un sistema OCR industrial especializado en planillas de producción de telares de Álamo Bolsas Industriales, Argentina.
+
+Esta es una foto o scan de una planilla de control diario de producción. Extraé TODOS los datos visibles con máxima precisión.
+
+=== CÓMO LEER LA PLANILLA ===
+
+ENCABEZADO (parte superior):
+- "Turno: Mañana/Tarde" seguido del horario. Ejemplos:
+  * "Turno: Mañana / 6 a 3" → turno mañana normal → "manana" (540 min)
+  * "Turno: Tarde / 3 a 11:30" → turno tarde normal → "tarde" (540 min)
+  * "Turno: Tarde / 15 a 3" o "15:30 a 4:00" → 12 horas → "extra" (720 min)
+  * Si hay 12 horas de diferencia entre inicio y fin → SIEMPRE es "extra"
+- "Telares: X / Y" → números de telares asignados
+- "Fecha: DD/MM/AAAA" o "DD/M/AA" → leé con cuidado cada dígito
+- "N° Legajo Maquinista" seguido del número → es un número de 3-4 dígitos (ej: 405, 408, 441)
+- "N° Legajo Auxiliar" → puede estar vacío
+
+TABLA DE PRODUCCIÓN (columnas de izquierda a derecha):
+| N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad |
+
+- N° Telar: número del telar (1, 2, 3, 4, 5, 6, 7, 8...)
+- FTO: código alfanumérico (ej: "lo2", "102", "b3", "Lo2"). Leelo con cuidado.
+- Ancho Trama: número pequeño, usualmente 5
+- Mts Iniciales y Mts Finales: CRÍTICO — son contadores de metros entre 0 y 65535.
+  * Leé CADA dígito con cuidado. Un error aquí afecta toda la productividad.
+  * Ejemplo válido: 4085, 6706, 38194, 40808, 21333, 23864
+  * Si el número parece muy pequeño (menos de 3 dígitos) revisalo bien
+- E/R: velocidad lineal, número decimal como 5.5, 5.8, 5.9, 6.0
+- Velocidad: número como 1010, 1015, etc.
+
+Los primeros 4 telares son los "asignados" (es_extra: false).
+Si hay 5 o más telares en la tabla → los adicionales son "extra" (es_extra: true).
+
+SECCIÓN TIEMPO PERDIDO (parte inferior izquierda):
+Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
+- Leé TODAS las filas que tengan datos escritos
+- Horarios: formato HH:MM (24 hs). Ej: "18:30", "23:50", "2:50", "4:00"
+- Motivo: código P1 a P18. Leé exactamente lo que dice (ej: "P17", "P18", "P1")
+- IMPORTANTE: si hay paradas después de las 23:00 o entre 0:00 y 6:00 → es señal de turno de 12 hs
+
+OBSERVACIONES (parte inferior):
+- Copiá textualmente todo lo que esté escrito en ese campo
+
+=== FORMATO DE RESPUESTA ===
+Devolvé ÚNICAMENTE el JSON válido, sin texto antes ni después, sin bloques de código markdown:
+
+{
+  "legajo_maquinista": "405",
+  "legajo_auxiliar": null,
+  "fecha": "12/03/2026",
+  "turno": "tarde",
+  "telares": [
+    {"numero": 1, "fto": "lo2", "ancho_trama": 5, "mts_iniciales": 4085, "mts_finales": 6706, "er": 5.9, "velocidad": 1010, "es_extra": false},
+    {"numero": 2, "fto": "lo2", "ancho_trama": 5, "mts_iniciales": 38194, "mts_finales": 40808, "er": 5.9, "velocidad": 1010, "es_extra": false},
+    {"numero": 3, "fto": "lo2", "ancho_trama": 5, "mts_iniciales": 28941, "mts_finales": 29814, "er": 5.9, "velocidad": 1010, "es_extra": false},
+    {"numero": 4, "fto": "lo2", "ancho_trama": 5, "mts_iniciales": 21333, "mts_finales": 23864, "er": 5.8, "velocidad": 1010, "es_extra": false}
+  ],
+  "paradas": [
+    {"telar": 3, "desde": "18:30", "hasta": "19:55", "motivo": "P18"},
+    {"telar": 3, "desde": "22:45", "hasta": "23:50", "motivo": "P17"},
+    {"telar": 2, "desde": "23:00", "hasta": "23:50", "motivo": "P18"},
+    {"telar": 3, "desde": "02:50", "hasta": "03:10", "motivo": "P17"},
+    {"telar": 3, "desde": "03:20", "hasta": "04:00", "motivo": "P17"}
+  ],
+  "observaciones": "Máquina 3 se para mucho por trama chica"
+}
+
+Si algún campo no es legible usá null. NO inventes datos.`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1800,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: tarea.b64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    })
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  const raw = data.content.map(b => b.text||'').join('').trim();
+  const clean = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+  return JSON.parse(clean);
+}
+
+// ═══════════════════════════════════════════════════
+// AGRUPAR POR LEGAJO
+// ═══════════════════════════════════════════════════
+function agruparPorLegajo(resultados) {
+  const mapa = {};
+  resultados.forEach(r => {
+    if (!r.datos) return;
+    const d = r.datos;
+    const leg = String(d.legajo_maquinista||'').trim();
+    if (!leg) return;
+    if (!mapa[leg]) {
+      mapa[leg] = { legajo: leg, fecha: d.fecha||'', turno: d.turno||'manana', telares: [], paradas: [], mtsExtra: 0, obs: '', alertas: [] };
+    }
+    (d.telares||[]).forEach(t => { if (!mapa[leg].telares.find(x=>x.numero===t.numero)) mapa[leg].telares.push(t); });
+    (d.paradas||[]).forEach(p => mapa[leg].paradas.push(p));
+    if (d.observaciones && !mapa[leg].obs.includes(d.observaciones))
+      mapa[leg].obs = [mapa[leg].obs, d.observaciones].filter(Boolean).join(' / ');
+    // Detectar turno extra por paradas nocturnas si no vino del encabezado
+    if (mapa[leg].turno !== 'extra') {
+      const tieneNocturna = mapa[leg].paradas.some(p => {
+        const h = parseInt((p.desde||'0:0').split(':')[0]);
+        return h >= 0 && h < 6;
+      });
+      if (tieneNocturna) mapa[leg].turno = 'extra';
+    }
+  });
+  Object.values(mapa).forEach(m => {
+    m.telares.sort((a,b)=>(a.numero||0)-(b.numero||0));
+    const extras = m.telares.filter(t=>t.es_extra);
+    m.mtsExtra = extras.reduce((s,t)=>{ const v=(t.mts_finales||0)-(t.mts_iniciales||0); return s+Math.max(v,0); }, 0);
+  });
+  return Object.values(mapa);
+}
+
+// ═══════════════════════════════════════════════════
+// VALIDACIÓN
+// ═══════════════════════════════════════════════════
+function calcAlertas() {
+  maquinistas.forEach((m, mi) => {
+    m.alertas = [];
+    const minT = m.turno==='extra'?720:540;
+    m.telares.filter(t=>!t.es_extra).forEach(t => {
+      const ini=parseFloat(t.mts_iniciales), fin=parseFloat(t.mts_finales), er=parseFloat(t.er);
+      if (isNaN(ini)||isNaN(fin)||!er) return;
+      const mts=(ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini;
+      if (mts<=0) return;
+      const minP = m.paradas.reduce((s,p)=>{
+        if(p.telar!==t.numero) return s;
+        const[dh,dm]=(p.desde||'0:0').split(':').map(Number);
+        const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);
+        let d=dh*60+dm,h=hh*60+hm; if(h<d)h+=1440; return s+(h-d);
+      }, 0);
+      const teo = er*(minT-minP);
+      if (mts<teo*0.15&&minP===0) {
+        t._w='err';
+        m.alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas (esperado ~${Math.round(teo).toLocaleString()}). Probable error de lectura.`});
+      } else if (mts<teo*0.35&&minP<30) {
+        t._w='warn';
+        m.alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts con solo ${minP} min parada. Verificar.`});
+      } else { t._w=null; }
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER MAQUINISTAS
+// ═══════════════════════════════════════════════════
+function renderMaquinistas() {
+  const c = document.getElementById('maqBlocks');
+  c.innerHTML = '';
+  maquinistas.forEach((m,mi) => c.appendChild(buildBlock(m,mi)));
+}
+
+function buildBlock(m, mi) {
+  const wrap = document.createElement('div');
+  wrap.className = 'mblock' + (m.alertas.length>0?' has-alerts':'');
+  wrap.id = `mb-${mi}`;
+  const asig = m.telares.filter(t=>!t.es_extra);
+  const alertBadge = m.alertas.length>0 ? `<span class="tag orange">⚠️ ${m.alertas.length}</span>` : '<span class="tag green">✓ OK</span>';
+  const turnoBadge = m.turno==='extra'?'<span class="tag orange">⚡ 12hs</span>':m.turno==='tarde'?'<span class="tag">🌆 Tarde</span>':'<span class="tag">🌅 Mañana</span>';
+  wrap.innerHTML = `
+    <div class="mhdr" onclick="toggleBlock(${mi})">
+      <div class="mbadge">${m.legajo}</div>
+      <div class="mname">${m.legajo}</div>
+      <div class="mmeta" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${turnoBadge}${alertBadge}<span style="color:var(--text3)">${asig.length} telares · ${m.paradas.length} paradas</span></div>
+      <div class="mtog" id="tog-${mi}">▼</div>
+    </div>
+    <div class="mbody" id="body-${mi}">
+      ${m.alertas.length>0?`<div class="apanel"><div class="aptitle">⚠️ Datos a revisar</div>${m.alertas.map(a=>`<div class="aitem"><span>${a.nivel==='error'?'🔴':'🟡'}</span><span>${a.msg}</span></div>`).join('')}</div>`:''}
+      <div class="fgrid">
+        <div class="fg"><label>Fecha</label><input type="date" id="f-${mi}" value="${fv(m.fecha)}"></div>
+        <div class="fg"><label>N° Legajo</label><input type="text" id="l-${mi}" value="${m.legajo}" placeholder="408"></div>
+        <div class="fg full">
+          <label>Turno</label>
+          <div class="trow">
+            <div class="tb ${m.turno==='manana'?'active':''}" onclick="setT(${mi},'manana')">🌅 Mañana</div>
+            <div class="tb ${m.turno==='tarde'?'active':''}"  onclick="setT(${mi},'tarde')">🌆 Tarde</div>
+            <div class="tb ${m.turno==='extra'?'active':''}"  onclick="setT(${mi},'extra')">⚡ 12 hs extra</div>
+          </div>
+          <div class="ichip" id="ti-${mi}">${tl(m.turno)}</div>
+        </div>
+      </div>
+      <div class="sdiv"><span>telares asignados</span></div>
+      <table class="tt">
+        <thead><tr><th>#</th><th>FTO</th><th>Ancho</th><th>Mts Iniciales</th><th>Mts Finales</th><th>E/R</th><th></th></tr></thead>
+        <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr>
+          <td class="tnum">${t.numero||(i+1)}</td>
+          <td><input type="text" value="${t.fto||''}" placeholder="FTO" style="width:72px"></td>
+          <td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td>
+          <td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td>
+          <td><input type="number" value="${t.mts_finales||''}"   placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td>
+          <td><input type="number" value="${t.er||''}" placeholder="5.5" step="0.1" style="width:60px"></td>
+          <td style="width:20px;font-size:13px;">${t._w==='err'?'🔴':t._w==='warn'?'🟡':''}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <div class="sdiv"><span>paradas</span></div>
+      <div class="plist" id="pl-${mi}">${m.paradas.map(p=>prow(p,mi)).join('')}</div>
+      <button class="btn-add" onclick="addP(${mi})">+ Agregar parada</button>
+      <div class="sdiv"><span>metros extra</span></div>
+      <div class="fgrid">
+        <div class="fg"><label>Metros Extra totales del día</label><input type="number" id="ex-${mi}" value="${m.mtsExtra||''}" placeholder="0" min="0"></div>
+      </div>
+      <div class="sdiv"><span>observaciones</span></div>
+      <div class="fg"><label>Observaciones del maquinista</label><textarea id="ob-${mi}">${m.obs||''}</textarea></div>
+    </div>`;
+  return wrap;
+}
+
+function prow(p, mi) {
+  const opts = MOTIVOS.map(m=>{ const k=m.split(' ')[0]; return `<option value="${k}" ${(p.motivo&&p.motivo.toUpperCase()===k)?'selected':''}>${m}</option>`; }).join('');
+  return `<div class="prow" data-mi="${mi}"><input type="number" placeholder="Telar" value="${p.telar||''}" class="p-t" oninput="reval(${mi})"><input type="time" value="${p.desde||''}" class="p-d" onchange="reval(${mi})"><input type="time" value="${p.hasta||''}" class="p-h" onchange="reval(${mi})"><select class="motsel">${opts}</select><button class="btn-rp" onclick="this.parentElement.remove();reval(${mi})">✕</button></div>`;
+}
+
+function addP(mi) {
+  const c = document.createElement('div'); c.innerHTML = prow({},mi);
+  document.getElementById(`pl-${mi}`).appendChild(c.firstElementChild);
+}
+
+function toggleBlock(mi) {
+  const b=document.getElementById(`body-${mi}`), t=document.getElementById(`tog-${mi}`);
+  const h=b.style.display==='none'; b.style.display=h?'':'none'; t.textContent=h?'▼':'▶';
+}
+
+function setT(mi, t) {
+  maquinistas[mi].turno=t;
+  document.getElementById(`mb-${mi}`).replaceWith(buildBlock(maquinistas[mi],mi));
+}
+
+function reval(mi) {
+  // Leer DOM → actualizar estado → recalcular alertas
+  const trows=document.querySelectorAll(`#tb-${mi} tr`);
+  maquinistas[mi].telares = Array.from(trows).map((tr,i)=>{ const ins=tr.querySelectorAll('input'); return { numero:i+1, fto:ins[0]?.value||'', ancho_trama:parseFloat(ins[1]?.value)||null, mts_iniciales:parseFloat(ins[2]?.value), mts_finales:parseFloat(ins[3]?.value), er:parseFloat(ins[4]?.value)||null, es_extra:false, _w:null }; });
+  const prows=document.querySelectorAll(`#pl-${mi} .prow`);
+  maquinistas[mi].paradas = Array.from(prows).map(pr=>({ telar:parseInt(pr.querySelector('.p-t').value)||null, desde:pr.querySelector('.p-d').value, hasta:pr.querySelector('.p-h').value, motivo:pr.querySelector('.motsel').value })).filter(p=>p.telar&&p.desde&&p.hasta);
+  // Recalcular alertas solo para este bloque
+  maquinistas[mi].alertas=[];
+  const minT=maquinistas[mi].turno==='extra'?720:540;
+  maquinistas[mi].telares.forEach(t=>{
+    if(!t.er) return;
+    const ini=t.mts_iniciales,fin=t.mts_finales;
+    if(isNaN(ini)||isNaN(fin)) return;
+    const mts=(ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini;
+    if(mts<=0) return;
+    const minP=maquinistas[mi].paradas.reduce((s,p)=>{ if(p.telar!==t.numero)return s; const[dh,dm]=(p.desde||'0:0').split(':').map(Number); const[hh,hm]=(p.hasta||'0:0').split(':').map(Number); let d=dh*60+dm,h=hh*60+hm; if(h<d)h+=1440; return s+(h-d); },0);
+    const teo=t.er*(minT-minP);
+    const cells=document.querySelectorAll(`#tb-${mi} tr`)[t.numero-1]?.querySelectorAll('input');
+    if(cells){cells[2].classList.remove('warn','err');cells[3].classList.remove('warn','err');}
+    if(mts<teo*0.15&&minP===0){ t._w='err'; maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`}); if(cells){cells[2].classList.add('err');cells[3].classList.add('err');} }
+    else if(mts<teo*0.35&&minP<30){ t._w='warn'; maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`}); if(cells){cells[2].classList.add('warn');cells[3].classList.add('warn');} }
+  });
+}
+
+function addMaqManual() {
+  const leg=prompt('N° de Legajo:'); if(!leg) return;
+  maquinistas.push({ legajo:leg, fecha:'', turno:'manana', telares:[{},{},{},{}], paradas:[], mtsExtra:0, obs:'', alertas:[] });
+  const mi=maquinistas.length-1;
+  document.getElementById('maqBlocks').appendChild(buildBlock(maquinistas[mi],mi));
+}
+
+// ═══════════════════════════════════════════════════
+// SINCRONIZAR DOM → ESTADO
+// ═══════════════════════════════════════════════════
+function syncDom() {
+  maquinistas.forEach((m,mi) => {
+    m.legajo  = document.getElementById(`l-${mi}`)?.value.trim() || m.legajo;
+    m.fecha   = document.getElementById(`f-${mi}`)?.value || m.fecha;
+    m.mtsExtra= parseFloat(document.getElementById(`ex-${mi}`)?.value)||0;
+    m.obs     = document.getElementById(`ob-${mi}`)?.value.trim()||'';
+    const trows=document.querySelectorAll(`#tb-${mi} tr`);
+    m.telares=Array.from(trows).map((tr,i)=>{ const ins=tr.querySelectorAll('input'); return { numero:i+1, fto:ins[0]?.value||'', ancho_trama:parseFloat(ins[1]?.value)||null, mts_iniciales:parseFloat(ins[2]?.value), mts_finales:parseFloat(ins[3]?.value), er:parseFloat(ins[4]?.value)||null, es_extra:false }; });
+    const prows=document.querySelectorAll(`#pl-${mi} .prow`);
+    m.paradas=Array.from(prows).map(pr=>({ telar:parseInt(pr.querySelector('.p-t').value)||null, desde:pr.querySelector('.p-d').value, hasta:pr.querySelector('.p-h').value, motivo:pr.querySelector('.motsel').value })).filter(p=>p.telar&&p.desde&&p.hasta);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// PUBLICAR EN GOOGLE SHEETS
+// ═══════════════════════════════════════════════════
+async function publicarSheets() {
+  if (!gToken) { showSB('error','No estás conectado a Google. Volvé al paso 1.'); return; }
+  if (!quinceActual) { showSB('error','Seleccioná una quincena primero.'); return; }
+  syncDom();
+  document.getElementById('btnPublicar').disabled = true;
+  showSB('loading', `⚡ Publicando en "${quinceActual.nombre}"...`);
+
+  const sheetId = quinceActual.sheetId;
+  let totalMts = 0, totalParadas = 0, legajosCargados = [];
+
+  try {
+    // Primero leer los datos actuales para encontrar la primera fila vacía por hoja
+    for (const m of maquinistas) {
+      const leg = m.legajo;
+      if (!leg) continue;
+
+      // Leer cuántas filas ya hay en la hoja
+      const readRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(leg + '!B:B')}`,
+        { headers: { Authorization: `Bearer ${gToken}` } }
+      );
+      if (!readRes.ok) {
+        const e = await readRes.json();
+        throw new Error(`Hoja "${leg}" no encontrada: ${e.error?.message||readRes.status}`);
+      }
+      const readData = await readRes.json();
+      const rows = readData.values || [];
+      // Encontrar primera fila vacía (filas 1-4 son headers, datos desde fila 5)
+      let firstEmptyRow = 5;
+      for (let i = 4; i < rows.length; i++) {
+        if (rows[i] && rows[i][0]) firstEmptyRow = i + 2; // +1 por 0-index, +1 por la siguiente
+      }
+
+      const fecha = new Date((m.fecha||new Date().toISOString().split('T')[0])+'T12:00:00');
+      const fechaSerial = Math.floor(fecha.getTime()/86400000)+25569;
+      const fechaStr = fecha.toLocaleDateString('es-AR');
+      const minTurno = m.turno==='extra'?720:540;
+      const plusPorTelar = m.mtsExtra>0?Math.ceil((m.mtsExtra/5.5)/4):0;
+
+      // Calcular minutos no productivos por telar
+      const mnp = {};
+      m.paradas.forEach(p => {
+        const [dh,dm]=(p.desde||'0:0').split(':').map(Number);
+        const [hh,hm]=(p.hasta||'0:0').split(':').map(Number);
+        let d=dh*60+dm, h=hh*60+hm; if(h<d)h+=1440;
+        mnp[p.telar]=(mnp[p.telar]||0)+(h-d);
+      });
+
+      // Construir filas a escribir
+      const writeRows = [];
+      let firstTelar = true;
+
+      m.telares.filter(t=>!t.es_extra).forEach((t, idx) => {
+        if (isNaN(t.mts_iniciales)||isNaN(t.mts_finales)) return;
+        const mts=(t.mts_iniciales>63000&&t.mts_finales<3000)?(65535-t.mts_iniciales)+t.mts_finales:t.mts_finales-t.mts_iniciales;
+        const mtsVal = Math.max(mts,0);
+        totalMts += mtsVal;
+        const np = mnp[t.numero]||0;
+        const minProd = Math.max(minTurno-np-plusPorTelar,1);
+        const metros100 = t.er?t.er*9*60:1;
+        const productividad = metros100>0?(mtsVal/metros100)*(540/minProd):0;
+
+        // Col A vacía, B=fecha (solo primer telar), C=telar, D=ini, E=fin, F=er,
+        // G=total, H=minNP, I=mtsExtra(solo 1ro), J=plus, K=minProd, L=metros100, M=productividad, N=obs, O=alerta
+        const alertaT = m.alertas.find(a=>a.telar===t.numero);
+        const row = [
+          '',                                          // A
+          firstTelar ? fechaStr : '',                  // B fecha
+          t.numero,                                    // C telar
+          t.mts_iniciales,                             // D entrada
+          t.mts_finales,                               // E salida
+          t.er||'',                                    // F E/R
+          mtsVal,                                      // G total (valor calculado)
+          np||'',                                      // H min no prod
+          (idx===0&&m.mtsExtra>0)?m.mtsExtra:'',       // I mts extra
+          plusPorTelar||'',                            // J plus
+          minProd,                                     // K min prod
+          metros100,                                   // L metros al 100%
+          productividad.toFixed(4),                    // M productividad
+          (idx===0&&m.obs)?m.obs:'',                   // N observaciones
+          alertaT?`⚠️ ${alertaT.msg}`:''              // O alerta
+        ];
+        writeRows.push(row);
+        firstTelar = false;
+      });
+
+      if (writeRows.length === 0) continue;
+
+      // Escribir en Sheets
+      const range = `${leg}!A${firstEmptyRow}:O${firstEmptyRow+writeRows.length-1}`;
+      const writeRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ range, majorDimension: 'ROWS', values: writeRows })
+        }
+      );
+      if (!writeRes.ok) {
+        const e = await writeRes.json();
+        throw new Error(`Error al escribir hoja "${leg}": ${e.error?.message||writeRes.status}`);
+      }
+
+      totalParadas += m.paradas.length;
+      legajosCargados.push({ leg, mts: totalMts, paradas: m.paradas.length, alertas: m.alertas.length });
+    }
+
+    // Resultado
+    document.getElementById('sheetLink').href = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
+    document.getElementById('rDesc').textContent = `${legajosCargados.length} maquinista${legajosCargados.length!==1?'s':''} · ${totalMts.toLocaleString()} metros · ${quinceActual.nombre}`;
+    document.getElementById('rResumen').innerHTML = legajosCargados.map(l=>`
+      <div class="erow">
+        <span class="el">Legajo ${l.leg}</span>
+        <span class="ev">${l.mts.toLocaleString()} mts · ${l.paradas} paradas${l.alertas>0?` · <span style="color:var(--warn)">⚠️ ${l.alertas} alerta${l.alertas>1?'s':''}</span>`:''}</span>
+      </div>`).join('') + `<div class="erow" style="margin-top:8px;"><span class="el" style="font-weight:700;">TOTAL</span><span class="ev" style="color:var(--accent)">${totalMts.toLocaleString()} mts</span></div>`;
+
+    document.getElementById('paso3').classList.add('hidden');
+    document.getElementById('paso4').classList.remove('hidden');
+    setStep(4); hideStatus();
+
+  } catch(err) {
+    console.error(err);
+    showSB('error','❌ ' + err.message);
+    document.getElementById('btnPublicar').disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// PASO 3 PREVIEW
+// ═══════════════════════════════════════════════════
+function irP3() {
+  syncDom();
+  const q = quinceActual;
+  document.getElementById('p3preview').innerHTML = `
+    <div class="erow"><span class="el">Quincena</span><span class="ev">${q?.nombre||'Sin seleccionar'}</span></div>
+    <div class="erow"><span class="el">Spreadsheet ID</span><span class="ev" style="font-size:11px">${q?.sheetId?.substring(0,20)||'—'}...</span></div>
+    <div class="erow"><span class="el">Maquinistas</span><span class="ev">${maquinistas.length}</span></div>
+    <div class="erow"><span class="el">Total alertas</span><span class="ev" style="color:${maquinistas.reduce((s,m)=>s+m.alertas.length,0)>0?'var(--warn)':'var(--accent2)'}">${maquinistas.reduce((s,m)=>s+m.alertas.length,0)}</span></div>
+    ${!q?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No hay quincena seleccionada. Volvé al paso 1 y elegí una.</div>':''}
+    ${!gToken?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No estás conectado a Google. Volvé al paso 1.</div>':''}
+  `;
+  document.getElementById('btnPublicar').disabled = !gToken || !q;
+  document.getElementById('paso2').classList.add('hidden');
+  document.getElementById('paso3').classList.remove('hidden');
+  setStep(3);
+}
+
+// ═══════════════════════════════════════════════════
+// NAVEGACIÓN
+// ═══════════════════════════════════════════════════
+function back1(){ document.getElementById('paso2').classList.add('hidden'); document.getElementById('paso1').classList.remove('hidden'); setStep(1); }
+function back2(){ document.getElementById('paso3').classList.add('hidden'); document.getElementById('paso2').classList.remove('hidden'); setStep(2); }
+function nuevoDia(){
+  archivos=[]; maquinistas=[];
+  document.getElementById('flist').innerHTML='';
+  document.getElementById('progWrap').classList.add('hidden');
+  document.getElementById('progBar').style.width='0%';
+  document.getElementById('btnLeer').disabled=true;
+  document.getElementById('maqBlocks').innerHTML='';
+  document.getElementById('fInput').value='';
+  document.getElementById('paso4').classList.add('hidden');
+  document.getElementById('paso1').classList.remove('hidden');
+  setStep(1); hideStatus();
+}
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function fv(f){ if(!f)return''; const p=f.split('/'); if(p.length===3)return`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; return f; }
+function tl(t){ return{manana:'⏱ 540 min · Mañana 06:00–15:00',tarde:'⏱ 540 min · Tarde 15:00–23:30',extra:'⚡ 720 min · 12 horas extra'}[t]||''; }
+function showSB(type,msg){ const b=document.getElementById('statusBar'); b.className=`sbar ${type}`; b.classList.remove('hidden'); b.innerHTML=type==='loading'?`<div class="spin"></div><span>${msg}</span>`:`<span>${msg}</span>`; }
+function hideStatus(){ document.getElementById('statusBar').classList.add('hidden'); }
+function setStep(n){ for(let i=1;i<=4;i++){ const el=document.getElementById(`s${i}`); el.className='step '+(i<n?'done':i===n?'active':''); el.querySelector('.step-n').textContent=i<n?'✓':i; } }
+
+// INIT
+checkTokenFromURL();
+renderQuincenas();
+</script>
+</body>
+</html>
