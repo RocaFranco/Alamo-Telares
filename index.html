@@ -1014,73 +1014,68 @@ Si algún campo no es legible usá null. NO inventes datos.`;
 }
 
 function agruparPorLegajo(resultados) {
-  // Clave = legajo + fecha → cada planilla diaria es un registro independiente.
-  // El mismo maquinista puede aparecer múltiples veces si subís varios días juntos.
-  // Dentro de una misma planilla (mismo legajo+fecha) sí se consolidan páginas
-  // (por ejemplo si la planilla tiene 2 páginas por escáner).
+  // Regla: cada resultado (cada página del PDF) = un bloque independiente.
+  // El orden de resultados[] ya es el orden del PDF — lo respetamos siempre.
+  // Solo consolidamos páginas si son del MISMO legajo Y MISMA FECHA y la misma
+  // planilla se escaneó en 2 hojas (caso raro). Si la fecha es distinta o null
+  // diferente → bloque separado.
 
-  const mapa = {}; // clave: "LEG|FECHA"
+  // Primero: asignar índice de posición original a cada resultado
+  const bloques = []; // array final, en orden del PDF
 
-  resultados.forEach(r => {
+  resultados.forEach((r, idxOriginal) => {
     if (!r.datos) return;
-    const d = r.datos;
-    const leg  = String(d.legajo_maquinista||'').trim();
+    const d   = r.datos;
+    const leg = String(d.legajo_maquinista||'').trim();
     if (!leg) return;
 
     const fecha = String(d.fecha||'').trim();
 
-    // Clave: legajo + fecha si hay fecha, legajo + nº de página si no hay fecha
-    // Esto garantiza que cada página del PDF sea un bloque independiente
-    // aunque la IA no haya podido leer la fecha
-    const paginaId = r.pagina || r.nombre || Math.random();
-    const clave = fecha ? `${leg}|${fecha}` : `${leg}|pag_${paginaId}`;
+    // ¿Existe ya un bloque con el mismo legajo+fecha (consolidación de 2 hojas del mismo día)?
+    // Solo consolidar si AMBOS tienen fecha Y es la misma. Si alguno no tiene fecha → bloque nuevo.
+    const existente = fecha
+      ? bloques.find(b => b.legajo === leg && b.fecha === fecha)
+      : null;
 
-    if (!mapa[clave]) {
-      mapa[clave] = {
+    if (existente) {
+      // Consolidar: mismo maquinista, mismo día, 2ª hoja del escaneo
+      existente._paginas.push({
+        telares: (d.telares||[]).filter(t => { const n=parseInt(t.numero); return !isNaN(n)&&n>=1&&n<=16; }),
+        paradas: (d.paradas||[]).filter(p => p.telar&&p.desde&&p.hasta),
+      });
+      if (d.turno === 'extra') existente.turno = 'extra';
+      if (d.observaciones && !existente.obs.includes(d.observaciones))
+        existente.obs = [existente.obs, d.observaciones].filter(Boolean).join(' / ');
+    } else {
+      // Nuevo bloque
+      bloques.push({
         legajo: leg,
         fecha:  fecha,
         turno:  d.turno || 'manana',
         telares: [],
         paradas: [],
         mtsExtra: 0,
-        obs: '',
+        obs: d.observaciones||'',
         alertas: [],
         sinAuxiliar: false,
-        _paginas: [],
-        _paginaOrigen: r.pagina || 9999  // para ordenar por orden del PDF
-      };
+        _paginaOrigen: r.pagina || (idxOriginal + 1),
+        _paginas: [{
+          telares: (d.telares||[]).filter(t => { const n=parseInt(t.numero); return !isNaN(n)&&n>=1&&n<=16; }),
+          paradas: (d.paradas||[]).filter(p => p.telar&&p.desde&&p.hasta),
+        }]
+      });
     }
-
-    const m = mapa[clave];
-
-    // Actualizar turno (extra tiene prioridad)
-    if (d.turno === 'extra') m.turno = 'extra';
-
-    // Observaciones
-    if (d.observaciones && !m.obs.includes(d.observaciones))
-      m.obs = [m.obs, d.observaciones].filter(Boolean).join(' / ');
-
-    // Guardar página para procesar después
-    m._paginas.push({
-      telares: (d.telares||[]).filter(t => {
-        const n = parseInt(t.numero);
-        return !isNaN(n) && n >= 1 && n <= 16;
-      }),
-      paradas: (d.paradas||[]).filter(p => p.telar && p.desde && p.hasta),
-    });
   });
 
-  // ── RESOLVER TELARES Y PARADAS POR CADA ENTRADA ─────────────────────────
-  Object.values(mapa).forEach(m => {
+  // ── RESOLVER TELARES Y PARADAS POR BLOQUE ───────────────────────────────
+  bloques.forEach(m => {
     const paginas = m._paginas;
 
     if (paginas.length === 1) {
-      // Caso normal: una sola página
       m.telares = paginas[0].telares;
       m.paradas = paginas[0].paradas;
     } else {
-      // Múltiples páginas del mismo legajo+fecha (ej: escaneo en 2 hojas)
-      // Deduplicar telares: mismo número → quedarse con el de más metros
+      // Múltiples hojas del mismo día → deduplicar telares por número
       const porNumero = {};
       paginas.forEach(pag => {
         pag.telares.forEach(t => {
@@ -1089,21 +1084,20 @@ function agruparPorLegajo(resultados) {
           if (!porNumero[n]) {
             porNumero[n] = t;
           } else {
-            const mtsExist = Math.max((parseFloat(porNumero[n].mts_finales)||0) - (parseFloat(porNumero[n].mts_iniciales)||0), 0);
-            const mtsNew   = Math.max((parseFloat(t.mts_finales)||0) - (parseFloat(t.mts_iniciales)||0), 0);
+            const mtsExist = Math.max((parseFloat(porNumero[n].mts_finales)||0)-(parseFloat(porNumero[n].mts_iniciales)||0), 0);
+            const mtsNew   = Math.max((parseFloat(t.mts_finales)||0)-(parseFloat(t.mts_iniciales)||0), 0);
             if (mtsNew > mtsExist) porNumero[n] = t;
           }
         });
       });
       m.telares = Object.values(porNumero);
 
-      // Paradas: acumular de todas las páginas, deduplicar exactas
+      // Paradas: acumular sin duplicar exactas
       const todasParadas = [];
       paginas.forEach(pag => {
         pag.paradas.forEach(p => {
           const yaExiste = todasParadas.some(x =>
-            parseInt(x.telar) === parseInt(p.telar) &&
-            x.desde === p.desde && x.hasta === p.hasta
+            parseInt(x.telar)===parseInt(p.telar) && x.desde===p.desde && x.hasta===p.hasta
           );
           if (!yaExiste) todasParadas.push(p);
         });
@@ -1111,7 +1105,7 @@ function agruparPorLegajo(resultados) {
       m.paradas = todasParadas;
     }
 
-    delete m._paginas; // limpiar
+    delete m._paginas;
 
     // Detectar turno extra por paradas nocturnas
     if (m.turno !== 'extra') {
@@ -1122,26 +1116,26 @@ function agruparPorLegajo(resultados) {
       if (tieneNocturna) m.turno = 'extra';
     }
 
-    // Separar asignados (máx 4) vs extra
-    m.telares.sort((a,b) => (parseInt(a.numero)||0) - (parseInt(b.numero)||0));
+    // Separar asignados (máx 4) vs extra y ordenar
+    m.telares.sort((a,b) => (parseInt(a.numero)||0)-(parseInt(b.numero)||0));
     const asig  = m.telares.filter(t => !t.es_extra);
     const extra = m.telares.filter(t =>  t.es_extra);
     if (asig.length > 4) {
-      const asig4  = asig.slice(0,4).map(t => ({...t, es_extra:false}));
-      const resto  = asig.slice(4).map(t => ({...t, es_extra:true}));
-      m.telares = [...asig4, ...resto, ...extra];
+      const asig4 = asig.slice(0,4).map(t=>({...t,es_extra:false}));
+      const resto  = asig.slice(4).map(t=>({...t,es_extra:true}));
+      m.telares = [...asig4,...resto,...extra];
     }
-    m.telares.sort((a,b) => (parseInt(a.numero)||0) - (parseInt(b.numero)||0));
+    m.telares.sort((a,b) => (parseInt(a.numero)||0)-(parseInt(b.numero)||0));
 
     // Metros extra
-    m.mtsExtra = m.telares.filter(t => t.es_extra).reduce((s,t) => {
-      const v = (parseFloat(t.mts_finales)||0) - (parseFloat(t.mts_iniciales)||0);
-      return s + Math.max(v, 0);
-    }, 0);
+    m.mtsExtra = m.telares.filter(t=>t.es_extra).reduce((s,t)=>{
+      const v=(parseFloat(t.mts_finales)||0)-(parseFloat(t.mts_iniciales)||0);
+      return s+Math.max(v,0);
+    },0);
   });
 
-  // Ordenar por número de página del PDF (orden original del documento)
-  return Object.values(mapa).sort((a,b) => a._paginaOrigen - b._paginaOrigen);
+  // El array ya está en orden del PDF — no reordenar
+  return bloques;
 }
 
 
@@ -1361,7 +1355,7 @@ async function publicarSheets(){
         const np=((!isNaN(telarReal)&&mnp[telarReal])||0) + (m.sinAuxiliar ? 40 : 0);
         const hrsT=m.turno==='extra'?12:m.turno==='tarde'?8.5:9;
         // Columna J (mtsExtra÷4) solo en la PRIMERA fila del maquinista
-        const mtsExtraCol=firstTelar&&m.mtsExtra>0?Math.round(m.mtsExtra/4):'';
+        const mtsExtraCol=m.mtsExtra>0?Math.round(m.mtsExtra/4):'';
         writeRows.push([
           firstTelar?fechaStr:'',  // B - Fecha (solo primera fila)
           hrsT,                    // C - Horas trabajadas
