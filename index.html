@@ -944,7 +944,12 @@ REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
   * Mañana (6 a 15 aprox.) → "manana" | Tarde (15 a 23:30 aprox.) → "tarde"
   * 12 horas de diferencia entre inicio y fin → SIEMPRE "extra"
 - "Telares: X/Y/Z/W" → los 4 telares asignados. USALO para validar los números de la tabla.
-- "Fecha": leé con cuidado cada dígito. Si falta el año → 2026.
+- "Fecha": formato argentino DD/MM/AAAA. Leé con cuidado cada dígito.
+  * Ejemplos válidos: "17/03/2026", "5/3/2026", "05/03/26" → siempre devolvé "17/03/2026"
+  * Si ves "17/3" → es 17/03/2026 (año actual = 2026)
+  * Si ves "17.03" o "17-03" → igual, convertir a 17/03/2026
+  * Si el año tiene 2 dígitos (ej: "26") → agregar "20" adelante → 2026
+  * Si el campo está vacío o ilegible → null (NO inventes una fecha)
 - "N° Legajo Auxiliar" → puede estar vacío → null.
 
 === CÓMO LEER LA TABLA DE PRODUCCIÓN ===
@@ -965,7 +970,13 @@ Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Ve
 Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
 - Horarios HH:MM (24hs). Motivo: P1 a P18.
 - REGLA 1 aplica aquí también para el número de telar.
-- Incluí TODAS las filas con datos escritos.
+- CRÍTICO — ANTI-INVENTADO: SOLO copiá filas que tengan datos VISIBLES Y ESCRITOS.
+  * Si una fila está vacía o en blanco → NO la incluyas.
+  * Si no hay ninguna parada escrita → devolvé "paradas": []
+  * NO completes ni inferís paradas que no estén explícitamente escritas.
+  * Una parada válida tiene: número de telar + hora desde + hora hasta + motivo P1-P18.
+  * Si falta cualquiera de esos 4 datos → no incluir esa fila.
+- Incluí SOLO las filas que tengan los 4 campos completos y visibles.
 
 OBSERVACIONES: copiá textualmente lo escrito.
 
@@ -1035,7 +1046,8 @@ function agruparPorLegajo(resultados) {
         obs: '',
         alertas: [],
         sinAuxiliar: false,
-        _paginas: []   // páginas acumuladas (para dedup interno)
+        _paginas: [],
+        _paginaOrigen: r.pagina || 9999  // para ordenar por orden del PDF
       };
     }
 
@@ -1128,11 +1140,8 @@ function agruparPorLegajo(resultados) {
     }, 0);
   });
 
-  // Ordenar: por legajo primero, luego por fecha
-  return Object.values(mapa).sort((a,b) => {
-    if (a.legajo !== b.legajo) return a.legajo.localeCompare(b.legajo);
-    return (a.fecha||'').localeCompare(b.fecha||'');
-  });
+  // Ordenar por número de página del PDF (orden original del documento)
+  return Object.values(mapa).sort((a,b) => a._paginaOrigen - b._paginaOrigen);
 }
 
 
