@@ -1198,13 +1198,18 @@ async function publicarSheets() {
       const minTurno = m.turno==='extra'?720:540;
       const plusPorTelar = m.mtsExtra>0?Math.ceil((m.mtsExtra/5.5)/4):0;
 
-      // Calcular minutos no productivos por telar
+      // Calcular minutos no productivos por telar (suma todas las paradas de ese telar)
       const mnp = {};
       m.paradas.forEach(p => {
-        const [dh,dm]=(p.desde||'0:0').split(':').map(Number);
-        const [hh,hm]=(p.hasta||'0:0').split(':').map(Number);
-        let d=dh*60+dm, h=hh*60+hm; if(h<d)h+=1440;
-        mnp[p.telar]=(mnp[p.telar]||0)+(h-d);
+        if (!p.telar || !p.desde || !p.hasta) return;
+        const [dh,dm] = p.desde.split(':').map(Number);
+        const [hh,hm] = p.hasta.split(':').map(Number);
+        let d = dh*60+dm, h = hh*60+hm;
+        // Si están invertidas (error de lectura), las corrijo
+        if (h < d && (d-h) < 360) { const tmp=d; d=h; h=tmp; }
+        else if (h < d) h += 1440;
+        const mins = h - d;
+        if (mins > 0) mnp[p.telar] = (mnp[p.telar]||0) + mins;
       });
 
       // Construir filas a escribir
@@ -1225,22 +1230,15 @@ async function publicarSheets() {
         const hrsT = m.turno === 'extra' ? 12 : 9;
         const alertaT = m.alertas.find(a=>a.telar===t.numero);
         const row = [
-          '',                                           // A vacía
           firstTelar ? fechaStr : '',                   // B fecha (solo primer telar)
           hrsT,                                         // C hrs trabajadas (9 o 12)
           t.numero,                                     // D telar
           t.mts_iniciales,                              // E entrada
           t.mts_finales,                                // F salida
           t.er ? String(t.er).replace('.',',') : '',   // G E/R
-          '',                                           // H total — fórmula Sheet
-          np||'',                                       // I min no productivos
-          m.mtsExtra>0?Math.round(m.mtsExtra/4):'',    // J mts extra dividido entre 4 telares (todas las filas)
-          '',                                           // K plus — fórmula Sheet
-          '',                                           // L min productivos — fórmula Sheet
-          '',                                           // M metros al 100% — fórmula Sheet
-          '',                                           // N productividad — fórmula Sheet
-          (idx===0&&m.obs)?m.obs:'',                    // O observaciones
-          alertaT?`⚠️ ${alertaT.msg}`:''               // P alerta
+          // H, K, L, M, N — NO SE TOCAN, fórmulas del Sheet
+          np||'',                                       // I min no productivos (suma de paradas de este telar)
+          m.mtsExtra>0?Math.round(m.mtsExtra/4):''     // J mts extra dividido entre 4 telares
         ];
         writeRows.push(row);
         firstTelar = false;
@@ -1250,7 +1248,7 @@ async function publicarSheets() {
       if (writeRows.length === 0) continue;
 
       // Escribir en Sheets
-      const range = `${leg}!A${firstEmptyRow}:P${firstEmptyRow+writeRows.length-1}`;
+      const range = `${leg}!B${firstEmptyRow}:J${firstEmptyRow+writeRows.length-1}`;
       const writeRes = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
         {
