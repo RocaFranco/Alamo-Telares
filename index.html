@@ -933,7 +933,7 @@ function buildBlock(m, mi) {
       <table class="tt">
         <thead><tr><th>#</th><th>FTO</th><th>Ancho</th><th>Mts Iniciales</th><th>Mts Finales</th><th>E/R</th><th></th></tr></thead>
         <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr>
-          <td class="tnum">${t.numero||(i+1)}</td>
+          <td><input type="number" value="${t.numero||(i+1)}" style="width:44px;font-size:13px;color:var(--accent);font-weight:700;text-align:center;" oninput="reval(${mi})"></td>
           <td><input type="text" value="${t.fto||''}" placeholder="FTO" style="width:72px"></td>
           <td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td>
           <td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td>
@@ -1137,8 +1137,8 @@ function recalcExtras(mi) {
   let total = 0;
   rows.forEach(tr => {
     const ins = tr.querySelectorAll('input');
-    const ini = parseFloat(ins[0]?.value)||0;
-    const fin = parseFloat(ins[1]?.value)||0;
+    const ini = parseFloat(ins[1]?.value)||0;  // ins[0] es el número de telar
+    const fin = parseFloat(ins[2]?.value)||0;
     const mts = Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
     const tdTot = tr.querySelectorAll('td')[3];
     if (tdTot) tdTot.textContent = mts.toLocaleString('es-AR');
@@ -1185,7 +1185,7 @@ function setT(mi, t) {
 function reval(mi) {
   // Leer DOM → actualizar estado → recalcular alertas
   const trows=document.querySelectorAll(`#tb-${mi} tr`);
-  maquinistas[mi].telares = Array.from(trows).map((tr,i)=>{ const ins=tr.querySelectorAll('input'); return { numero:i+1, fto:ins[0]?.value||'', ancho_trama:parseFloat(ins[1]?.value)||null, mts_iniciales:parseFloat(ins[2]?.value), mts_finales:parseFloat(ins[3]?.value), er:parseFloat(ins[4]?.value)||null, es_extra:false, _w:null }; });
+  maquinistas[mi].telares = Array.from(trows).map((tr,i)=>{ const ins=tr.querySelectorAll('input'); return { numero:parseInt(ins[0]?.value)||(i+1), fto:ins[1]?.value||'', ancho_trama:parseFloat(ins[2]?.value)||null, mts_iniciales:parseFloat(ins[3]?.value), mts_finales:parseFloat(ins[4]?.value), er:parseFloat(ins[5]?.value)||null, es_extra:false, _w:null }; });
   const prows=document.querySelectorAll(`#pl-${mi} .prow`);
   maquinistas[mi].paradas = Array.from(prows).map(pr=>({ telar:parseInt(pr.querySelector('.p-t').value)||null, desde:pr.querySelector('.p-d').value, hasta:pr.querySelector('.p-h').value, motivo:pr.querySelector('.motsel').value })).filter(p=>p.telar&&p.desde&&p.hasta);
   // Recalcular alertas solo para este bloque
@@ -1226,8 +1226,8 @@ function syncDom() {
       let totalExt = 0;
       extBody.querySelectorAll('tbody tr').forEach((tr, i) => {
         const ins = tr.querySelectorAll('input');
-        const ini = parseFloat(ins[0]?.value)||0;
-        const fin = parseFloat(ins[1]?.value)||0;
+        const ini = parseFloat(ins[1]?.value)||0;  // ins[0] es el número de telar
+        const fin = parseFloat(ins[2]?.value)||0;
         const mts = Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
         totalExt += mts;
         // Actualizar telar extra en el estado
@@ -1241,7 +1241,7 @@ function syncDom() {
     }
     m.obs     = document.getElementById(`ob-${mi}`)?.value.trim()||'';
     const trows=document.querySelectorAll(`#tb-${mi} tr`);
-    m.telares=Array.from(trows).map((tr,i)=>{ const ins=tr.querySelectorAll('input'); return { numero:i+1, fto:ins[0]?.value||'', ancho_trama:parseFloat(ins[1]?.value)||null, mts_iniciales:parseFloat(ins[2]?.value), mts_finales:parseFloat(ins[3]?.value), er:parseFloat(ins[4]?.value)||null, es_extra:false }; });
+    m.telares=Array.from(trows).map((tr,i)=>{ const ins=tr.querySelectorAll('input'); return { numero:parseInt(ins[0]?.value)||(i+1), fto:ins[1]?.value||'', ancho_trama:parseFloat(ins[2]?.value)||null, mts_iniciales:parseFloat(ins[3]?.value), mts_finales:parseFloat(ins[4]?.value), er:parseFloat(ins[5]?.value)||null, es_extra:false }; });
     const prows=document.querySelectorAll(`#pl-${mi} .prow`);
     m.paradas=Array.from(prows).map(pr=>({ telar:parseInt(pr.querySelector('.p-t').value)||null, desde:pr.querySelector('.p-d').value, hasta:pr.querySelector('.p-h').value, motivo:pr.querySelector('.motsel').value })).filter(p=>p.telar&&p.desde&&p.hasta);
   });
