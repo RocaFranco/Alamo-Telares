@@ -213,6 +213,29 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
 .dash-panel{display:none;}
 .dash-panel.active{display:block;}
 @media(max-width:600px){.dash-bar-row{grid-template-columns:60px 1fr 70px;}.dash-kpis{grid-template-columns:1fr 1fr;}.dash-body{padding:16px;}.dash-tl-row{grid-template-columns:1fr 80px;}}
+
+/* FTO color chips */
+.fto-chip{display:inline-block;padding:2px 7px;border-radius:3px;font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;text-align:center;min-width:36px;}
+.fto-40 {background:#7f3c5c;}
+.fto-47 {background:#1248ac;}
+.fto-53 {background:#7a7a7a;}
+.fto-57 {background:#356d1d;}
+.fto-60 {background:#e30504;}
+.fto-71 {background:#6e3a06;}
+.fto-82 {background:#df8708;}
+.fto-102{background:#d706d7;}
+.fto-120{background:#dcdb10;color:#333;}
+.fto-sin{background:#aaa;}
+
+/* Sin Auxiliar toggle */
+.aux-btn{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:5px;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--text2);transition:all .2s;user-select:none;width:100%;}
+.aux-btn:hover{border-color:var(--warn);color:var(--warn);}
+.aux-btn.activo{border-color:var(--danger);background:rgba(192,48,48,.07);color:var(--danger);font-weight:700;}
+.aux-btn .aux-icon{font-size:16px;flex-shrink:0;}
+.aux-btn .aux-badge{margin-left:auto;background:var(--danger);color:#fff;border-radius:3px;padding:1px 7px;font-size:10px;letter-spacing:.5px;display:none;}
+.aux-btn.activo .aux-badge{display:inline;}
+.aux-btn .aux-info{font-size:10px;color:var(--text3);margin-left:4px;}
+.aux-btn.activo .aux-info{color:rgba(192,48,48,.7);}
 </style>
 </head>
 <body>
@@ -441,6 +464,29 @@ let quinceActual = null;
 let legajosValidos = [];
 let quincenas = JSON.parse(localStorage.getItem('alamo_quincenas') || '[]');
 if (quincenas.length === 0) { quincenas.push({ nombre: '2da Quincena Febrero 2026', sheetId: DEFAULT_SHEET_ID }); guardarQuincenas(); }
+
+// Colores por FTO
+const FTO_VALIDOS = [40, 47, 53, 57, 60, 71, 82, 102, 120];
+function ftoClass(fto) {
+  const n = parseInt(fto);
+  if (FTO_VALIDOS.includes(n)) return 'fto-' + n;
+  return 'fto-sin';
+}
+function ftoLabel(fto) {
+  const n = parseInt(fto);
+  if (FTO_VALIDOS.includes(n)) return String(n);
+  if (!fto || String(fto).toUpperCase() === 'SIN FTO') return 'S/FTO';
+  return String(fto);
+}
+function actualizarFtoChip(input) {
+  const chip = input.previousElementSibling;
+  if (!chip) return;
+  const cls = ftoClass(input.value);
+  chip.className = 'fto-chip ' + cls;
+  chip.textContent = ftoLabel(input.value);
+  reval(parseInt(input.closest('[id^=body-]').id.replace('body-','')));
+}
+
 const MOTIVOS = ['P1 - Falta de Urdimbre','P2 - Falta de Trama','P3 - Falta de Aceite','P4 - Falta de Aro/Plato','P5 - Falta de Auxiliar','P6 - Falta de Cono','P7 - Falta de Herramienta','P8 - Falta de Tapas Trama','P9 - Mant. Preventivo','P10 - Capacitación','P11 - Cambio de FTO','P12 - Falla Sensor Trama','P13 - Falla Sensor Urdimbre','P14 - Falla Ultrasonido','P15 - Falla Eléctrica','P16 - Falla Mecánica','P17 - Falla de Trama','P18 - Falla de Urdimbre'];
 
 function conectarGoogle() {
@@ -802,46 +848,66 @@ async function leerPlanillaIA(tarea) {
 
 Esta es una foto o scan de una planilla de control diario de producción. Extraé TODOS los datos visibles con máxima precisión.
 ${contextoMemoria}
-=== CÓMO LEER LA PLANILLA ===
+=== REGLAS ABSOLUTAS — NO HAY EXCEPCIONES ===
 
-ENCABEZADO (parte superior):
-- "Turno: Mañana/Tarde" seguido del horario. Ejemplos:
-  * "Turno: Mañana / 6 a 3" → turno mañana normal → "manana" (540 min)
-  * "Turno: Tarde / 3 a 11:30" → turno tarde normal → "tarde" (540 min)
-  * "Turno: Tarde / 15 a 3" o "15:30 a 4:00" → 12 horas → "extra" (720 min)
-  * Si hay 12 horas de diferencia entre inicio y fin → SIEMPRE es "extra"
-- "Telares: X / Y" → números de telares asignados separados por /
-- "Fecha: DD/MM/AAAA" o "DD/M/AA" o "DD/M" → leé con cuidado cada dígito
-  * Si dice "13:03" o "13/3" en el campo fecha → es 13/03/2026 (asumí el año actual 2026)
-  * Si el campo fecha está vacío o ilegible → usá null
-- "N° Legajo Maquinista" seguido del número → SOLO puede ser uno de estos valores exactos:
+REGLA 1 — TELARES VÁLIDOS: La fábrica tiene exactamente 16 telares, numerados del 1 al 16.
+  → Cualquier número fuera de ese rango es un error de lectura. Corregilo usando el contexto.
+  → PROBLEMA CONOCIDO: las celdas de N° Telar son angostas. Si el telar es de 2 dígitos (10 al 16),
+    el segundo dígito puede quedar cortado fuera del recuadro y solo se ve el primer dígito ("1").
+    Cómo resolverlo:
+    * PRIMERO mirá el campo "Telares: X/Y/Z/W" del encabezado — esos son los 4 telares asignados.
+      Ejemplo: si dice "Telares: 11/12/13/14", las 4 filas de la tabla corresponden a 11, 12, 13, 14.
+    * Si el encabezado no es claro, usá la secuencia: los telares van en orden correlativo.
+      Ejemplo: si ves 9, 10, 1, 1 → los dos últimos son 11 y 12 (no 1 y 1).
+    * En la sección de paradas también aplica: si ves telar "1" pero los asignados son 11-14 → es 11.
+
+REGLA 2 — FORMATOS (FTO) VÁLIDOS: Los únicos formatos que existen son estos números: 40, 47, 53, 57, 60, 71, 82, 102, 120
+  → Son SOLO números enteros. NO existen formatos con letras ("lo2", "b3", "L02", etc. son errores).
+  → Si ves algo que parece letras, interpretalo como el número más cercano visualmente:
+    "lo2" o "L02" → 102 | "b0" o "G0" → 60 | "s7" → 57 | "4o" → 40 | "4?" → 47
+  → Si no podés determinarlo con certeza → devolvé el número como string "SIN FTO".
+  → NUNCA devuelvas un valor que no sea uno de esos 9 números o "SIN FTO".
+
+REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
   ${legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441'}
-  * IMPORTANTE: Si leés un número que NO está en esa lista, es un error de lectura.
-  * En ese caso buscá el número de esa lista que más se parezca visualmente al que leíste.
-  * NUNCA devuelvas un legajo que no esté en esa lista.
-- "N° Legajo Auxiliar" → puede estar vacío
+  → Si leés un número que NO está en esa lista, buscá el más parecido visualmente.
+  → NUNCA devuelvas un legajo que no esté en esa lista.
 
-TABLA DE PRODUCCIÓN (columnas de izquierda a derecha):
-| N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad |
-- Mts Iniciales y Mts Finales: CRÍTICO — son contadores entre 0 y 65535.
-  * Leé CADA dígito con cuidado. Ejemplos válidos: 4085, 6706, 38194, 40808, 21333, 23864
-  * Si el número tiene menos de 3 dígitos o más de 5, muy probablemente es error de lectura
-- E/R: velocidad decimal como 5.5, 5.8, 5.9, 6.0
-- Los primeros 4 telares son los "asignados" (es_extra: false). Si hay más → es_extra: true.
-  * Los telares asignados están listados en el campo "Telares: X/Y/Z/W" del encabezado.
+=== CÓMO LEER EL ENCABEZADO ===
 
-SECCIÓN TIEMPO PERDIDO (parte inferior izquierda):
+- "Turno" con horario:
+  * Mañana (6 a 15 aprox.) → "manana" | Tarde (15 a 23:30 aprox.) → "tarde"
+  * 12 horas de diferencia entre inicio y fin → SIEMPRE "extra"
+- "Telares: X/Y/Z/W" → los 4 telares asignados. USALO para validar los números de la tabla.
+- "Fecha": leé con cuidado cada dígito. Si falta el año → 2026.
+- "N° Legajo Auxiliar" → puede estar vacío → null.
+
+=== CÓMO LEER LA TABLA DE PRODUCCIÓN ===
+
+Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
+
+- N° Telar: número del 1 al 16. Aplicar REGLA 1 si hay dudas con telares de 2 dígitos.
+- FTO: REGLA 2 — solo los 9 números válidos o "SIN FTO". Nunca letras.
+- Ancho Trama: número pequeño, usualmente 5.
+- Mts Iniciales y Mts Finales: contadores entre 0 y 65535.
+  * Ejemplos válidos: 4085, 6706, 38194, 40808, 21333, 23864
+  * Menos de 3 dígitos o más de 5 → error de lectura probable, revisá.
+- E/R: decimal típico entre 5.5 y 6.0
+- Los 4 telares del encabezado → es_extra: false. 5° telar en adelante → es_extra: true.
+
+=== CÓMO LEER TIEMPO PERDIDO ===
+
 Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
-- Horarios: formato HH:MM (24hs). Ej: "18:30", "23:50", "02:50", "04:00"
-- Motivo: código P1 a P18 — leé exactamente lo que dice
-- Incluí TODAS las filas con datos, no solo las primeras
+- Horarios HH:MM (24hs). Motivo: P1 a P18.
+- REGLA 1 aplica aquí también para el número de telar.
+- Incluí TODAS las filas con datos escritos.
 
-OBSERVACIONES: Copiá textualmente todo lo que esté escrito.
+OBSERVACIONES: copiá textualmente lo escrito.
 
 === FORMATO DE RESPUESTA ===
-Devolvé ÚNICAMENTE JSON válido, sin texto antes ni después, sin bloques de código:
+JSON válido únicamente, sin texto ni bloques de código:
 
-{"legajo_maquinista":"405","legajo_auxiliar":null,"fecha":"12/03/2026","turno":"tarde","telares":[{"numero":5,"fto":"lo2","ancho_trama":5,"mts_iniciales":4085,"mts_finales":6706,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":6,"fto":"lo2","ancho_trama":5,"mts_iniciales":38194,"mts_finales":40808,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":7,"fto":"lo2","ancho_trama":5,"mts_iniciales":28941,"mts_finales":29814,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":8,"fto":"lo2","ancho_trama":5,"mts_iniciales":21333,"mts_finales":23864,"er":5.8,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":7,"desde":"18:30","hasta":"19:55","motivo":"P18"}],"observaciones":""}
+{"legajo_maquinista":"405","legajo_auxiliar":null,"fecha":"12/03/2026","turno":"tarde","telares":[{"numero":11,"fto":60,"ancho_trama":5,"mts_iniciales":4085,"mts_finales":6706,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":12,"fto":60,"ancho_trama":5,"mts_iniciales":38194,"mts_finales":40808,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":13,"fto":60,"ancho_trama":5,"mts_iniciales":28941,"mts_finales":29814,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":14,"fto":60,"ancho_trama":5,"mts_iniciales":21333,"mts_finales":23864,"er":5.8,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":13,"desde":"18:30","hasta":"19:55","motivo":"P18"}],"observaciones":""}
 
 Si algún campo no es legible usá null. NO inventes datos.`;
 
@@ -875,7 +941,7 @@ function agruparPorLegajo(resultados) {
   const mapa={};
   resultados.forEach(r=>{
     if(!r.datos)return; const d=r.datos; const leg=String(d.legajo_maquinista||'').trim(); if(!leg)return;
-    if(!mapa[leg])mapa[leg]={legajo:leg,fecha:d.fecha||'',turno:d.turno||'manana',telares:[],paradas:[],mtsExtra:0,obs:'',alertas:[]};
+    if(!mapa[leg])mapa[leg]={legajo:leg,fecha:d.fecha||'',turno:d.turno||'manana',telares:[],paradas:[],mtsExtra:0,obs:'',alertas:[],sinAuxiliar:false};
     (d.telares||[]).forEach(t=>{if(!mapa[leg].telares.find(x=>x.numero===t.numero))mapa[leg].telares.push(t);});
     (d.paradas||[]).forEach(p=>mapa[leg].paradas.push(p));
     if(d.observaciones&&!mapa[leg].obs.includes(d.observaciones))mapa[leg].obs=[mapa[leg].obs,d.observaciones].filter(Boolean).join(' / ');
@@ -887,7 +953,7 @@ function agruparPorLegajo(resultados) {
 
 function calcAlertas() {
   maquinistas.forEach((m,mi)=>{
-    m.alertas=[];const minT=m.turno==='extra'?720:540;
+    m.alertas=[];const minT=m.turno==='extra'?720:m.turno==='tarde'?510:540;
     m.telares.filter(t=>!t.es_extra).forEach(t=>{
       const ini=parseFloat(t.mts_iniciales),fin=parseFloat(t.mts_finales),er=parseFloat(t.er);
       if(isNaN(ini)||isNaN(fin)||!er)return;
@@ -916,9 +982,20 @@ function buildBlock(m,mi){
         <div class="fg"><label>N° Legajo</label><input type="text" id="l-${mi}" value="${m.legajo}" placeholder="408"></div>
         <div class="fg full"><label>Turno</label><div class="trow"><div class="tb ${m.turno==='manana'?'active':''}" onclick="setT(${mi},'manana')">🌅 Mañana</div><div class="tb ${m.turno==='tarde'?'active':''}" onclick="setT(${mi},'tarde')">🌆 Tarde</div><div class="tb ${m.turno==='extra'?'active':''}" onclick="setT(${mi},'extra')">⚡ 12 hs extra</div></div><div class="ichip" id="ti-${mi}">${tl(m.turno)}</div></div>
       </div>
+      <!-- SIN AUXILIAR -->
+      <div style="margin-bottom:12px;">
+        <div class="aux-btn ${m.sinAuxiliar?'activo':''}" id="aux-${mi}" onclick="toggleAuxiliar(${mi})">
+          <span class="aux-icon">${m.sinAuxiliar?'🚫':'👤'}</span>
+          <div>
+            <div>Falta el auxiliar</div>
+            <div class="aux-info">${m.sinAuxiliar?'+40 min de parada por telar al publicar':'Tocá si el auxiliar no vino hoy'}</div>
+          </div>
+          <span class="aux-badge">+40 MIN/TELAR</span>
+        </div>
+      </div>
       <div class="sdiv"><span>telares asignados</span></div>
       <table class="tt"><thead><tr><th>#</th><th>FTO</th><th>Ancho</th><th>Mts Iniciales</th><th>Mts Finales</th><th>E/R</th><th></th></tr></thead>
-      <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr><td><input type="number" value="${t.numero||(i+1)}" style="width:44px;font-size:13px;color:var(--accent);font-weight:700;text-align:center;" oninput="reval(${mi})"></td><td><input type="text" value="${t.fto||''}" placeholder="FTO" style="width:72px"></td><td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td><td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.mts_finales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.er||''}" placeholder="5.5" step="0.1" style="width:60px"></td><td style="width:20px;font-size:13px;">${t._w==='err'?'🔴':t._w==='warn'?'🟡':''}</td></tr>`).join('')}</tbody></table>
+      <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr><td><input type="number" value="${t.numero||(i+1)}" style="width:58px;font-size:13px;color:var(--accent);font-weight:700;text-align:center;" oninput="reval(${mi})"></td><td><div style="display:flex;flex-direction:column;gap:3px;align-items:center;"><span class="fto-chip ${ftoClass(t.fto)}">${ftoLabel(t.fto)}</span><input type="text" value="${t.fto||''}" placeholder="FTO" style="width:58px;font-size:11px;padding:3px 4px;text-align:center;" oninput="actualizarFtoChip(this)"></div></td><td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td><td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.mts_finales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.er||''}" placeholder="5.5" step="0.1" style="width:60px"></td><td style="width:20px;font-size:13px;">${t._w==='err'?'🔴':t._w==='warn'?'🟡':''}</td></tr>`).join('')}</tbody></table>
       <div class="sdiv"><span>paradas</span></div>
       <div class="plist" id="pl-${mi}">${m.paradas.map(p=>prow(p,mi)).join('')}</div>
       <button class="btn-add" onclick="addP(${mi})">+ Agregar parada</button>
@@ -967,6 +1044,23 @@ function recalcExtras(mi){const body=document.getElementById(`extbody-${mi}`);if
 function addTelarExtra(mi){maquinistas[mi].telares.push({numero:'?',mts_iniciales:'',mts_finales:'',es_extra:true});const body=document.getElementById(`extbody-${mi}`);if(body)body.innerHTML=buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra),mi);}
 function quitarTelarExtra(mi,idx){const extras=maquinistas[mi].telares.filter(t=>t.es_extra);const telarAQuitar=extras[idx];maquinistas[mi].telares=maquinistas[mi].telares.filter(t=>t!==telarAQuitar);const body=document.getElementById(`extbody-${mi}`);if(body)body.innerHTML=buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra),mi);recalcExtras(mi);}
 function addP(mi){const c=document.createElement('div');c.innerHTML=prow({},mi);document.getElementById(`pl-${mi}`).appendChild(c.firstElementChild);}
+
+function toggleAuxiliar(mi) {
+  maquinistas[mi].sinAuxiliar = !maquinistas[mi].sinAuxiliar;
+  // Redibujar solo el botón sin rebuildar todo el bloque
+  const btn = document.getElementById(`aux-${mi}`);
+  if (!btn) return;
+  const activo = maquinistas[mi].sinAuxiliar;
+  btn.className = 'aux-btn' + (activo ? ' activo' : '');
+  btn.innerHTML = `
+    <span class="aux-icon">${activo ? '🚫' : '👤'}</span>
+    <div>
+      <div>Falta el auxiliar</div>
+      <div class="aux-info">${activo ? '+40 min de parada por telar al publicar' : 'Tocá si el auxiliar no vino hoy'}</div>
+    </div>
+    <span class="aux-badge">+40 MIN/TELAR</span>`;
+}
+
 function toggleBlock(mi){const b=document.getElementById(`body-${mi}`),t=document.getElementById(`tog-${mi}`);const h=b.style.display==='none';b.style.display=h?'':'none';t.textContent=h?'▼':'▶';}
 function setT(mi,t){maquinistas[mi].turno=t;document.getElementById(`mb-${mi}`).replaceWith(buildBlock(maquinistas[mi],mi));}
 function reval(mi){
@@ -974,10 +1068,10 @@ function reval(mi){
   maquinistas[mi].telares=Array.from(trows).map((tr,i)=>{const ins=tr.querySelectorAll('input');return{numero:parseInt(ins[0]?.value)||(i+1),fto:ins[1]?.value||'',ancho_trama:parseFloat(ins[2]?.value)||null,mts_iniciales:parseFloat(ins[3]?.value),mts_finales:parseFloat(ins[4]?.value),er:parseFloat(ins[5]?.value)||null,es_extra:false,_w:null};});
   const prows=document.querySelectorAll(`#pl-${mi} .prow`);
   maquinistas[mi].paradas=Array.from(prows).map(pr=>({telar:parseInt(pr.querySelector('.p-t').value)||null,desde:pr.querySelector('.p-d').value,hasta:pr.querySelector('.p-h').value,motivo:pr.querySelector('.motsel').value})).filter(p=>p.telar&&p.desde&&p.hasta);
-  maquinistas[mi].alertas=[];const minT=maquinistas[mi].turno==='extra'?720:540;
+  maquinistas[mi].alertas=[];const minT=maquinistas[mi].turno==='extra'?720:maquinistas[mi].turno==='tarde'?510:540;
   maquinistas[mi].telares.forEach(t=>{if(!t.er)return;const ini=t.mts_iniciales,fin=t.mts_finales;if(isNaN(ini)||isNaN(fin))return;const mts=(ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini;if(mts<=0)return;const minP=maquinistas[mi].paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d)h+=1440;return s+(h-d);},0);const teo=t.er*(minT-minP);const cells=document.querySelectorAll(`#tb-${mi} tr`)[maquinistas[mi].telares.indexOf(t)]?.querySelectorAll('input');if(cells){cells[3].classList.remove('warn','err');cells[4].classList.remove('warn','err');}if(mts<teo*0.15&&minP===0){t._w='err';maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`});if(cells){cells[3].classList.add('err');cells[4].classList.add('err');}}else if(mts<teo*0.35&&minP<30){t._w='warn';maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`});if(cells){cells[3].classList.add('warn');cells[4].classList.add('warn');}}});
 }
-function addMaqManual(){const leg=prompt('N° de Legajo:');if(!leg)return;maquinistas.push({legajo:leg,fecha:'',turno:'manana',telares:[{},{},{},{}],paradas:[],mtsExtra:0,obs:'',alertas:[]});const mi=maquinistas.length-1;document.getElementById('maqBlocks').appendChild(buildBlock(maquinistas[mi],mi));}
+function addMaqManual(){const leg=prompt('N° de Legajo:');if(!leg)return;maquinistas.push({legajo:leg,fecha:'',turno:'manana',telares:[{},{},{},{}],paradas:[],mtsExtra:0,obs:'',alertas:[],sinAuxiliar:false});const mi=maquinistas.length-1;document.getElementById('maqBlocks').appendChild(buildBlock(maquinistas[mi],mi));}
 
 function syncDom(){
   maquinistas.forEach((m,mi)=>{
@@ -1048,8 +1142,8 @@ async function publicarSheets(){
         mtsMaquinista+=mtsVal;
         // parseInt para asegurar match con las claves de mnp
         const telarReal=parseInt(t.numero);
-        const np=(!isNaN(telarReal)&&mnp[telarReal])||0;
-        const hrsT=m.turno==='extra'?12:9;
+        const np=((!isNaN(telarReal)&&mnp[telarReal])||0) + (m.sinAuxiliar ? 40 : 0);
+        const hrsT=m.turno==='extra'?12:m.turno==='tarde'?8.5:9;
         // Columna J (mtsExtra÷4) solo en la PRIMERA fila del maquinista
         const mtsExtraCol=firstTelar&&m.mtsExtra>0?Math.round(m.mtsExtra/4):'';
         writeRows.push([
@@ -1138,7 +1232,7 @@ function back2(){document.getElementById('paso3').classList.add('hidden');docume
 function nuevoDia(){archivos=[];maquinistas=[];document.getElementById('flist').innerHTML='';document.getElementById('progWrap').classList.add('hidden');document.getElementById('progBar').style.width='0%';document.getElementById('btnLeer').disabled=true;document.getElementById('maqBlocks').innerHTML='';document.getElementById('fInput').value='';document.getElementById('paso4').classList.add('hidden');document.getElementById('paso1').classList.remove('hidden');setStep(1);hideStatus();}
 
 function fv(f){if(!f)return'';const p=f.split('/');if(p.length===3)return`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;return f;}
-function tl(t){return{manana:'⏱ 540 min · Mañana 06:00–15:00',tarde:'⏱ 540 min · Tarde 15:00–23:30',extra:'⚡ 720 min · 12 horas extra'}[t]||'';}
+function tl(t){return{manana:'⏱ 540 min · Mañana 06:00–15:00',tarde:'⏱ 510 min · Tarde 14:30–23:00 (8.5 hs prod.)',extra:'⚡ 720 min · 12 horas extra'}[t]||'';}
 function showSB(type,msg){const b=document.getElementById('statusBar');b.className=`sbar ${type}`;b.classList.remove('hidden');b.innerHTML=type==='loading'?`<div class="spin"></div><span>${msg}</span>`:`<span>${msg}</span>`;}
 function hideStatus(){document.getElementById('statusBar').classList.add('hidden');}
 function setStep(n){for(let i=1;i<=4;i++){const el=document.getElementById(`s${i}`);el.className='step '+(i<n?'done':i===n?'active':'');el.querySelector('.step-n').textContent=i<n?'✓':i;}}
