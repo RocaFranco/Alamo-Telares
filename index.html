@@ -1175,7 +1175,7 @@ async function publicarSheets() {
 
       // Leer cuántas filas ya hay en la hoja
       const readRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(leg + '!C:C')}`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(leg + '!D:D')}`,
         { headers: { Authorization: `Bearer ${gToken}` } }
       );
       if (!readRes.ok) {
@@ -1220,25 +1220,27 @@ async function publicarSheets() {
         const np = mnp[t.numero]||0;
         const f = filaActual; // fila actual para fórmulas
 
-        // Col A vacía, B=fecha (solo primer telar), C=telar, D=ini, E=fin, F=er,
-        // G=total fórmula, H=minNP, I=mtsExtra(solo 1ro), J=plus fórmula, K=minProd fórmula, L=metros100 fórmula, M=productividad fórmula, N=obs, O=alerta
+        // Nuevo orden: B=Fecha, C=HrsTrabajadas, D=Telar, E=Entrada, F=Salida, G=E/R
+        // H=Total(fórmula), I=MinNoProd, J=MtsExtra, K=Plus, L=MinProd(fórmula), M=Metros100(fórmula), N=Productividad(fórmula)
+        const hrsT = m.turno === 'extra' ? 12 : 9;
         const alertaT = m.alertas.find(a=>a.telar===t.numero);
         const row = [
-          '',                                          // A
-          firstTelar ? fechaStr : '',                  // B fecha
-          t.numero,                                    // C telar
-          t.mts_iniciales,                             // D entrada
-          t.mts_finales,                               // E salida
-          t.er ? String(t.er).replace('.',',') : '', // F E/R
-          `=IF(AND(D${f}>63000,E${f}<3000),(65535-D${f})+E${f},E${f}-D${f})`, // G total fórmula
-          np||'',                                      // H min no prod
-          (idx===0&&m.mtsExtra>0)?m.mtsExtra:'',       // I mts extra
-          idx===0&&m.mtsExtra>0?`=ROUNDUP((I${f}/5.5)/4,0)`:'', // J plus fórmula
-          `=${minTurno}-H${f}-J${f}`,                 // K min prod fórmula
-          t.er?`=F${f}*9*60`:'',                      // L metros al 100% fórmula
-          `=IFERROR((G${f}/L${f})*(540/K${f}),0)`,    // M productividad fórmula
-          (idx===0&&m.obs)?m.obs:'',                   // N observaciones
-          alertaT?`⚠️ ${alertaT.msg}`:''              // O alerta
+          '',                                           // A vacía
+          firstTelar ? fechaStr : '',                   // B fecha (solo primer telar)
+          hrsT,                                         // C hrs trabajadas (9 o 12)
+          t.numero,                                     // D telar
+          t.mts_iniciales,                              // E entrada
+          t.mts_finales,                                // F salida
+          t.er ? String(t.er).replace('.',',') : '',   // G E/R
+          '',                                           // H total — fórmula Sheet
+          np||'',                                       // I min no productivos
+          m.mtsExtra>0?Math.round(m.mtsExtra/4):'',    // J mts extra dividido entre 4 telares (todas las filas)
+          '',                                           // K plus — fórmula Sheet
+          '',                                           // L min productivos — fórmula Sheet
+          '',                                           // M metros al 100% — fórmula Sheet
+          '',                                           // N productividad — fórmula Sheet
+          (idx===0&&m.obs)?m.obs:'',                    // O observaciones
+          alertaT?`⚠️ ${alertaT.msg}`:''               // P alerta
         ];
         writeRows.push(row);
         firstTelar = false;
@@ -1248,7 +1250,7 @@ async function publicarSheets() {
       if (writeRows.length === 0) continue;
 
       // Escribir en Sheets
-      const range = `${leg}!A${firstEmptyRow}:O${firstEmptyRow+writeRows.length-1}`;
+      const range = `${leg}!A${firstEmptyRow}:P${firstEmptyRow+writeRows.length-1}`;
       const writeRes = await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
         {
