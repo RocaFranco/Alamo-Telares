@@ -1363,6 +1363,10 @@ async function publicarSheets() {
       const sheetMeta = metaData.sheets?.find(s => s.properties.title === leg);
       const sheetGid = sheetMeta?.properties?.sheetId;
 
+      // Escribir en Sheets usando batchUpdate para no tocar columnas con fórmulas
+      // Solo escribimos B,C,D,E,F,G (rango continuo) e I,J por separado
+      const nRows = writeRows.length;
+
       // Insertar filas vacías para expandir la tabla antes de escribir
       if (sheetGid !== undefined) {
         await fetch(
@@ -1381,10 +1385,6 @@ async function publicarSheets() {
           }
         );
       }
-
-      // Escribir en Sheets usando batchUpdate para no tocar columnas con fórmulas
-      // Solo escribimos B,C,D,E,F,G (rango continuo) e I,J por separado
-      const nRows = writeRows.length;
       const dataBCDEFG = writeRows.map(r => r.slice(0,6)); // B,C,D,E,F,G
       const dataI = writeRows.map(r => [r[6]]);             // I = min no productivos
       const dataJ = writeRows.map(r => [r[7]]);             // J = mts extra
