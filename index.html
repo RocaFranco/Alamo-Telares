@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Álamo Telares</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -494,6 +495,8 @@ if (quincenas.length === 0) { quincenas.push({ nombre: '2da Quincena Febrero 202
 
 // Colores por FTO
 const FTO_VALIDOS = [40, 47, 53, 57, 60, 71, 82, 102, 120];
+const ER_MAXIMO = 6.4;    // E/R máximo posible en la fábrica (puede ajustarse)
+const ER_TIPICO = 5.9;    // E/R típico para calcular máximos cuando no se lee el E/R
 function ftoClass(fto) {
   const n = parseInt(fto);
   if (FTO_VALIDOS.includes(n)) return 'fto-' + n;
@@ -523,8 +526,53 @@ function conectarGoogle() {
   const clientId = document.getElementById('cfgClientId').value.trim() || DEFAULT_CLIENT_ID;
   const sheetId  = document.getElementById('cfgSheetId').value.trim()  || DEFAULT_SHEET_ID;
   if (quincenas.length === 0) { quincenas.push({ nombre: 'Quincena actual', sheetId }); guardarQuincenas(); }
-  const params = new URLSearchParams({ client_id: clientId, redirect_uri: window.location.href.split('?')[0], response_type: 'token', scope: SCOPES, prompt: 'select_account' });
-  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  localStorage.setItem('alamo_client_id', clientId);
+  _pedirTokenGIS(clientId, false);
+}
+
+// Iniciar flujo de token con Google Identity Services
+function _pedirTokenGIS(clientId, silencioso) {
+  if (!window.google?.accounts?.oauth2) {
+    // GIS no cargó aún — fallback al método clásico
+    const params = new URLSearchParams({
+      client_id: clientId || DEFAULT_CLIENT_ID,
+      redirect_uri: window.location.href.split('?')[0].split('#')[0],
+      response_type: 'token',
+      scope: SCOPES,
+      prompt: silencioso ? 'none' : 'select_account'
+    });
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    return;
+  }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: clientId || DEFAULT_CLIENT_ID,
+    scope: SCOPES,
+    prompt: silencioso ? '' : 'select_account',
+    callback: (tokenResponse) => {
+      if (tokenResponse.error) {
+        if (silencioso) {
+          // Falló silencioso → pedir login una vez
+          _pedirTokenGIS(clientId, false);
+        } else {
+          showSB('error', '❌ Error al conectar con Google: ' + tokenResponse.error);
+        }
+        return;
+      }
+      gToken = tokenResponse.access_token;
+      const expiresIn = parseInt(tokenResponse.expires_in || '3600');
+      const expiry = Date.now() + (expiresIn - 300) * 1000;
+      localStorage.setItem('alamo_gtoken', gToken);
+      localStorage.setItem('alamo_gtoken_expiry', expiry.toString());
+      localStorage.setItem('alamo_gtoken_silencioso', '1'); // próxima vez renovar sin popup
+      _programarRenovacion(expiresIn - 300);
+      mostrarConectado(true);
+    }
+  });
+  if (silencioso) {
+    client.requestAccessToken({ prompt: '' });
+  } else {
+    client.requestAccessToken();
+  }
 }
 function desconectar() {
   gToken = null; localStorage.removeItem('alamo_gtoken');
@@ -533,22 +581,175 @@ function desconectar() {
   document.getElementById('hConnStatus').textContent = '● No conectado';
   document.getElementById('hConnStatus').style.color = 'var(--danger)';
 }
+// ── SISTEMA DE TOKEN CON AUTO-RENOVACIÓN ───────────────────────────────────
+// El token OAuth implícito dura 1 hora. Lo renovamos automáticamente
+// en segundo plano con un iframe invisible antes de que expire.
+
+let _tokenRenovacionTimer = null;
+
 function checkTokenFromURL() {
   const hash = window.location.hash;
   if (hash.includes('access_token')) {
     const params = new URLSearchParams(hash.substring(1));
     gToken = params.get('access_token');
     const expiresIn = parseInt(params.get('expires_in') || '3600');
-    const expiry = Date.now() + (expiresIn - 60) * 1000;
+    // Guardamos con 5 min de margen (renovar antes de que expire)
+    const expiry = Date.now() + (expiresIn - 300) * 1000;
     localStorage.setItem('alamo_gtoken', gToken);
     localStorage.setItem('alamo_gtoken_expiry', expiry.toString());
+    localStorage.setItem('alamo_client_id', document.getElementById('cfgClientId')?.value || DEFAULT_CLIENT_ID);
     window.history.replaceState({}, document.title, window.location.pathname);
-    mostrarConectado(true); return true;
+    _programarRenovacion(expiresIn - 300); // renovar 5 min antes
+    mostrarConectado(true);
+    return true;
   }
-  const saved = localStorage.getItem('alamo_gtoken');
+  const saved  = localStorage.getItem('alamo_gtoken');
   const expiry = parseInt(localStorage.getItem('alamo_gtoken_expiry') || '0');
-  if (saved && Date.now() < expiry) { gToken = saved; mostrarConectado(false); return true; }
-  localStorage.removeItem('alamo_gtoken'); localStorage.removeItem('alamo_gtoken_expiry'); return false;
+  if (saved && Date.now() < expiry) {
+    gToken = saved;
+    // Calcular cuánto falta para renovar
+    const msRestantes = expiry - Date.now();
+    _programarRenovacion(Math.floor(msRestantes / 1000));
+    mostrarConectado(false);
+    return true;
+  }
+  // Token expirado — intentar renovación silenciosa con GIS si ya se conectó antes
+  localStorage.removeItem('alamo_gtoken');
+  localStorage.removeItem('alamo_gtoken_expiry');
+  const yaConectoAntes = localStorage.getItem('alamo_gtoken_silencioso');
+  const clientId = localStorage.getItem('alamo_client_id') || DEFAULT_CLIENT_ID;
+  if (yaConectoAntes) {
+    // El usuario ya autorizó antes → intentar sin popup
+    console.log('[Token] Intentando renovación silenciosa al cargar...');
+    setTimeout(() => _pedirTokenGIS(clientId, true), 1500); // esperar que GIS cargue
+  }
+  return false;
+}
+
+function _programarRenovacion(enSegundos) {
+  // Cancelar timer anterior si existe
+  if (_tokenRenovacionTimer) clearTimeout(_tokenRenovacionTimer);
+  // No programar si faltan menos de 30 segundos (renovar ya)
+  const ms = Math.max((enSegundos - 30) * 1000, 5000);
+  console.log(`[Token] Renovación programada en ${Math.round(ms/1000/60)} minutos`);
+  _tokenRenovacionTimer = setTimeout(() => {
+    _renovarTokenSilencioso();
+  }, ms);
+}
+
+function _renovarTokenSilencioso() {
+  const clientId = localStorage.getItem('alamo_client_id') || DEFAULT_CLIENT_ID;
+  console.log('[Token] Iniciando renovación silenciosa...');
+  const statusEl = document.getElementById('hConnStatus');
+  if (statusEl) { statusEl.textContent = '↻ Renovando...'; statusEl.style.color = 'var(--warn)'; }
+
+  // Si GIS está disponible, usarlo (más confiable que el iframe)
+  if (window.google?.accounts?.oauth2) {
+    _pedirTokenGIS(clientId, true);
+    return;
+  }
+
+  // Crear iframe invisible con prompt=none para renovación silenciosa
+  // Google renueva el token sin mostrar popup si el usuario ya autorizó
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'display:none;width:0;height:0;position:absolute;';
+  document.body.appendChild(iframe);
+
+  // Listener para capturar el redirect del iframe
+  const redirectUri = window.location.href.split('?')[0].split('#')[0];
+  const params = new URLSearchParams({
+    client_id:    clientId,
+    redirect_uri: redirectUri,
+    response_type:'token',
+    scope:        SCOPES,
+    prompt:       'none'  // ← clave: no muestra UI, falla silenciosamente si no puede
+  });
+
+  // Monitorear el hash del iframe
+  let intentos = 0;
+  const checkIframe = setInterval(() => {
+    intentos++;
+    try {
+      const iframeHash = iframe.contentWindow?.location?.hash || '';
+      if (iframeHash.includes('access_token')) {
+        clearInterval(checkIframe);
+        const iparams = new URLSearchParams(iframeHash.substring(1));
+        const newToken = iparams.get('access_token');
+        const expiresIn = parseInt(iparams.get('expires_in') || '3600');
+        if (newToken) {
+          gToken = newToken;
+          const expiry = Date.now() + (expiresIn - 300) * 1000;
+          localStorage.setItem('alamo_gtoken', newToken);
+          localStorage.setItem('alamo_gtoken_expiry', expiry.toString());
+          _programarRenovacion(expiresIn - 300);
+          console.log('[Token] ✅ Renovado silenciosamente. Próxima renovación en ~55 min');
+          if (statusEl) { statusEl.textContent = '● Conectado'; statusEl.style.color = 'var(--accent2)'; }
+        }
+        iframe.remove();
+      } else if (iframeHash.includes('error')) {
+        // No pudo renovar silenciosamente → pedir al usuario
+        clearInterval(checkIframe);
+        iframe.remove();
+        _pedirRenovacionManual();
+      }
+    } catch(e) {
+      // Cross-origin aún cargando — esperar
+    }
+    if (intentos > 30) {
+      clearInterval(checkIframe);
+      iframe.remove();
+      _pedirRenovacionManual();
+    }
+  }, 500);
+
+  iframe.src = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
+
+function _pedirRenovacionManual() {
+  // No pudo renovar solo → avisar al usuario con un botón rápido
+  console.log('[Token] No se pudo renovar silenciosamente, pidiendo al usuario');
+  const statusEl = document.getElementById('hConnStatus');
+  if (statusEl) {
+    statusEl.innerHTML = '<button onclick="renovarConexion()" style="background:var(--danger);border:none;border-radius:3px;color:#fff;cursor:pointer;font-family:var(--mono);font-size:10px;padding:3px 8px;">⚠️ Renovar conexión</button>';
+  }
+  // También mostrar aviso en el statusBar si está visible
+  showSB('error', '⚠️ La sesión de Google expiró. Hacé click en "Renovar conexión" en el header.');
+}
+
+function renovarConexion() {
+  const clientId = localStorage.getItem('alamo_client_id') || DEFAULT_CLIENT_ID;
+  _pedirTokenGIS(clientId, false); // popup si es necesario
+}
+
+// Wrapper para hacer fetch con re-intento automático si el token expiró
+async function gFetch(url, options={}) {
+  const resp = await fetch(url, {
+    ...options,
+    headers: { ...options.headers, Authorization: `Bearer ${gToken || localStorage.getItem('alamo_gtoken')}` }
+  });
+  if (resp.status === 401) {
+    // Token expirado inesperadamente → intentar renovar y reintentar
+    console.log('[Token] 401 detectado, intentando renovar...');
+    await new Promise(resolve => {
+      _renovarTokenSilencioso();
+      // Esperar hasta 10 seg para que se renueve
+      let t = 0;
+      const check = setInterval(() => {
+        t++;
+        if (gToken !== localStorage.getItem('alamo_gtoken') || t > 20) {
+          clearInterval(check);
+          gToken = localStorage.getItem('alamo_gtoken') || gToken;
+          resolve();
+        }
+      }, 500);
+    });
+    // Reintentar con el nuevo token
+    return fetch(url, {
+      ...options,
+      headers: { ...options.headers, Authorization: `Bearer ${gToken || localStorage.getItem('alamo_gtoken')}` }
+    });
+  }
+  return resp;
 }
 async function mostrarConectado(verificar) {
   document.getElementById('notConnected').classList.add('hidden');
@@ -558,7 +759,7 @@ async function mostrarConectado(verificar) {
   hideStatus(); renderQuincenas();
   if (quinceActual) cargarLegajosDelSheet(quinceActual.sheetId);
   if (verificar) {
-    try { const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${gToken}` } }); if (r.ok) { const u = await r.json(); document.getElementById('connUser').textContent = u.email || ''; if (u.email) localStorage.setItem('alamo_user_email', u.email); } } catch(e) {}
+    try { const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${gToken || localStorage.getItem('alamo_gtoken')}` } }); if (r.ok) { const u = await r.json(); document.getElementById('connUser').textContent = u.email || ''; if (u.email) localStorage.setItem('alamo_user_email', u.email); } } catch(e) {}
   } else { const email = localStorage.getItem('alamo_user_email'); if (email) document.getElementById('connUser').textContent = email; }
 }
 
@@ -566,7 +767,7 @@ let editandoIdx = null;
 async function cargarLegajosDelSheet(sheetId) {
   if (!gToken || !sheetId) return;
   try {
-    const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Prod. General!A3:A20')}`, { headers: { Authorization: `Bearer ${gToken}` } });
+    const r = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Prod. General!A3:A20')}`);
     if (!r.ok) return;
     const data = await r.json();
     legajosValidos = (data.values || []).map(r => String(r[0]).trim()).filter(v => v && !isNaN(v));
@@ -821,7 +1022,7 @@ function memAprender(legajo, datosIA, datosEditados) {
   const mtsVals = (datosEditados.telares||[]).filter(t=>!t.es_extra).map(t=>{
     const ini=parseFloat(t.mts_iniciales), fin=parseFloat(t.mts_finales);
     if(isNaN(ini)||isNaN(fin)) return null;
-    return Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
+    return Math.max(fin<ini?(65535-ini)+fin:fin-ini, 0);
   }).filter(v=>v!==null&&v>0);
   if (mtsVals.length > 0) {
     const mn = Math.min(...mtsVals), mx = Math.max(...mtsVals);
@@ -959,10 +1160,21 @@ Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Ve
 - N° Telar: número del 1 al 16. Aplicar REGLA 1 si hay dudas con telares de 2 dígitos.
 - FTO: REGLA 2 — solo los 9 números válidos o "SIN FTO". Nunca letras.
 - Ancho Trama: número pequeño, usualmente 5.
+- E/R (velocidad): decimal entre 4.0 y 6.4. Valores típicos: 5.5, 5.6, 5.7, 5.8, 5.9, 6.0
 - Mts Iniciales y Mts Finales: contadores entre 0 y 65535.
   * Ejemplos válidos: 4085, 6706, 38194, 40808, 21333, 23864
   * Menos de 3 dígitos o más de 5 → error de lectura probable, revisá.
-- E/R: decimal típico entre 5.5 y 6.0
+  * VALIDACIÓN FÍSICA CRÍTICA: la diferencia (fin - ini) representa los metros producidos en el turno.
+    Con el E/R podés saber si es físicamente posible:
+    → Metros máximos posibles = E/R × minutos del turno (turno normal = 540 min, tarde = 510 min, 12hs = 720 min)
+    → Ejemplo con E/R=5.9 en turno normal: máximo = 5.9 × 540 = 3186 mts
+    → NUNCA puede producir más que ese máximo (ni siquiera cerca, ya que las máquinas siempre paran algo)
+    → Si la diferencia supera ese máximo → al menos uno de los dos valores está mal leído
+    → Caso típico de error: si ini=10526, fin=22860, E/R=5.9 → diferencia=12334 mts → imposible
+      El error probablemente sea en las decenas de miles: ini correcto es probablemente 20526
+      (el "1" al inicio fue leído en vez de "2")
+    → Revisá especialmente el primer dígito de los valores cuando la diferencia parece imposible
+    → Si hay rollover (fin < ini): metros = (65535 - ini) + fin → también debe ser ≤ máximo teórico
 - Los 4 telares del encabezado → es_extra: false. 5° telar en adelante → es_extra: true.
 
 === CÓMO LEER TIEMPO PERDIDO ===
@@ -1084,8 +1296,8 @@ function agruparPorLegajo(resultados) {
           if (!porNumero[n]) {
             porNumero[n] = t;
           } else {
-            const mtsExist = Math.max((parseFloat(porNumero[n].mts_finales)||0)-(parseFloat(porNumero[n].mts_iniciales)||0), 0);
-            const mtsNew   = Math.max((parseFloat(t.mts_finales)||0)-(parseFloat(t.mts_iniciales)||0), 0);
+            const mtsExist = Math.max((()=>{const i=parseFloat(porNumero[n].mts_iniciales)||0,f=parseFloat(porNumero[n].mts_finales)||0;return f<i?(65535-i)+f:f-i;})(), 0);
+            const mtsNew   = Math.max((()=>{const i=parseFloat(t.mts_iniciales)||0,f=parseFloat(t.mts_finales)||0;return f<i?(65535-i)+f:f-i;})(), 0);
             if (mtsNew > mtsExist) porNumero[n] = t;
           }
         });
@@ -1129,7 +1341,7 @@ function agruparPorLegajo(resultados) {
 
     // Metros extra
     m.mtsExtra = m.telares.filter(t=>t.es_extra).reduce((s,t)=>{
-      const v=(parseFloat(t.mts_finales)||0)-(parseFloat(t.mts_iniciales)||0);
+      const v=(()=>{const i=parseFloat(t.mts_iniciales)||0,f=parseFloat(t.mts_finales)||0;return f<i?(65535-i)+f:f-i;})();
       return s+Math.max(v,0);
     },0);
   });
@@ -1141,16 +1353,63 @@ function agruparPorLegajo(resultados) {
 
 function calcAlertas() {
   maquinistas.forEach((m,mi)=>{
-    m.alertas=[];const minT=m.turno==='extra'?720:m.turno==='tarde'?510:540;
+    m.alertas=[];
+    const minT = m.turno==='extra'?720 : m.turno==='tarde'?510 : 540;
+
     m.telares.filter(t=>!t.es_extra).forEach(t=>{
-      const ini=parseFloat(t.mts_iniciales),fin=parseFloat(t.mts_finales),er=parseFloat(t.er);
-      if(isNaN(ini)||isNaN(fin)||!er)return;
-      const mts=(ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini;if(mts<=0)return;
-      const minP=m.paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d)h+=1440;return s+(h-d);},0);
-      const teo=er*(minT-minP);
-      if(mts<teo*0.15&&minP===0){t._w='err';m.alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas (esperado ~${Math.round(teo).toLocaleString()}). Probable error de lectura.`});}
-      else if(mts<teo*0.35&&minP<30){t._w='warn';m.alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts con solo ${minP} min parada. Verificar.`});}
-      else{t._w=null;}
+      const ini = parseFloat(t.mts_iniciales);
+      const fin = parseFloat(t.mts_finales);
+      const er  = parseFloat(t.er) || ER_TIPICO;
+      if(isNaN(ini)||isNaN(fin)) return;
+      const mts = fin<ini ? (65535-ini)+fin : fin-ini;
+      if(mts<=0) return;
+
+      // Máximo físicamente posible
+      const maxConER    = Math.round(er * minT);
+      const maxAbsoluto = Math.round(ER_MAXIMO * minT);
+
+      // IMPOSIBLE — supera incluso el máximo absoluto de la fábrica
+      if(mts > maxAbsoluto) {
+        t._w='err';
+        m.alertas.push({nivel:'error', telar:t.numero,
+          msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts es IMPOSIBLE (máx físico = ${maxAbsoluto.toLocaleString()} mts con E/R ${ER_MAXIMO}). Error de lectura — revisá mts iniciales y finales.`
+        });
+        return;
+      }
+
+      // Supera el máximo con su E/R específico
+      if(mts > maxConER) {
+        t._w='err';
+        m.alertas.push({nivel:'error', telar:t.numero,
+          msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts supera el máximo con E/R ${er} (max = ${maxConER.toLocaleString()} mts). Probable error en mts iniciales o finales.`
+        });
+        return;
+      }
+
+      // Cálculo normal con paradas
+      const minP = m.paradas.reduce((s,p)=>{
+        if(parseInt(p.telar)!==parseInt(t.numero)) return s;
+        const[dh,dm]=(p.desde||'0:0').split(':').map(Number);
+        const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);
+        let d=dh*60+dm, h=hh*60+hm;
+        if(h<d) h+=1440;
+        return s+(h-d);
+      }, 0);
+      const teo = er*(minT-minP);
+
+      if(mts < teo*0.15 && minP===0){
+        t._w='err';
+        m.alertas.push({nivel:'error', telar:t.numero,
+          msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas (esperado ~${Math.round(teo).toLocaleString()}). Posible error de lectura.`
+        });
+      } else if(mts < teo*0.35 && minP<30){
+        t._w='warn';
+        m.alertas.push({nivel:'warning', telar:t.numero,
+          msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts con solo ${minP} min parada. Verificar.`
+        });
+      } else {
+        t._w=null;
+      }
     });
   });
 }
@@ -1224,12 +1483,12 @@ function mostrarAlertasParadas(mi){
 
 function buildExtrasTable(extras,mi){
   if(!extras||extras.length===0)return`<div style="font-size:12px;font-family:var(--mono);color:var(--text2);padding:8px 0;">Sin telares extra este día. <button class="btn-add" style="display:inline;width:auto;padding:4px 10px;margin-left:8px;" onclick="addTelarExtra(${mi})">+ Agregar telar extra</button></div>`;
-  const rows=extras.map((t,i)=>{const ini=t.mts_iniciales||'';const fin=t.mts_finales||'';const tot=(!isNaN(ini)&&!isNaN(fin)&&ini!==''&&fin!=='')?Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini,0):0;return`<tr><td style="padding:4px 3px;"><input type="number" value="${t.numero||''}" placeholder="Telar" style="width:60px;font-size:12px;color:var(--accent2);font-weight:700;"></td><td style="padding:4px 3px;"><input type="number" value="${ini}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td><td style="padding:4px 3px;"><input type="number" value="${fin}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td><td style="padding:4px 6px;text-align:right;font-family:var(--mono);font-weight:700;">${tot.toLocaleString('es-AR')}</td><td style="padding:4px 3px;"><button class="btn-rp" onclick="quitarTelarExtra(${mi},${i})">✕</button></td></tr>`;}).join('');
-  const total=extras.reduce((s,t)=>{const ini=t.mts_iniciales||0,fin=t.mts_finales||0;if(isNaN(ini)||isNaN(fin))return s;return s+Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini,0);},0);
+  const rows=extras.map((t,i)=>{const ini=t.mts_iniciales||'';const fin=t.mts_finales||'';const tot=(!isNaN(ini)&&!isNaN(fin)&&ini!==''&&fin!=='')?Math.max(fin<ini?(65535-ini)+fin:fin-ini,0):0;return`<tr><td style="padding:4px 3px;"><input type="number" value="${t.numero||''}" placeholder="Telar" style="width:60px;font-size:12px;color:var(--accent2);font-weight:700;"></td><td style="padding:4px 3px;"><input type="number" value="${ini}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td><td style="padding:4px 3px;"><input type="number" value="${fin}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td><td style="padding:4px 6px;text-align:right;font-family:var(--mono);font-weight:700;">${tot.toLocaleString('es-AR')}</td><td style="padding:4px 3px;"><button class="btn-rp" onclick="quitarTelarExtra(${mi},${i})">✕</button></td></tr>`;}).join('');
+  const total=extras.reduce((s,t)=>{const ini=t.mts_iniciales||0,fin=t.mts_finales||0;if(isNaN(ini)||isNaN(fin))return s;return s+Math.max(fin<ini?(65535-ini)+fin:fin-ini,0);},0);
   const por4=Math.round(total/4);
   return`<table class="tt" style="margin-bottom:8px;"><thead><tr><th style="width:50px;"># Telar</th><th>Mts Iniciales</th><th>Mts Finales</th><th style="text-align:right;">Total</th><th style="width:32px;"></th></tr></thead><tbody>${rows}</tbody><tfoot><tr style="background:var(--surface2);"><td colspan="3" style="padding:6px;font-size:12px;font-family:var(--mono);color:var(--text2);">Total metros extra</td><td style="padding:6px;text-align:right;font-family:var(--mono);font-weight:700;" id="ext-total-${mi}">${total.toLocaleString('es-AR')}</td><td></td></tr><tr><td colspan="3" style="padding:4px 6px;font-size:11px;font-family:var(--mono);color:var(--text3);">Por telar (÷ 4) → columna J</td><td style="padding:4px 6px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text2);" id="ext-div4-${mi}">${por4.toLocaleString('es-AR')}</td><td></td></tr></tfoot></table><button class="btn-add" onclick="addTelarExtra(${mi})">+ Agregar telar extra</button>`;
 }
-function recalcExtras(mi){const body=document.getElementById(`extbody-${mi}`);if(!body)return;const rows=body.querySelectorAll('tbody tr');let total=0;rows.forEach(tr=>{const ins=tr.querySelectorAll('input');const ini=parseFloat(ins[1]?.value)||0;const fin=parseFloat(ins[2]?.value)||0;const mts=Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini,0);const tdTot=tr.querySelectorAll('td')[3];if(tdTot)tdTot.textContent=mts.toLocaleString('es-AR');total+=mts;});const t=document.getElementById(`ext-total-${mi}`);const d=document.getElementById(`ext-div4-${mi}`);if(t)t.textContent=total.toLocaleString('es-AR');if(d)d.textContent=Math.round(total/4).toLocaleString('es-AR');maquinistas[mi].mtsExtra=total;}
+function recalcExtras(mi){const body=document.getElementById(`extbody-${mi}`);if(!body)return;const rows=body.querySelectorAll('tbody tr');let total=0;rows.forEach(tr=>{const ins=tr.querySelectorAll('input');const ini=parseFloat(ins[1]?.value)||0;const fin=parseFloat(ins[2]?.value)||0;const mts=Math.max(fin<ini?(65535-ini)+fin:fin-ini,0);const tdTot=tr.querySelectorAll('td')[3];if(tdTot)tdTot.textContent=mts.toLocaleString('es-AR');total+=mts;});const t=document.getElementById(`ext-total-${mi}`);const d=document.getElementById(`ext-div4-${mi}`);if(t)t.textContent=total.toLocaleString('es-AR');if(d)d.textContent=Math.round(total/4).toLocaleString('es-AR');maquinistas[mi].mtsExtra=total;}
 function addTelarExtra(mi){maquinistas[mi].telares.push({numero:'?',mts_iniciales:'',mts_finales:'',es_extra:true});const body=document.getElementById(`extbody-${mi}`);if(body)body.innerHTML=buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra),mi);}
 function quitarTelarExtra(mi,idx){const extras=maquinistas[mi].telares.filter(t=>t.es_extra);const telarAQuitar=extras[idx];maquinistas[mi].telares=maquinistas[mi].telares.filter(t=>t!==telarAQuitar);const body=document.getElementById(`extbody-${mi}`);if(body)body.innerHTML=buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra),mi);recalcExtras(mi);}
 function addP(mi){const c=document.createElement('div');c.innerHTML=prow({},mi);document.getElementById(`pl-${mi}`).appendChild(c.firstElementChild);}
@@ -1279,7 +1538,7 @@ function reval(mi){
   const prows=document.querySelectorAll(`#pl-${mi} .prow`);
   maquinistas[mi].paradas=Array.from(prows).map(pr=>({telar:parseInt(pr.querySelector('.p-t').value)||null,desde:pr.querySelector('.p-d').value,hasta:pr.querySelector('.p-h').value,motivo:pr.querySelector('.motsel').value})).filter(p=>p.telar&&p.desde&&p.hasta);
   maquinistas[mi].alertas=[];const minT=maquinistas[mi].turno==='extra'?720:maquinistas[mi].turno==='tarde'?510:540;
-  maquinistas[mi].telares.forEach(t=>{if(!t.er)return;const ini=t.mts_iniciales,fin=t.mts_finales;if(isNaN(ini)||isNaN(fin))return;const mts=(ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini;if(mts<=0)return;const minP=maquinistas[mi].paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d)h+=1440;return s+(h-d);},0);const teo=t.er*(minT-minP);const cells=document.querySelectorAll(`#tb-${mi} tr`)[maquinistas[mi].telares.indexOf(t)]?.querySelectorAll('input');if(cells){cells[3].classList.remove('warn','err');cells[4].classList.remove('warn','err');}if(mts<teo*0.15&&minP===0){t._w='err';maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`});if(cells){cells[3].classList.add('err');cells[4].classList.add('err');}}else if(mts<teo*0.35&&minP<30){t._w='warn';maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`});if(cells){cells[3].classList.add('warn');cells[4].classList.add('warn');}}});
+  maquinistas[mi].telares.forEach(t=>{if(!t.er)return;const ini=t.mts_iniciales,fin=t.mts_finales;if(isNaN(ini)||isNaN(fin))return;const mts=fin<ini?(65535-ini)+fin:fin-ini;if(mts<=0)return;const minP=maquinistas[mi].paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d)h+=1440;return s+(h-d);},0);const teo=t.er*(minT-minP);const cells=document.querySelectorAll(`#tb-${mi} tr`)[maquinistas[mi].telares.indexOf(t)]?.querySelectorAll('input');if(cells){cells[3].classList.remove('warn','err');cells[4].classList.remove('warn','err');}if(mts<teo*0.15&&minP===0){t._w='err';maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`});if(cells){cells[3].classList.add('err');cells[4].classList.add('err');}}else if(mts<teo*0.35&&minP<30){t._w='warn';maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`});if(cells){cells[3].classList.add('warn');cells[4].classList.add('warn');}}});
 }
 function addMaqManual(){const leg=prompt('N° de Legajo:');if(!leg)return;maquinistas.push({legajo:leg,fecha:'',turno:'manana',telares:[{},{},{},{}],paradas:[],mtsExtra:0,obs:'',alertas:[],sinAuxiliar:false});const mi=maquinistas.length-1;document.getElementById('maqBlocks').appendChild(buildBlock(maquinistas[mi],mi));}
 
@@ -1288,7 +1547,7 @@ function syncDom(){
     m.legajo=document.getElementById(`l-${mi}`)?.value.trim()||m.legajo;
     m.fecha=document.getElementById(`f-${mi}`)?.value||m.fecha;
     const extBody=document.getElementById(`extbody-${mi}`);
-    if(extBody){let totalExt=0;extBody.querySelectorAll('tbody tr').forEach((tr,i)=>{const ins=tr.querySelectorAll('input');const ini=parseFloat(ins[1]?.value)||0;const fin=parseFloat(ins[2]?.value)||0;const mts=Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini,0);totalExt+=mts;const extrasArr=maquinistas[mi].telares.filter(t=>t.es_extra);if(extrasArr[i]){extrasArr[i].mts_iniciales=ini;extrasArr[i].mts_finales=fin;}});m.mtsExtra=totalExt;}
+    if(extBody){let totalExt=0;extBody.querySelectorAll('tbody tr').forEach((tr,i)=>{const ins=tr.querySelectorAll('input');const ini=parseFloat(ins[1]?.value)||0;const fin=parseFloat(ins[2]?.value)||0;const mts=Math.max(fin<ini?(65535-ini)+fin:fin-ini,0);totalExt+=mts;const extrasArr=maquinistas[mi].telares.filter(t=>t.es_extra);if(extrasArr[i]){extrasArr[i].mts_iniciales=ini;extrasArr[i].mts_finales=fin;}});m.mtsExtra=totalExt;}
     m.obs=document.getElementById(`ob-${mi}`)?.value.trim()||'';
     const trows=document.querySelectorAll(`#tb-${mi} tr`);m.telares=Array.from(trows).map((tr,i)=>{const ins=tr.querySelectorAll('input');return{numero:parseInt(ins[0]?.value)||(i+1),fto:ins[1]?.value||'',ancho_trama:parseFloat(ins[2]?.value)||null,mts_iniciales:parseFloat(ins[3]?.value),mts_finales:parseFloat(ins[4]?.value),er:parseFloat(ins[5]?.value)||null,es_extra:false};});
     const prows=document.querySelectorAll(`#pl-${mi} .prow`);m.paradas=Array.from(prows).map(pr=>({telar:parseInt(pr.querySelector('.p-t').value)||null,desde:pr.querySelector('.p-d').value,hasta:pr.querySelector('.p-h').value,motivo:pr.querySelector('.motsel').value})).filter(p=>p.telar&&p.desde&&p.hasta);
@@ -1308,7 +1567,7 @@ async function publicarSheets(){
       const leg=m.legajo; if(!leg)continue;
 
       // Leer columna D para encontrar primera fila vacía
-      const readRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(leg+'!D:D')}`,{headers:{Authorization:`Bearer ${gToken}`}});
+      const readRes=await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(leg+'!D:D')}`);
       if(!readRes.ok){const e=await readRes.json();throw new Error(`Hoja "${leg}" no encontrada: ${e.error?.message||readRes.status}`);}
       const readData=await readRes.json(); const rows=readData.values||[];
       let firstEmptyRow=5;
@@ -1345,7 +1604,7 @@ async function publicarSheets(){
       const writeRows=[]; let firstTelar=true; let mtsMaquinista=0;
       m.telares.filter(t=>!t.es_extra).forEach((t,idx)=>{
         if(isNaN(t.mts_iniciales)||isNaN(t.mts_finales))return;
-        const mts=(t.mts_iniciales>63000&&t.mts_finales<3000)
+        const mts=(t.mts_finales<t.mts_iniciales)
           ?(65535-t.mts_iniciales)+t.mts_finales
           :t.mts_finales-t.mts_iniciales;
         const mtsVal=Math.max(mts,0);
@@ -1372,7 +1631,7 @@ async function publicarSheets(){
       if(writeRows.length===0)continue;
 
       // Obtener sheetId numérico para insertar filas
-      const metaRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=sheets(properties(title,sheetId))`,{headers:{Authorization:`Bearer ${gToken}`}});
+      const metaRes=await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=sheets(properties(title,sheetId))`);
       const metaData=await metaRes.json();
       const sheetMeta=metaData.sheets?.find(s=>s.properties.title===leg);
       const sheetGid=sheetMeta?.properties?.sheetId;
@@ -1620,7 +1879,7 @@ async function dashLeerQuincena(q) {
   // Obtener lista de hojas
   const metaRes = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${q.sheetId}?fields=sheets(properties(title))`,
-    { headers: { Authorization: `Bearer ${gToken}` } }
+    { headers: { Authorization: `Bearer ${gToken || localStorage.getItem('alamo_gtoken')}` } }
   );
   const meta = await metaRes.json();
   const hojas = (meta.sheets || []).map(s => s.properties.title);
@@ -1636,7 +1895,7 @@ async function dashLeerQuincena(q) {
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${q.sheetId}/values:batchGet?` +
       chunkRanges.map(r => `ranges=${encodeURIComponent(r)}`).join('&') +
       '&valueRenderOption=UNFORMATTED_VALUE';
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${gToken}` } });
+    const res = await gFetch(url);
     if (!res.ok) throw new Error(`Error leyendo Sheet: ${res.status}`);
     const data = await res.json();
     (data.valueRanges || []).forEach((vr, j) => {
@@ -1660,7 +1919,7 @@ async function dashLeerQuincena(q) {
       const entrada = parseFloat(row[3]);
       const salida = parseFloat(row[4]);
       if (!telar || isNaN(entrada) || isNaN(salida)) return;
-      const mts = entrada > 63000 && salida < 3000 ? (65535 - entrada) + salida : salida > entrada ? salida - entrada : Math.abs(salida - entrada);
+      const mts = salida < entrada ? (65535 - entrada) + salida : salida - entrada;
       const mtsVal = Math.max(mts, 0);
       const mnp = parseFloat(row[7]) || 0;
       const hrs = parseFloat(row[1]) || 9;
