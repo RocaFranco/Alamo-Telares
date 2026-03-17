@@ -639,7 +639,7 @@ async function leerTodas() {
   const resultados=[];
   for(let i=0;i<tareas.length;i++){
     const t=tareas[i]; setFileSt(t.archId,'proc',`⏳ leyendo pág. ${t.pagina}...`); document.getElementById('progBar').style.width=`${(i/tareas.length)*100}%`;
-    try{ const datos=await leerPlanillaIA(t); setFileSt(t.archId,'ok',`✅ leg. ${datos.legajo_maquinista||'?'}`); resultados.push({datos,nombre:t.nombre}); }
+    try{ const datos=await leerPlanillaIA(t); setFileSt(t.archId,'ok',`✅ leg. ${datos.legajo_maquinista||'?'}`); resultados.push({datos,nombre:t.nombre,pagina:t.pagina,archId:t.archId}); }
     catch(err){ console.error('Error lectura:',err); setFileSt(t.archId,'err','❌ '+err.message.substring(0,50)); showSB('error','❌ '+err.message.substring(0,150)); resultados.push({datos:null,nombre:t.nombre,error:err.message}); }
     document.getElementById('progBar').style.width=`${((i+1)/tareas.length)*100}%`;
   }
@@ -1018,9 +1018,11 @@ function agruparPorLegajo(resultados) {
 
     const fecha = String(d.fecha||'').trim();
 
-    // Clave: si tenemos fecha usamos legajo+fecha, si no solo legajo
-    // (sin fecha no podemos distinguir días → consolida como antes)
-    const clave = fecha ? `${leg}|${fecha}` : leg;
+    // Clave: legajo + fecha si hay fecha, legajo + nº de página si no hay fecha
+    // Esto garantiza que cada página del PDF sea un bloque independiente
+    // aunque la IA no haya podido leer la fecha
+    const paginaId = r.pagina || r.nombre || Math.random();
+    const clave = fecha ? `${leg}|${fecha}` : `${leg}|pag_${paginaId}`;
 
     if (!mapa[clave]) {
       mapa[clave] = {
@@ -1157,7 +1159,8 @@ function buildBlock(m,mi){
   const asig=m.telares.filter(t=>!t.es_extra);
   const alertBadge=m.alertas.length>0?`<span class="tag orange">⚠️ ${m.alertas.length}</span>`:'<span class="tag green">✓ OK</span>';
   const turnoBadge=m.turno==='extra'?'<span class="tag orange">⚡ 12hs</span>':m.turno==='tarde'?'<span class="tag">🌆 Tarde</span>':'<span class="tag">🌅 Mañana</span>';
-  wrap.innerHTML=`<div class="mhdr" onclick="toggleBlock(${mi})"><div class="mbadge">${m.legajo}</div><div class="mname">${m.legajo}</div><div class="mmeta" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${turnoBadge}${alertBadge}<span style="color:var(--text3)">${asig.length} telares · ${m.paradas.length} paradas</span></div><div class="mtog" id="tog-${mi}">▼</div></div>
+  const fechaBadge=m.fecha?`<span class="tag" style="color:var(--accent2);border-color:var(--accent2);">📅 ${m.fecha}</span>`:'<span class="tag" style="color:var(--danger);border-color:rgba(192,48,48,.3);">⚠️ sin fecha</span>';
+  wrap.innerHTML=`<div class="mhdr" onclick="toggleBlock(${mi})"><div class="mbadge">${m.legajo}</div><div class="mname">${m.legajo}</div><div class="mmeta" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${fechaBadge}${turnoBadge}${alertBadge}<span style="color:var(--text3)">${asig.length} telares · ${m.paradas.length} paradas</span></div><div class="mtog" id="tog-${mi}">▼</div></div>
     <div class="mbody" id="body-${mi}">
       ${m.alertas.length>0?`<div class="apanel"><div class="aptitle">⚠️ Datos a revisar</div>${m.alertas.map(a=>`<div class="aitem"><span>${a.nivel==='error'?'🔴':'🟡'}</span><span>${a.msg}</span></div>`).join('')}</div>`:''}
       <div class="fgrid">
