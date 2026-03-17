@@ -1247,14 +1247,25 @@ async function publicarSheets() {
 
       if (writeRows.length === 0) continue;
 
-      // Escribir en Sheets
-      const range = `${leg}!B${firstEmptyRow}:J${firstEmptyRow+writeRows.length-1}`;
+      // Escribir en Sheets usando batchUpdate para no tocar columnas con fórmulas
+      // Solo escribimos B,C,D,E,F,G (rango continuo) e I,J por separado
+      const nRows = writeRows.length;
+      const dataBCDEFG = writeRows.map(r => r.slice(0,6)); // B,C,D,E,F,G
+      const dataI = writeRows.map(r => [r[6]]);             // I = min no productivos
+      const dataJ = writeRows.map(r => [r[7]]);             // J = mts extra
+
+      const batchData = [
+        { range: `${leg}!B${firstEmptyRow}:G${firstEmptyRow+nRows-1}`, values: dataBCDEFG },
+        { range: `${leg}!I${firstEmptyRow}:I${firstEmptyRow+nRows-1}`, values: dataI },
+        { range: `${leg}!J${firstEmptyRow}:J${firstEmptyRow+nRows-1}`, values: dataJ },
+      ];
+
       const writeRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,
         {
-          method: 'PUT',
+          method: 'POST',
           headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ range, majorDimension: 'ROWS', values: writeRows })
+          body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: batchData })
         }
       );
       if (!writeRes.ok) {
