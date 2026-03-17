@@ -946,8 +946,8 @@ function buildBlock(m, mi) {
       <div class="plist" id="pl-${mi}">${m.paradas.map(p=>prow(p,mi)).join('')}</div>
       <button class="btn-add" onclick="addP(${mi})">+ Agregar parada</button>
       <div class="sdiv"><span>metros extra</span></div>
-      <div class="fgrid">
-        <div class="fg"><label>Metros Extra totales del día</label><input type="number" id="ex-${mi}" value="${m.mtsExtra||''}" placeholder="0" min="0"></div>
+      <div id="extbody-${mi}">
+        ${buildExtrasTable(m.telares.filter(t=>t.es_extra), mi)}
       </div>
       <div class="sdiv"><span>observaciones</span></div>
       <div class="fg"><label>Observaciones del maquinista</label><textarea id="ob-${mi}">${m.obs||''}</textarea></div>
@@ -1082,6 +1082,91 @@ function mostrarAlertasParadas(mi) {
   }
 }
 
+function buildExtrasTable(extras, mi) {
+  if (!extras || extras.length === 0) {
+    return `<div style="font-size:12px;font-family:var(--mono);color:var(--text2);padding:8px 0;">Sin telares extra este día. <button class="btn-add" style="display:inline;width:auto;padding:4px 10px;margin-left:8px;" onclick="addTelarExtra(${mi})">+ Agregar telar extra</button></div>`;
+  }
+  const rows = extras.map((t, i) => {
+    const ini = t.mts_iniciales||'';
+    const fin = t.mts_finales||'';
+    const tot = (!isNaN(ini)&&!isNaN(fin)&&ini!==''&&fin!=='') ? Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0) : 0;
+    return `<tr>
+      <td style="padding:4px 6px;color:var(--accent2);font-weight:700;font-family:var(--mono);">${t.numero||'?'}</td>
+      <td style="padding:4px 3px;"><input type="number" value="${ini}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td>
+      <td style="padding:4px 3px;"><input type="number" value="${fin}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td>
+      <td style="padding:4px 6px;text-align:right;font-family:var(--mono);font-weight:700;">${tot.toLocaleString('es-AR')}</td>
+      <td style="padding:4px 3px;"><button class="btn-rp" onclick="quitarTelarExtra(${mi},${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  const total = extras.reduce((s,t) => {
+    const ini=t.mts_iniciales||0, fin=t.mts_finales||0;
+    if(isNaN(ini)||isNaN(fin)) return s;
+    return s + Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
+  }, 0);
+  const por4 = Math.round(total/4);
+  return `<table class="tt" style="margin-bottom:8px;">
+    <thead><tr>
+      <th style="width:50px;"># Telar</th>
+      <th>Mts Iniciales</th>
+      <th>Mts Finales</th>
+      <th style="text-align:right;">Total</th>
+      <th style="width:32px;"></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot>
+      <tr style="background:var(--surface2);">
+        <td colspan="3" style="padding:6px;font-size:12px;font-family:var(--mono);color:var(--text2);">Total metros extra</td>
+        <td style="padding:6px;text-align:right;font-family:var(--mono);font-weight:700;" id="ext-total-${mi}">${total.toLocaleString('es-AR')}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td colspan="3" style="padding:4px 6px;font-size:11px;font-family:var(--mono);color:var(--text3);">Por telar (÷ 4) → columna J</td>
+        <td style="padding:4px 6px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text2);" id="ext-div4-${mi}">${por4.toLocaleString('es-AR')}</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+  <button class="btn-add" onclick="addTelarExtra(${mi})">+ Agregar telar extra</button>`;
+}
+
+function recalcExtras(mi) {
+  // Leer inputs de telares extra y actualizar totales
+  const body = document.getElementById(`extbody-${mi}`);
+  if (!body) return;
+  const rows = body.querySelectorAll('tbody tr');
+  let total = 0;
+  rows.forEach(tr => {
+    const ins = tr.querySelectorAll('input');
+    const ini = parseFloat(ins[0]?.value)||0;
+    const fin = parseFloat(ins[1]?.value)||0;
+    const mts = Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
+    const tdTot = tr.querySelectorAll('td')[3];
+    if (tdTot) tdTot.textContent = mts.toLocaleString('es-AR');
+    total += mts;
+  });
+  const t = document.getElementById(`ext-total-${mi}`);
+  const d = document.getElementById(`ext-div4-${mi}`);
+  if (t) t.textContent = total.toLocaleString('es-AR');
+  if (d) d.textContent = Math.round(total/4).toLocaleString('es-AR');
+  // Actualizar estado
+  maquinistas[mi].mtsExtra = total;
+}
+
+function addTelarExtra(mi) {
+  maquinistas[mi].telares.push({ numero: '?', mts_iniciales: '', mts_finales: '', es_extra: true });
+  const body = document.getElementById(`extbody-${mi}`);
+  if (body) body.innerHTML = buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra), mi);
+}
+
+function quitarTelarExtra(mi, idx) {
+  const extras = maquinistas[mi].telares.filter(t=>t.es_extra);
+  const telarAQuitar = extras[idx];
+  maquinistas[mi].telares = maquinistas[mi].telares.filter(t => t !== telarAQuitar);
+  const body = document.getElementById(`extbody-${mi}`);
+  if (body) body.innerHTML = buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra), mi);
+  recalcExtras(mi);
+}
+
 function addP(mi) {
   const c = document.createElement('div'); c.innerHTML = prow({},mi);
   document.getElementById(`pl-${mi}`).appendChild(c.firstElementChild);
@@ -1135,7 +1220,25 @@ function syncDom() {
   maquinistas.forEach((m,mi) => {
     m.legajo  = document.getElementById(`l-${mi}`)?.value.trim() || m.legajo;
     m.fecha   = document.getElementById(`f-${mi}`)?.value || m.fecha;
-    m.mtsExtra= parseFloat(document.getElementById(`ex-${mi}`)?.value)||0;
+    // Leer metros extra de la tabla de telares extra
+    const extBody = document.getElementById(`extbody-${mi}`);
+    if (extBody) {
+      let totalExt = 0;
+      extBody.querySelectorAll('tbody tr').forEach((tr, i) => {
+        const ins = tr.querySelectorAll('input');
+        const ini = parseFloat(ins[0]?.value)||0;
+        const fin = parseFloat(ins[1]?.value)||0;
+        const mts = Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
+        totalExt += mts;
+        // Actualizar telar extra en el estado
+        const extrasArr = maquinistas[mi].telares.filter(t=>t.es_extra);
+        if (extrasArr[i]) {
+          extrasArr[i].mts_iniciales = ini;
+          extrasArr[i].mts_finales = fin;
+        }
+      });
+      m.mtsExtra = totalExt;
+    }
     m.obs     = document.getElementById(`ob-${mi}`)?.value.trim()||'';
     const trows=document.querySelectorAll(`#tb-${mi} tr`);
     m.telares=Array.from(trows).map((tr,i)=>{ const ins=tr.querySelectorAll('input'); return { numero:i+1, fto:ins[0]?.value||'', ancho_trama:parseFloat(ins[1]?.value)||null, mts_iniciales:parseFloat(ins[2]?.value), mts_finales:parseFloat(ins[3]?.value), er:parseFloat(ins[4]?.value)||null, es_extra:false }; });
@@ -1209,7 +1312,7 @@ async function publicarSheets() {
         if (h < d && (d-h) < 360) { const tmp=d; d=h; h=tmp; }
         else if (h < d) h += 1440;
         const mins = h - d;
-        if (mins > 0) mnp[p.telar] = (mnp[p.telar]||0) + mins;
+        if (mins > 0) mnp[parseInt(p.telar)] = (mnp[parseInt(p.telar)]||0) + mins;
       });
 
       // Construir filas a escribir
@@ -1222,7 +1325,11 @@ async function publicarSheets() {
         const mts=(t.mts_iniciales>63000&&t.mts_finales<3000)?(65535-t.mts_iniciales)+t.mts_finales:t.mts_finales-t.mts_iniciales;
         const mtsVal = Math.max(mts,0);
         totalMts += mtsVal;
-        const np = mnp[t.numero]||0;
+        // El número de telar real viene de t.numero (ej: 5,6,7,8)
+        // Las paradas también usan el número real, así que el match es directo
+        const telarReal = parseInt(t.numero) || (idx+1);
+        const np = mnp[telarReal] || 0;
+        console.log(`Telar ${telarReal}: mnp=${np}`, mnp);
         const f = filaActual; // fila actual para fórmulas
 
         // Nuevo orden: B=Fecha, C=HrsTrabajadas, D=Telar, E=Entrada, F=Salida, G=E/R
@@ -1246,6 +1353,34 @@ async function publicarSheets() {
       });
 
       if (writeRows.length === 0) continue;
+
+      // Primero obtener el sheetId numérico para poder insertar filas
+      const metaRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=sheets(properties(title,sheetId))`,
+        { headers: { Authorization: `Bearer ${gToken}` } }
+      );
+      const metaData = await metaRes.json();
+      const sheetMeta = metaData.sheets?.find(s => s.properties.title === leg);
+      const sheetGid = sheetMeta?.properties?.sheetId;
+
+      // Insertar filas vacías para expandir la tabla antes de escribir
+      if (sheetGid !== undefined) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requests: [{
+                insertDimension: {
+                  range: { sheetId: sheetGid, dimension: 'ROWS', startIndex: firstEmptyRow-1, endIndex: firstEmptyRow-1+nRows },
+                  inheritFromBefore: true
+                }
+              }]
+            })
+          }
+        );
+      }
 
       // Escribir en Sheets usando batchUpdate para no tocar columnas con fórmulas
       // Solo escribimos B,C,D,E,F,G (rango continuo) e I,J por separado
