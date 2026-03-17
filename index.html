@@ -14,23 +14,16 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
-
-/* GRAIN OVERLAY */
 body::before{content:'';position:fixed;inset:0;opacity:.025;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size:200px;pointer-events:none;z-index:0;}
-
 .wrap{max-width:980px;margin:0 auto;padding:0 24px 80px;position:relative;z-index:1;}
-
-/* HEADER */
 header{padding:28px 0 20px;display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--ink);margin-bottom:28px;}
 .hlogo{display:flex;align-items:center;gap:14px;}
 .logo{width:48px;height:48px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;font-family:var(--mono);border-radius:4px;}
 .htxt h1{font-size:24px;font-weight:800;letter-spacing:-1px;line-height:1;}
 .htxt p{font-size:12px;color:var(--text2);font-family:var(--mono);margin-top:3px;}
 .hright{font-size:11px;font-family:var(--mono);color:var(--text3);text-align:right;line-height:1.8;}
-
-/* STEPS */
 .steps{display:flex;align-items:center;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--surface);}
 .step{flex:1;padding:10px 14px;font-size:11px;font-family:var(--mono);color:var(--text3);border-right:1px solid var(--border);display:flex;align-items:center;gap:7px;transition:all .2s;}
 .step:last-child{border-right:none;}
@@ -38,14 +31,10 @@ header{padding:28px 0 20px;display:flex;align-items:flex-end;justify-content:spa
 .step.done{background:var(--accent2);color:#fff;}
 .step-n{width:18px;height:18px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;}
 @media(max-width:600px){.step span{display:none;}}
-
-/* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:16px;}
 .card.primary{border-color:var(--accent);border-width:2px;}
 .ctitle{font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
 .ctitle::after{content:'';flex:1;height:1px;background:var(--border);}
-
-/* SHEETS CONFIG */
 .sheets-config{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
 .sc-label{font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
 .sc-val{font-size:13px;font-family:var(--mono);color:var(--accent2);font-weight:700;flex:1;}
@@ -54,21 +43,15 @@ header{padding:28px 0 20px;display:flex;align-items:flex-end;justify-content:spa
 .sc-connected{display:flex;align-items:center;gap:7px;font-size:12px;font-family:var(--mono);}
 .sc-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);flex-shrink:0;animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-
-/* QUINCENA SELECTOR */
 .quinc-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
 .qbtn{padding:7px 14px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .2s;}
 .qbtn.active{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700;}
 .qbtn:hover:not(.active){border-color:var(--accent);color:var(--accent);}
-
-/* UPLOAD */
 .drop{border:2px dashed var(--border);border-radius:6px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);}
 .drop:hover,.drop.over{border-color:var(--accent);background:rgba(212,82,26,.04);}
 .drop h3{font-size:15px;font-weight:700;margin-bottom:5px;}
 .drop p{font-size:12px;color:var(--text2);font-family:var(--mono);}
 .drop-icon{font-size:28px;margin-bottom:8px;}
-
-/* FILE LIST */
 .flist{display:flex;flex-direction:column;gap:5px;margin-top:10px;}
 .fitem{display:flex;align-items:center;gap:9px;padding:8px 12px;background:var(--surface);border-radius:4px;border:1px solid var(--border);}
 .fitem.proc{border-color:var(--warn);}
@@ -80,12 +63,8 @@ header{padding:28px 0 20px;display:flex;align-items:flex-end;justify-content:spa
 .fi-rm:hover{color:var(--danger);}
 .fspin{width:12px;height:12px;border:2px solid rgba(201,146,10,.3);border-top-color:var(--warn);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
-/* PROGRESS */
 .prog{background:var(--surface2);border-radius:3px;height:3px;margin-top:8px;overflow:hidden;}
 .prog-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .4s;}
-
-/* MAQ BLOCKS */
 .mblock{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:12px;overflow:hidden;}
 .mblock.has-alerts{border-color:var(--warn);}
 .mhdr{padding:12px 16px;background:var(--surface2);display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);}
@@ -95,8 +74,6 @@ header{padding:28px 0 20px;display:flex;align-items:flex-end;justify-content:spa
 .mmeta{font-size:11px;font-family:var(--mono);color:var(--text2);}
 .mtog{color:var(--text2);font-size:12px;transition:transform .2s;}
 .mbody{padding:16px;}
-
-/* FORM */
 .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
 .fg label{font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:.5px;text-transform:uppercase;}
 input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:13px;padding:7px 10px;outline:none;transition:border-color .2s;width:100%;}
@@ -105,18 +82,12 @@ textarea{resize:vertical;min-height:52px;}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 @media(max-width:560px){.fgrid{grid-template-columns:1fr;}}
 .full{grid-column:1/-1;}
-
-/* TURNO */
 .trow{display:flex;gap:6px;flex-wrap:wrap;}
 .tb{flex:1;min-width:90px;padding:7px 6px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-family:var(--mono);font-size:11px;text-align:center;transition:all .2s;}
 .tb.active{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:700;}
 .ichip{display:inline-flex;align-items:center;gap:5px;background:rgba(212,82,26,.08);border:1px solid rgba(212,82,26,.2);border-radius:4px;padding:4px 9px;font-size:10px;font-family:var(--mono);color:var(--accent);margin-top:5px;}
-
-/* DIVIDER */
 .sdiv{height:1px;background:var(--border);margin:14px 0;position:relative;}
 .sdiv span{position:absolute;left:8px;top:-7px;background:var(--surface);padding:0 6px;font-size:9px;font-family:var(--mono);color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
-
-/* TABLE */
 .tt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
 .tt th{color:var(--text2);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:5px 4px;text-align:left;border-bottom:1px solid var(--border);}
 .tt td{padding:3px 3px;border-bottom:1px solid rgba(0,0,0,.05);vertical-align:middle;}
@@ -124,8 +95,6 @@ textarea{resize:vertical;min-height:52px;}
 .tnum{color:var(--accent);font-weight:700;padding:5px 6px!important;font-size:13px;width:26px;text-align:center;}
 input.warn{border-color:var(--warn)!important;background:rgba(201,146,10,.07)!important;}
 input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!important;}
-
-/* PARADAS */
 .plist{display:flex;flex-direction:column;gap:5px;}
 .prow{display:grid;grid-template-columns:56px 108px 108px 46px 1fr 30px;gap:6px;align-items:center;}
 @media(max-width:560px){.prow{grid-template-columns:1fr 1fr;gap:4px;}}
@@ -139,13 +108,9 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
 .palert-title{font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;color:var(--danger);}
 .btn-add{background:rgba(212,82,26,.06);border:1px dashed rgba(212,82,26,.3);border-radius:4px;color:var(--accent);cursor:pointer;font-family:var(--mono);font-size:11px;padding:7px 12px;width:100%;text-align:center;transition:all .2s;margin-top:6px;}
 .btn-add:hover{background:rgba(212,82,26,.12);border-style:solid;}
-
-/* ALERTS */
 .apanel{background:rgba(201,146,10,.06);border:1px solid rgba(201,146,10,.25);border-radius:5px;padding:10px 12px;margin-bottom:12px;}
 .aptitle{font-size:9px;font-family:var(--mono);color:var(--warn);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px;}
 .aitem{display:flex;align-items:flex-start;gap:6px;font-size:11px;font-family:var(--mono);color:var(--text2);padding:3px 0;line-height:1.5;}
-
-/* BUTTONS */
 .btn-p{background:var(--accent);border:none;border-radius:4px;color:#fff;cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:700;padding:11px 22px;transition:all .2s;display:inline-flex;align-items:center;gap:7px;}
 .btn-p:hover{background:#b8431a;transform:translateY(-1px);}
 .btn-p:disabled{opacity:.4;cursor:not-allowed;transform:none;}
@@ -154,16 +119,12 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
 .btn-ok{background:var(--accent2);border:none;border-radius:4px;color:#fff;cursor:pointer;font-family:var(--sans);font-size:14px;font-weight:700;padding:11px 22px;transition:all .2s;display:inline-flex;align-items:center;gap:7px;}
 .btn-ok:hover{background:#1e4a2f;}
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px;}
-
-/* STATUS */
 .sbar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:5px;font-size:12px;font-family:var(--mono);margin-bottom:14px;}
 .sbar.loading{background:rgba(201,146,10,.08);border:1px solid rgba(201,146,10,.25);color:var(--warn);}
 .sbar.success{background:rgba(42,95,63,.08);border:1px solid rgba(42,95,63,.25);color:var(--accent2);}
 .sbar.error{background:rgba(192,48,48,.08);border:1px solid rgba(192,48,48,.25);color:var(--danger);}
 .sbar.info{background:rgba(212,82,26,.08);border:1px solid rgba(212,82,26,.25);color:var(--accent);}
 .spin{width:13px;height:13px;border:2px solid rgba(201,146,10,.3);border-top-color:var(--warn);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
-
-/* RESULT */
 .rcard{background:var(--accent2);border-radius:6px;padding:24px;text-align:center;margin-bottom:16px;color:#fff;}
 .rcard .rcheck{font-size:40px;margin-bottom:8px;}
 .rcard h2{font-size:22px;font-weight:800;margin-bottom:4px;}
@@ -172,20 +133,86 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
 .erow:last-child{border-bottom:none;}
 .el{color:var(--text2);flex-shrink:0;}
 .ev{color:var(--text);font-weight:700;text-align:right;word-break:break-word;max-width:65%;}
-
-/* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
 .modal{background:var(--surface);border-radius:8px;padding:24px;max-width:480px;width:100%;border:2px solid var(--ink);}
 .modal h3{font-size:16px;font-weight:800;margin-bottom:6px;}
 .modal p{font-size:13px;color:var(--text2);font-family:var(--mono);margin-bottom:14px;line-height:1.6;}
 .modal input{margin-bottom:10px;}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
-
 .hidden{display:none!important;}
 .motsel{font-size:11px;padding:5px 6px;}
 .tag{display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:2px 7px;font-size:10px;font-family:var(--mono);color:var(--text2);}
 .tag.green{border-color:var(--accent2);color:var(--accent2);background:rgba(42,95,63,.06);}
 .tag.orange{border-color:var(--accent);color:var(--accent);background:rgba(212,82,26,.06);}
+/* ═══════════════════════════════════════════════════
+   DASHBOARD STYLES
+   ═══════════════════════════════════════════════════ */
+.dash-btn{background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;padding:8px 14px;transition:all .2s;display:inline-flex;align-items:center;gap:6px;letter-spacing:.5px;}
+.dash-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+.dash-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+.dash-modal{background:var(--bg);border:2px solid var(--ink);border-radius:8px;width:100%;max-width:1100px;margin:auto;overflow:hidden;}
+.dash-modal-hdr{background:var(--ink);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;}
+.dash-modal-hdr h2{font-size:18px;font-weight:800;letter-spacing:-0.5px;font-family:var(--sans);}
+.dash-modal-hdr p{font-size:11px;font-family:var(--mono);opacity:.6;margin-top:3px;}
+.dash-close{background:none;border:1px solid rgba(255,255,255,.3);border-radius:4px;color:#fff;cursor:pointer;font-family:var(--mono);font-size:13px;padding:6px 12px;transition:all .2s;}
+.dash-close:hover{background:rgba(255,255,255,.1);}
+.dash-quinc-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.dash-quinc-bar label{font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.dash-qsel,.dash-compare-sel{background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:12px;padding:5px 10px;outline:none;cursor:pointer;}
+.dash-load-btn{background:var(--accent2);border:none;border-radius:4px;color:#fff;cursor:pointer;font-family:var(--mono);font-size:11px;font-weight:700;padding:6px 14px;transition:all .2s;}
+.dash-load-btn:hover{background:#1e4a2f;}
+.dash-load-btn:disabled{opacity:.4;cursor:not-allowed;}
+.dash-tabs{background:var(--surface);border-bottom:2px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;}
+.dash-tabs::-webkit-scrollbar{display:none;}
+.dash-tab{padding:11px 18px;font-size:11px;font-family:var(--mono);letter-spacing:.5px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .2s;text-transform:uppercase;}
+.dash-tab:hover{color:var(--text);}
+.dash-tab.active{color:var(--accent2);border-bottom-color:var(--accent2);font-weight:700;}
+.dash-body{padding:24px;}
+.dash-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;}
+.dash-kpi{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 16px;}
+.dash-kpi-label{font-size:9px;font-family:var(--mono);color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
+.dash-kpi-val{font-size:26px;font-weight:800;font-family:var(--mono);color:var(--ink);line-height:1;}
+.dash-kpi-sub{font-size:10px;font-family:var(--mono);color:var(--text2);margin-top:4px;}
+.dash-kpi.green .dash-kpi-val{color:var(--accent2);}
+.dash-kpi.orange .dash-kpi-val{color:var(--warn);}
+.dash-kpi.red .dash-kpi-val{color:var(--danger);}
+.dash-section-title{font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.dash-section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.dash-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-bottom:24px;}
+.dash-table th{color:var(--text2);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:2px solid var(--border);}
+.dash-table td{padding:8px 8px;border-bottom:1px solid rgba(0,0,0,.05);vertical-align:middle;}
+.dash-table tr:hover td{background:var(--surface2);}
+.dash-table .val{font-weight:700;color:var(--ink);}
+.dash-table .val.good{color:var(--accent2);}
+.dash-table .leg-badge{background:var(--ink);color:#fff;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700;}
+.dash-bar-wrap{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+.dash-bar-row{display:grid;grid-template-columns:80px 1fr 90px;gap:10px;align-items:center;}
+.dash-bar-lbl{font-size:11px;font-family:var(--mono);color:var(--text2);text-align:right;}
+.dash-bar-track{background:var(--surface2);border-radius:3px;height:20px;overflow:hidden;}
+.dash-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.dash-bar-fill.green{background:var(--accent2);}
+.dash-bar-fill.orange{background:var(--warn);}
+.dash-bar-fill.blue{background:#2a5a8a;}
+.dash-bar-val{font-size:11px;font-family:var(--mono);font-weight:700;color:var(--text);text-align:right;}
+.dash-compare-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-bottom:24px;}
+.dash-compare-table th{color:var(--text2);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:6px 8px;border-bottom:2px solid var(--border);text-align:right;}
+.dash-compare-table th:first-child{text-align:left;}
+.dash-compare-table td{padding:7px 8px;border-bottom:1px solid rgba(0,0,0,.05);text-align:right;}
+.dash-compare-table td:first-child{text-align:left;font-weight:700;}
+.dash-compare-table .delta-pos{color:var(--accent2);font-weight:700;}
+.dash-compare-table .delta-neg{color:var(--danger);font-weight:700;}
+.dash-compare-table tr:hover td{background:var(--surface2);}
+.dash-timeline{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;}
+.dash-tl-row{display:grid;grid-template-columns:240px 1fr 110px;gap:12px;align-items:center;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:5px;}
+.dash-tl-bar-track{background:var(--surface2);border-radius:3px;height:16px;overflow:hidden;}
+.dash-tl-bar-fill{height:100%;border-radius:3px;background:var(--accent2);transition:width .5s ease;}
+.dash-tl-val{font-size:11px;font-family:var(--mono);font-weight:700;text-align:right;}
+.dash-loading{text-align:center;padding:48px 24px;font-family:var(--mono);color:var(--text2);}
+.dash-loading .dl-spin{width:28px;height:28px;border:3px solid rgba(42,95,63,.2);border-top-color:var(--accent2);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
+.dash-empty{text-align:center;padding:40px 24px;font-family:var(--mono);color:var(--text3);font-size:13px;}
+.dash-panel{display:none;}
+.dash-panel.active{display:block;}
+@media(max-width:600px){.dash-bar-row{grid-template-columns:60px 1fr 70px;}.dash-kpis{grid-template-columns:1fr 1fr;}.dash-body{padding:16px;}.dash-tl-row{grid-template-columns:1fr 80px;}}
 </style>
 </head>
 <body>
@@ -193,15 +220,18 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
 
 <header>
   <div class="hlogo">
-    <img src="data:image/jpeg;base64,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" alt="Álamo Bolsas Industriales" style="height:52px;width:auto;object-fit:contain;">
+    <img src="data:image/jpeg;base64,/9j/7gAOQWRvYmUAZAAAAAAA/9sAQwAFAwQEBAMFBAQEBQUFBgcMCAcHBwcPCwsJDBEPEhIRDxERExYcFxMUGhURERghGBodHR8fHxMXIiQiHiQcHh8e/8AAFAgAaAEWBEMRAE0RAFkRAEsRAP/EAB0AAQABBQEBAQAAAAAAAAAAAAAHBAUGCAkDAgH/xABOEAABAwMCAwUEBgcFAwsFAQABAAIDBAURBgcSITEIEyJBUWFxgZEUFTJCcqEJFiNSYrHBJDOCktFTk6IXNENUVYOUs8LS8EVWY3Oy8f/aAA4EQwBNAFkASwAAPwDctblrctbloiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiLzqp4aWnkqKiVkUUbS573HAaB5lFS3e40NotdTc7nVw0dFSxOlnnmeGsjY0ZLiT0ARQ9rXcSuuMz6SyySUdEOXet5Sy+3P3R7Bz/AJItDe0L2q9Ranrqix7e1VRY7ExxYa2PwVdYOnED1iZ6AYd6kZwCwziuEYbXcVWwOd4Z8vHEfY7zPxRQC6bV9CyLUxlvlM2eTEVy4pWCR/Xwy+Z5HoUUw7R6hrL1aqimuEpmqKNzQJXfaexwOM+pBBGfci3x7De6l73C0XdLTqarfXXWxyxNFXJ/eTQSB3Bxn7zgWOHF5jGeeSSzdFsSiIiIiZCIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIoZ3U1abtWutFBL/YIH4kc08pnj/wBI/M8/RFoD21d8ZNZX2bQemas/q7bpsVc0TuVfUNPqOsbD08i4F3PDUVTtjohlwYy83iLNL1p4HD+9/id/D6Dz93Urx2POzpBqWCn1/r2i7y0E8dstso5VeP8ApZB/s/Rv3up8P2iuO+VVHFb7Za4+EcUjpS0cuFrW8I5f4j8kWUfpHb1SUek9JaPpQyPvKqSt7mMcIjjiZ3bOQ5AZkdj8JRfuxNK5tFc60jwySsiafwgk/wD9BF6fo17LJDprV2oHsIjq6yno4z6mJjnu/wDNaiktFt0iwzcHW8Onx9BomsqLk5ueF32YQehd6n0CKAu1D2iLdtdEdP2GOnueq5ow7u3nMNE0jk+XByXHqGZHLmcDGSiyo1fqaepM775WNeTkNjfwNH+EckWl11343fuN2Nzm3AvkUvHxCOmqO5ib7BGzDcfBFKe12qZ9QUE1NXlpraXHE8DHeMPR2PXIIPwRbo9jbee47o6Yr7ZqR0b9QWcx97OxgYKqF+eGQtHIOBaQ7HL7J80WZop9RERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERFg+7OpjaLULbRycNbWNILgeccfQu956D4nyRa69tzd86E0UNKWOq7vUN9ic0vY7D6Wl+y+Qejnc2N/wAR6gIo+230ydQ3jM7D9X0uHTn98+TPj5+z3otXeyRs+/dLXgqbpC79WbS5stwdzAnd9ynB/ixl3o0HoSEU8Ma2NgYxoa1owABgAeiLpRTwxU1PHBBEyKKNoYyNjQ1rWgYAAHIADlhFAm5t1F01fVva7ihpv7PH7m/aP+bKLmd2xdaDWm+15kgl7yhtJFspSDkERE8ZHvkMhz6YRS7t7azaNI0NM9vDM9nfS/ifzPy5D4It6Oy9o92iNkNO2ieLu62an+m1gIwRLN4yD7Wgtb/hReW4Gpo9N2cvj4X10+WU0Z9fNx9g/wBAio+09u9SbTaEdVQGKbUFwDobVTO5jiA8Urh+4zIPtJaPMkFDNhtVx1Rfvo8b3STTOMk87+fCM83u/wBPM8kXP/bPRerN6Nyzb6eolqa2tldVXK41GXiFhd45XnzOTgDzJA5eRZ5uRaLRp3QkNvo4GCWWpYO8cAZJCMlzif8A4OaLZntY6H0NtV2a6LTFittOyrrLnAz6VIxpqah7Gue+R78ZPIYwOQ4gAAiodionm8XKcA8DadjD7y7I/kUWNfo2aKofrfVdwaHfR4bbFC8+XG+Xib+UbkUuIt5UREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREVNda6nttunr6p/BDAwvefYPL3+SK06x1DbNKaWuWo7zOIKC3U7p53+eAOg9XE4AHmSAi17udXX6m1G+fgL6qslDIowfsjo1vuA/qUXLbWF71LvHu3NX9w+out8rWw0lK05ETSeGOIejWtxk+wk+aKeNJ2WCwWOC3Q4c5o4pX4/vHnq7/AOeQCLpXsrt/bds9u7dpW3cD3wt7yrqAMGoqHY7yQ+88h6NDR5IvPWl3Fk01WV4IErWcMI9ZHcm/nz+CKm7QGt2be7S33UokDauKnMNCD1dU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" alt="Álamo Bolsas Industriales" style="height:52px;width:auto;object-fit:contain;">
     <div class="htxt">
       <h1>Álamo Telares</h1>
       <p>Control diario de producción · Bolsas Industriales Álamo</p>
     </div>
   </div>
-  <div class="hright" id="hright">
-    <span style="color:var(--text3)">Google Sheets</span><br>
-    <span id="hConnStatus" style="color:var(--danger)">● No conectado</span>
+  <div class="hright" id="hright" style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+    <button class="dash-btn" onclick="abrirDash()">📊 Estadísticas</button>
+    <div style="text-align:right;line-height:1.8;">
+      <span style="color:var(--text3)">Google Sheets</span><br>
+      <span id="hConnStatus" style="color:var(--danger)">● No conectado</span>
+    </div>
   </div>
 </header>
 
@@ -217,8 +247,6 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
 
 <!-- ═══ PASO 1 ═══ -->
 <div id="paso1">
-
-  <!-- Google Sheets config -->
   <div class="card">
     <div class="ctitle">🔗 Conexión Google Sheets</div>
     <div id="notConnected">
@@ -250,7 +278,6 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
     </div>
   </div>
 
-  <!-- Upload planillas -->
   <div class="card primary">
     <div class="ctitle">📋 Planillas del día</div>
     <div class="drop" id="dropZone" onclick="document.getElementById('fInput').click()">
@@ -327,68 +354,109 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
   </div>
 </div>
 
+<!-- ═══ DASHBOARD MODAL ═══ -->
+<div class="dash-modal-bg hidden" id="dashModal">
+  <div class="dash-modal">
+    <div class="dash-modal-hdr">
+      <div>
+        <h2>📊 Estadísticas · Álamo Telares</h2>
+        <p id="dashQuinceLabel">Seleccioná una vista y cargá los datos</p>
+      </div>
+      <button class="dash-close" onclick="cerrarDash()">✕ Cerrar</button>
+    </div>
+    <div class="dash-quinc-bar" style="flex-direction:column;align-items:flex-start;gap:10px;">
+      <div style="display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap;">
+        <label>Vista</label>
+        <select class="dash-qsel" id="dashModoVista" onchange="dashCambiarModo()">
+          <option value="todas">📅 Todas las quincenas — historial completo</option>
+          <option value="una">🔍 Una quincena específica</option>
+          <option value="comparar">⚖️ Comparar dos quincenas</option>
+        </select>
+        <button class="dash-load-btn" id="dashLoadBtn" onclick="dashCargarDatos()">Cargar →</button>
+        <span id="dashLoadStatus" style="font-size:11px;font-family:var(--mono);color:var(--text2);"></span>
+      </div>
+      <div id="dashSelRow" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;width:100%;">
+        <label id="dashSel1Label">Quincena</label>
+        <select class="dash-qsel" id="dashQselPrincipal" onchange="dashCambiarQuincena()">
+          <option value="">— Seleccionar —</option>
+        </select>
+        <label id="dashSel2Label" style="display:none;margin-left:8px;">Comparar con</label>
+        <select class="dash-compare-sel" id="dashQselComparar" style="display:none;">
+          <option value="">— Seleccionar —</option>
+        </select>
+      </div>
+    </div>
+    <div class="dash-tabs">
+      <div class="dash-tab active" onclick="dashTab('historial')" id="dt-historial">Historial</div>
+      <div class="dash-tab" onclick="dashTab('operarios')" id="dt-operarios">Por Operario</div>
+      <div class="dash-tab" onclick="dashTab('telares')" id="dt-telares">Por Telar</div>
+      <div class="dash-tab" onclick="dashTab('paradas')" id="dt-paradas">Paradas</div>
+      <div class="dash-tab" onclick="dashTab('evolucion')" id="dt-evolucion">Evolución</div>
+      <div class="dash-tab" onclick="dashTab('comparativa')" id="dt-comparativa">Comparativa</div>
+      <div class="dash-tab" onclick="dashTab('memoria')" id="dt-memoria">🧠 Memoria IA</div>
+    </div>
+    <div class="dash-body">
+      <div id="dashKpis" class="dash-kpis" style="display:none;">
+        <div class="dash-kpi green"><div class="dash-kpi-label">Total metros</div><div class="dash-kpi-val" id="kpi-metros">—</div><div class="dash-kpi-sub" id="kpi-metros-sub"></div></div>
+        <div class="dash-kpi"><div class="dash-kpi-label">Operarios</div><div class="dash-kpi-val" id="kpi-operarios">—</div><div class="dash-kpi-sub">con registros</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-label">Registros</div><div class="dash-kpi-val" id="kpi-registros">—</div><div class="dash-kpi-sub">filas de producción</div></div>
+        <div class="dash-kpi orange"><div class="dash-kpi-label">Min no productivos</div><div class="dash-kpi-val" id="kpi-paradas">—</div><div class="dash-kpi-sub" id="kpi-paradas-sub"></div></div>
+        <div class="dash-kpi"><div class="dash-kpi-label">Promedio/turno</div><div class="dash-kpi-val" id="kpi-prom">—</div><div class="dash-kpi-sub">metros por telar/turno</div></div>
+      </div>
+      <div class="dash-panel active" id="panel-historial">
+        <div style="padding:24px;font-family:var(--mono);color:var(--text2);text-align:center;">Presioná <strong>Cargar →</strong> para ver el historial</div>
+      </div>
+      <div class="dash-panel" id="panel-operarios">
+        <div class="dash-empty">Cargá datos primero</div>
+      </div>
+      <div class="dash-panel" id="panel-telares">
+        <div class="dash-empty">Cargá datos primero</div>
+      </div>
+      <div class="dash-panel" id="panel-paradas">
+        <div class="dash-empty">Cargá datos primero</div>
+      </div>
+      <div class="dash-panel" id="panel-evolucion">
+        <div class="dash-empty">Cargá datos primero</div>
+      </div>
+      <div class="dash-panel" id="panel-comparativa">
+        <div class="dash-empty">Seleccioná modo "Comparar dos quincenas" y cargá.</div>
+      </div>
+      <div class="dash-panel" id="panel-memoria">
+        <div id="mem-content">
+          <div class="dash-loading"><div class="dl-spin"></div>Cargando memoria...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-// ═══════════════════════════════════════════════════
-// CONFIG & ESTADO
-// ═══════════════════════════════════════════════════
 const DEFAULT_CLIENT_ID = '844318342271-7a62emkjn9vt9m574s59t8jmcbi0t1b4.apps.googleusercontent.com';
 const DEFAULT_SHEET_ID  = '1wIHpu7ObkXkfprHbrjCU58ajeZm_XQU99Vtg3KjJUe4';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
-
-let gToken = null;          // OAuth access token
-let archivos = [];          // archivos cargados
-let maquinistas = [];       // datos procesados
-let quinceActual = null;    // {nombre, sheetId}
-let legajosValidos = [];    // se carga desde la primera pestaña del Sheet
+let gToken = null;
+let archivos = [];
+let maquinistas = [];
+let quinceActual = null;
+let legajosValidos = [];
 let quincenas = JSON.parse(localStorage.getItem('alamo_quincenas') || '[]');
+if (quincenas.length === 0) { quincenas.push({ nombre: '2da Quincena Febrero 2026', sheetId: DEFAULT_SHEET_ID }); guardarQuincenas(); }
+const MOTIVOS = ['P1 - Falta de Urdimbre','P2 - Falta de Trama','P3 - Falta de Aceite','P4 - Falta de Aro/Plato','P5 - Falta de Auxiliar','P6 - Falta de Cono','P7 - Falta de Herramienta','P8 - Falta de Tapas Trama','P9 - Mant. Preventivo','P10 - Capacitación','P11 - Cambio de FTO','P12 - Falla Sensor Trama','P13 - Falla Sensor Urdimbre','P14 - Falla Ultrasonido','P15 - Falla Eléctrica','P16 - Falla Mecánica','P17 - Falla de Trama','P18 - Falla de Urdimbre'];
 
-// Agregar quincena default si no hay ninguna
-if (quincenas.length === 0) {
-  quincenas.push({ nombre: '2da Quincena Febrero 2026', sheetId: DEFAULT_SHEET_ID });
-  guardarQuincenas();
-}
-
-const MOTIVOS = [
-  'P1 - Falta de Urdimbre','P2 - Falta de Trama','P3 - Falta de Aceite',
-  'P4 - Falta de Aro/Plato','P5 - Falta de Auxiliar','P6 - Falta de Cono',
-  'P7 - Falta de Herramienta','P8 - Falta de Tapas Trama','P9 - Mant. Preventivo',
-  'P10 - Capacitación','P11 - Cambio de FTO','P12 - Falla Sensor Trama',
-  'P13 - Falla Sensor Urdimbre','P14 - Falla Ultrasonido','P15 - Falla Eléctrica',
-  'P16 - Falla Mecánica','P17 - Falla de Trama','P18 - Falla de Urdimbre'
-];
-
-// ═══════════════════════════════════════════════════
-// GOOGLE AUTH
-// ═══════════════════════════════════════════════════
 function conectarGoogle() {
   const clientId = document.getElementById('cfgClientId').value.trim() || DEFAULT_CLIENT_ID;
   const sheetId  = document.getElementById('cfgSheetId').value.trim()  || DEFAULT_SHEET_ID;
-
-  // Guardar sheetId como primera quincena si no hay ninguna
-  if (quincenas.length === 0) {
-    quincenas.push({ nombre: 'Quincena actual', sheetId });
-    guardarQuincenas();
-  }
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: window.location.href.split('?')[0],
-    response_type: 'token',
-    scope: SCOPES,
-    prompt: 'select_account'
-  });
+  if (quincenas.length === 0) { quincenas.push({ nombre: 'Quincena actual', sheetId }); guardarQuincenas(); }
+  const params = new URLSearchParams({ client_id: clientId, redirect_uri: window.location.href.split('?')[0], response_type: 'token', scope: SCOPES, prompt: 'select_account' });
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
-
 function desconectar() {
-  gToken = null;
-  localStorage.removeItem('alamo_gtoken');
+  gToken = null; localStorage.removeItem('alamo_gtoken');
   document.getElementById('notConnected').classList.remove('hidden');
   document.getElementById('isConnected').classList.add('hidden');
   document.getElementById('hConnStatus').textContent = '● No conectado';
   document.getElementById('hConnStatus').style.color = 'var(--danger)';
 }
-
 function checkTokenFromURL() {
   const hash = window.location.hash;
   if (hash.includes('access_token')) {
@@ -399,317 +467,341 @@ function checkTokenFromURL() {
     localStorage.setItem('alamo_gtoken', gToken);
     localStorage.setItem('alamo_gtoken_expiry', expiry.toString());
     window.history.replaceState({}, document.title, window.location.pathname);
-    mostrarConectado(true);
-    return true;
+    mostrarConectado(true); return true;
   }
   const saved = localStorage.getItem('alamo_gtoken');
   const expiry = parseInt(localStorage.getItem('alamo_gtoken_expiry') || '0');
-  if (saved && Date.now() < expiry) {
-    gToken = saved;
-    mostrarConectado(false);
-    return true;
-  }
-  // Token expirado o no existe — limpiar silenciosamente
-  localStorage.removeItem('alamo_gtoken');
-  localStorage.removeItem('alamo_gtoken_expiry');
-  return false;
+  if (saved && Date.now() < expiry) { gToken = saved; mostrarConectado(false); return true; }
+  localStorage.removeItem('alamo_gtoken'); localStorage.removeItem('alamo_gtoken_expiry'); return false;
 }
-
 async function mostrarConectado(verificar) {
   document.getElementById('notConnected').classList.add('hidden');
   document.getElementById('isConnected').classList.remove('hidden');
   document.getElementById('hConnStatus').textContent = '● Conectado';
   document.getElementById('hConnStatus').style.color = 'var(--accent2)';
-  hideStatus();
-  renderQuincenas();
+  hideStatus(); renderQuincenas();
   if (quinceActual) cargarLegajosDelSheet(quinceActual.sheetId);
-
   if (verificar) {
-    try {
-      const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: { Authorization: `Bearer ${gToken}` }
-      });
-      if (r.ok) {
-        const u = await r.json();
-        document.getElementById('connUser').textContent = u.email || '';
-        if (u.email) localStorage.setItem('alamo_user_email', u.email);
-      }
-    } catch(e) {}
-  } else {
-    const email = localStorage.getItem('alamo_user_email');
-    if (email) document.getElementById('connUser').textContent = email;
-  }
+    try { const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${gToken}` } }); if (r.ok) { const u = await r.json(); document.getElementById('connUser').textContent = u.email || ''; if (u.email) localStorage.setItem('alamo_user_email', u.email); } } catch(e) {}
+  } else { const email = localStorage.getItem('alamo_user_email'); if (email) document.getElementById('connUser').textContent = email; }
 }
 
-// ═══════════════════════════════════════════════════
-// QUINCENAS
-// ═══════════════════════════════════════════════════
-let editandoIdx = null; // índice de quincena que se está editando
-
+let editandoIdx = null;
 async function cargarLegajosDelSheet(sheetId) {
   if (!gToken || !sheetId) return;
   try {
-    const r = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Prod. General!A3:A20')}`,
-      { headers: { Authorization: `Bearer ${gToken}` } }
-    );
+    const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Prod. General!A3:A20')}`, { headers: { Authorization: `Bearer ${gToken}` } });
     if (!r.ok) return;
     const data = await r.json();
-    const rows = data.values || [];
-    legajosValidos = rows.map(r => String(r[0]).trim()).filter(v => v && !isNaN(v));
+    legajosValidos = (data.values || []).map(r => String(r[0]).trim()).filter(v => v && !isNaN(v));
     console.log('Legajos cargados:', legajosValidos);
-  } catch(e) {
-    console.error('Error cargando legajos:', e);
-  }
+  } catch(e) { console.error('Error cargando legajos:', e); }
 }
-
 function renderQuincenas() {
-  const row = document.getElementById('quinceRow');
-  row.innerHTML = '';
+  const row = document.getElementById('quinceRow'); row.innerHTML = '';
   quincenas.forEach((q, i) => {
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;align-items:center;gap:4px;';
-
-    const b = document.createElement('button');
-    b.className = 'qbtn' + (quinceActual?.nombre === q.nombre ? ' active' : '');
-    b.textContent = q.nombre;
-    b.onclick = () => {
-      quinceActual = q;
-      renderQuincenas();
-      cargarLegajosDelSheet(q.sheetId);
-    };
-
-    const btnEdit = document.createElement('button');
-    btnEdit.className = 'sc-btn';
-    btnEdit.textContent = '✏️';
-    btnEdit.title = 'Editar';
-    btnEdit.style.cssText = 'padding:5px 8px;font-size:12px;';
-    btnEdit.onclick = (e) => { e.stopPropagation(); editarQuince(i); };
-
-    const btnDel = document.createElement('button');
-    btnDel.className = 'sc-btn';
-    btnDel.textContent = '🗑️';
-    btnDel.title = 'Eliminar';
-    btnDel.style.cssText = 'padding:5px 8px;font-size:12px;color:var(--danger);border-color:rgba(192,48,48,.3);';
-    btnDel.onclick = (e) => { e.stopPropagation(); eliminarQuince(i); };
-
-    wrap.appendChild(b);
-    wrap.appendChild(btnEdit);
-    wrap.appendChild(btnDel);
-    row.appendChild(wrap);
+    const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;align-items:center;gap:4px;';
+    const b = document.createElement('button'); b.className = 'qbtn' + (quinceActual?.nombre === q.nombre ? ' active' : ''); b.textContent = q.nombre; b.onclick = () => { quinceActual = q; renderQuincenas(); cargarLegajosDelSheet(q.sheetId); };
+    const btnEdit = document.createElement('button'); btnEdit.className = 'sc-btn'; btnEdit.textContent = '✏️'; btnEdit.title = 'Editar'; btnEdit.style.cssText = 'padding:5px 8px;font-size:12px;'; btnEdit.onclick = (e) => { e.stopPropagation(); editarQuince(i); };
+    const btnDel = document.createElement('button'); btnDel.className = 'sc-btn'; btnDel.textContent = '🗑️'; btnDel.title = 'Eliminar'; btnDel.style.cssText = 'padding:5px 8px;font-size:12px;color:var(--danger);border-color:rgba(192,48,48,.3);'; btnDel.onclick = (e) => { e.stopPropagation(); eliminarQuince(i); };
+    wrap.appendChild(b); wrap.appendChild(btnEdit); wrap.appendChild(btnDel); row.appendChild(wrap);
   });
-  if (!quinceActual && quincenas.length > 0) {
-    quinceActual = quincenas[quincenas.length - 1];
-    renderQuincenas();
-  }
+  if (!quinceActual && quincenas.length > 0) { quinceActual = quincenas[quincenas.length - 1]; renderQuincenas(); }
 }
-
-function editarQuince(i) {
-  editandoIdx = i;
-  const q = quincenas[i];
-  document.getElementById('qNombre').value = q.nombre;
-  document.getElementById('qSheetId').value = q.sheetId;
-  document.getElementById('modalQuinceTitle').textContent = 'Editar quincena';
-  document.getElementById('modalQuince').classList.remove('hidden');
-}
-
-function eliminarQuince(i) {
-  const q = quincenas[i];
-  if (!confirm(`¿Eliminar "${q.nombre}"?\n\nEsto solo borra el acceso desde esta app. Tu Google Sheet no se modifica.`)) return;
-  quincenas.splice(i, 1);
-  guardarQuincenas();
-  if (quinceActual?.nombre === q.nombre) quinceActual = quincenas[quincenas.length - 1] || null;
-  renderQuincenas();
-}
-
-function mostrarModalQuince() {
-  editandoIdx = null;
-  document.getElementById('qNombre').value = '';
-  document.getElementById('qSheetId').value = '';
-  document.getElementById('modalQuinceTitle').textContent = 'Nueva quincena';
-  document.getElementById('modalQuince').classList.remove('hidden');
-}
+function editarQuince(i) { editandoIdx = i; const q = quincenas[i]; document.getElementById('qNombre').value = q.nombre; document.getElementById('qSheetId').value = q.sheetId; document.getElementById('modalQuinceTitle').textContent = 'Editar quincena'; document.getElementById('modalQuince').classList.remove('hidden'); }
+function eliminarQuince(i) { const q = quincenas[i]; if (!confirm(`¿Eliminar "${q.nombre}"?\n\nEsto solo borra el acceso desde esta app. Tu Google Sheet no se modifica.`)) return; quincenas.splice(i, 1); guardarQuincenas(); if (quinceActual?.nombre === q.nombre) quinceActual = quincenas[quincenas.length - 1] || null; renderQuincenas(); }
+function mostrarModalQuince() { editandoIdx = null; document.getElementById('qNombre').value = ''; document.getElementById('qSheetId').value = ''; document.getElementById('modalQuinceTitle').textContent = 'Nueva quincena'; document.getElementById('modalQuince').classList.remove('hidden'); }
 function cerrarModalQuince() { document.getElementById('modalQuince').classList.add('hidden'); editandoIdx = null; }
-
 function guardarQuince() {
-  const n  = document.getElementById('qNombre').value.trim();
-  const id = document.getElementById('qSheetId').value.trim();
+  const n = document.getElementById('qNombre').value.trim(); const id = document.getElementById('qSheetId').value.trim();
   if (!n || !id) { alert('Completá ambos campos'); return; }
-  if (editandoIdx !== null) {
-    quincenas[editandoIdx] = { nombre: n, sheetId: id };
-    if (quinceActual?.nombre === quincenas[editandoIdx]?.nombre || editandoIdx !== null) {
-      quinceActual = { nombre: n, sheetId: id };
-    }
-  } else {
-    quincenas.push({ nombre: n, sheetId: id });
-    quinceActual = { nombre: n, sheetId: id };
-  }
-  guardarQuincenas();
-  renderQuincenas();
-  cerrarModalQuince();
+  if (editandoIdx !== null) { quincenas[editandoIdx] = { nombre: n, sheetId: id }; quinceActual = { nombre: n, sheetId: id }; }
+  else { quincenas.push({ nombre: n, sheetId: id }); quinceActual = { nombre: n, sheetId: id }; }
+  guardarQuincenas(); renderQuincenas(); cerrarModalQuince();
 }
-
 function guardarQuincenas() { localStorage.setItem('alamo_quincenas', JSON.stringify(quincenas)); }
 
-// ═══════════════════════════════════════════════════
-// DRAG & DROP ARCHIVOS
-// ═══════════════════════════════════════════════════
 const dz = document.getElementById('dropZone');
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('over'));
 dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); agregarFiles(e.dataTransfer.files); });
 function handleFiles(e) { agregarFiles(e.target.files); }
-
 function agregarFiles(files) {
   Array.from(files).forEach(f => {
-    const id = Date.now() + Math.random();
-    const tipo = f.type.includes('pdf') ? 'pdf' : 'image';
-    archivos.push({ id, file: f, tipo, nombre: f.name, b64: null, paginas: null });
-    addFileRow(id, f.name, tipo);
+    const id = Date.now() + Math.random(); const tipo = f.type.includes('pdf') ? 'pdf' : 'image';
+    archivos.push({ id, file: f, tipo, nombre: f.name, b64: null, paginas: null }); addFileRow(id, f.name, tipo);
     const reader = new FileReader();
     reader.onload = ev => {
-      const a = archivos.find(x => x.id === id);
-      if (!a) return;
-      a.dataUrl = ev.target.result;
-      if (f.type.includes('image')) {
-        const img = new Image();
-        img.onload = () => {
-          const MAX = 1500;
-          let w = img.width, h = img.height;
-          if (w > MAX || h > MAX) { const r = Math.min(MAX/w, MAX/h); w = Math.round(w*r); h = Math.round(h*r); }
-          const cv = document.createElement('canvas');
-          cv.width = w; cv.height = h;
-          cv.getContext('2d').drawImage(img, 0, 0, w, h);
-          const dataUrl = cv.toDataURL('image/jpeg', 0.88);
-          a.b64 = dataUrl.split(',')[1];
-          a.dataUrl = dataUrl;
-        };
-        img.src = ev.target.result;
-      } else {
-        a.b64 = ev.target.result.split(',')[1];
-      }
+      const a = archivos.find(x => x.id === id); if (!a) return; a.dataUrl = ev.target.result;
+      if (f.type.includes('image')) { const img = new Image(); img.onload = () => { const MAX=1500; let w=img.width,h=img.height; if(w>MAX||h>MAX){const r=Math.min(MAX/w,MAX/h);w=Math.round(w*r);h=Math.round(h*r);} const cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); const dataUrl=cv.toDataURL('image/jpeg',0.88); a.b64=dataUrl.split(',')[1]; a.dataUrl=dataUrl; }; img.src=ev.target.result; }
+      else { a.b64 = ev.target.result.split(',')[1]; }
     };
     reader.readAsDataURL(f);
   });
   document.getElementById('btnLeer').disabled = archivos.length === 0;
 }
+function addFileRow(id, nombre, tipo) { const row=document.createElement('div'); row.className='fitem'; row.id=`fi-${id}`; row.innerHTML=`<span>${tipo==='pdf'?'📄':'🖼️'}</span><span class="fi-name">${nombre}</span><span class="fi-st" id="fs-${id}">pendiente</span><button class="fi-rm" onclick="quitarFile('${id}')">✕</button>`; document.getElementById('flist').appendChild(row); }
+function quitarFile(id) { archivos=archivos.filter(a=>String(a.id)!==String(id)); document.getElementById(`fi-${id}`)?.remove(); document.getElementById('btnLeer').disabled=archivos.length===0; }
+function setFileSt(id, cls, txt) { const el=document.getElementById(`fi-${id}`); const st=document.getElementById(`fs-${id}`); if(!el||!st)return; el.className='fitem '+cls; st.textContent=txt; st.style.color=cls==='ok'?'var(--accent2)':cls==='err'?'var(--danger)':'var(--warn)'; }
 
-function addFileRow(id, nombre, tipo) {
-  const row = document.createElement('div');
-  row.className = 'fitem'; row.id = `fi-${id}`;
-  row.innerHTML = `<span>${tipo==='pdf'?'📄':'🖼️'}</span><span class="fi-name">${nombre}</span><span class="fi-st" id="fs-${id}">pendiente</span><button class="fi-rm" onclick="quitarFile('${id}')">✕</button>`;
-  document.getElementById('flist').appendChild(row);
-}
-
-function quitarFile(id) {
-  archivos = archivos.filter(a => String(a.id) !== String(id));
-  document.getElementById(`fi-${id}`)?.remove();
-  document.getElementById('btnLeer').disabled = archivos.length === 0;
-}
-
-function setFileSt(id, cls, txt) {
-  const el = document.getElementById(`fi-${id}`);
-  const st = document.getElementById(`fs-${id}`);
-  if (!el||!st) return;
-  el.className = 'fitem ' + cls;
-  st.textContent = txt;
-  st.style.color = cls==='ok'?'var(--accent2)':cls==='err'?'var(--danger)':'var(--warn)';
-}
-
-// ═══════════════════════════════════════════════════
-// DIVIDIR PDF EN PÁGINAS (usando canvas)
-// ═══════════════════════════════════════════════════
 async function pdfAImagenes(dataUrl) {
-  // Cargamos pdf.js desde CDN
-  if (!window.pdfjsLib) {
-    await new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-      s.onload = res; s.onerror = rej;
-      document.head.appendChild(s);
-    });
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  }
+  if (!window.pdfjsLib) { await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
   const pdfDoc = await pdfjsLib.getDocument({ data: atob(dataUrl.split(',')[1]) }).promise;
   const imagenes = [];
-  for (let i = 1; i <= pdfDoc.numPages; i++) {
-    const page = await pdfDoc.getPage(i);
-    const vp = page.getViewport({ scale: 2.2 }); // alta resolución para mejor OCR
-    const canvas = document.createElement('canvas');
-    canvas.width = vp.width; canvas.height = vp.height;
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-    const b64 = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
-    imagenes.push({ b64, pagina: i, total: pdfDoc.numPages });
-  }
+  for (let i=1; i<=pdfDoc.numPages; i++) { const page=await pdfDoc.getPage(i); const vp=page.getViewport({scale:2.2}); const canvas=document.createElement('canvas'); canvas.width=vp.width; canvas.height=vp.height; await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise; imagenes.push({b64:canvas.toDataURL('image/jpeg',0.92).split(',')[1],pagina:i,total:pdfDoc.numPages}); }
   return imagenes;
 }
 
-// ═══════════════════════════════════════════════════
-// LEER TODAS LAS PLANILLAS
-// ═══════════════════════════════════════════════════
 async function leerTodas() {
-  document.getElementById('btnLeer').disabled = true;
-  document.getElementById('progWrap').classList.remove('hidden');
-
-  // Primero expandir PDFs multipágina
-  const tareas = []; // {b64, nombre, archId}
+  document.getElementById('btnLeer').disabled=true; document.getElementById('progWrap').classList.remove('hidden');
+  const tareas=[];
   for (const a of archivos) {
-    // Esperar hasta que b64 esté listo (máx 5 segundos)
-    for (let w=0; w<50 && !a.b64; w++) { await new Promise(r => setTimeout(r, 100)); }
-    if (a.tipo === 'pdf') {
-      setFileSt(a.id, 'proc', '⏳ dividiendo páginas...');
-      try {
-        const imgs = await pdfAImagenes(a.dataUrl);
-        imgs.forEach((img, i) => {
-          tareas.push({ b64: img.b64, tipo: 'image', nombre: `${a.nombre} — pág ${img.pagina}/${img.total}`, archId: a.id, pagina: img.pagina });
-        });
-        setFileSt(a.id, 'proc', `⏳ ${imgs.length} pág.`);
-      } catch(err) {
-        setFileSt(a.id, 'err', '❌ error PDF');
-        tareas.push({ b64: a.b64, tipo: 'pdf', nombre: a.nombre, archId: a.id, pagina: 1 });
-      }
-    } else {
-      tareas.push({ b64: a.b64, tipo: 'image', nombre: a.nombre, archId: a.id, pagina: 1 });
-    }
+    for(let w=0;w<50&&!a.b64;w++){await new Promise(r=>setTimeout(r,100));}
+    if(a.tipo==='pdf'){ setFileSt(a.id,'proc','⏳ dividiendo páginas...'); try{ const imgs=await pdfAImagenes(a.dataUrl); imgs.forEach((img,i)=>{tareas.push({b64:img.b64,tipo:'image',nombre:`${a.nombre} — pág ${img.pagina}/${img.total}`,archId:a.id,pagina:img.pagina});}); setFileSt(a.id,'proc',`⏳ ${imgs.length} pág.`); }catch(err){ setFileSt(a.id,'err','❌ error PDF'); tareas.push({b64:a.b64,tipo:'pdf',nombre:a.nombre,archId:a.id,pagina:1}); } }
+    else { tareas.push({b64:a.b64,tipo:'image',nombre:a.nombre,archId:a.id,pagina:1}); }
   }
-
-  // Leer cada página con IA
-  const resultados = [];
-  for (let i = 0; i < tareas.length; i++) {
-    const t = tareas[i];
-    setFileSt(t.archId, 'proc', `⏳ leyendo pág. ${t.pagina}...`);
-    document.getElementById('progBar').style.width = `${(i / tareas.length) * 100}%`;
-    try {
-      const datos = await leerPlanillaIA(t);
-      setFileSt(t.archId, 'ok', `✅ leg. ${datos.legajo_maquinista||'?'}`);
-      resultados.push({ datos, nombre: t.nombre });
-    } catch(err) {
-      console.error('Error lectura:', err);
-      setFileSt(t.archId, 'err', '❌ ' + err.message.substring(0,50)); showSB('error', '❌ ' + err.message.substring(0,150));
-      resultados.push({ datos: null, nombre: t.nombre, error: err.message });
-    }
-    document.getElementById('progBar').style.width = `${((i+1) / tareas.length) * 100}%`;
+  const resultados=[];
+  for(let i=0;i<tareas.length;i++){
+    const t=tareas[i]; setFileSt(t.archId,'proc',`⏳ leyendo pág. ${t.pagina}...`); document.getElementById('progBar').style.width=`${(i/tareas.length)*100}%`;
+    try{ const datos=await leerPlanillaIA(t); setFileSt(t.archId,'ok',`✅ leg. ${datos.legajo_maquinista||'?'}`); resultados.push({datos,nombre:t.nombre}); }
+    catch(err){ console.error('Error lectura:',err); setFileSt(t.archId,'err','❌ '+err.message.substring(0,50)); showSB('error','❌ '+err.message.substring(0,150)); resultados.push({datos:null,nombre:t.nombre,error:err.message}); }
+    document.getElementById('progBar').style.width=`${((i+1)/tareas.length)*100}%`;
   }
-
-  maquinistas = agruparPorLegajo(resultados);
-  calcAlertas();
-
-  document.getElementById('paso1').classList.add('hidden');
-  document.getElementById('paso2').classList.remove('hidden');
-  renderMaquinistas();
-  document.getElementById('p2sum').textContent = `${maquinistas.length} maquinista${maquinistas.length!==1?'s':''} · ${tareas.length} páginas procesadas`;
-  setStep(2);
+  maquinistas=agruparPorLegajo(resultados); calcAlertas();
+  document.getElementById('paso1').classList.add('hidden'); document.getElementById('paso2').classList.remove('hidden');
+  renderMaquinistas(); document.getElementById('p2sum').textContent=`${maquinistas.length} maquinista${maquinistas.length!==1?'s':''} · ${tareas.length} páginas procesadas`; setStep(2);
 }
 
 // ═══════════════════════════════════════════════════
-// PROMPT IA MEJORADO
+// SISTEMA DE MEMORIA POR LEGAJO
 // ═══════════════════════════════════════════════════
+
+// Estructura en localStorage:
+// alamo_memoria_<legajo> = {
+//   legajo: "405",
+//   telares_habituales: [5,6,7,8],        // telares que usa más seguido
+//   ftos_habituales: ["lo2","b3"],         // FTOs frecuentes
+//   rango_mts: {min:800, max:3500},        // rango típico por telar por turno
+//   errores: [                             // hasta 10 errores recientes
+//     { campo:"mts_iniciales", telar:5, leido:"40850", correcto:"4085", fecha:"12/03/2026" },
+//     { campo:"legajo", leido:"1405", correcto:"405", fecha:"10/03/2026" }
+//   ],
+//   total_planillas: 14                   // cuántas veces se aprendió de este legajo
+// }
+
+function memGetLegajo(leg) {
+  try {
+    const raw = localStorage.getItem(`alamo_memoria_${leg}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function memSaveLegajo(leg, data) {
+  try {
+    localStorage.setItem(`alamo_memoria_${leg}`, JSON.stringify(data));
+  } catch(e) { console.warn('Error guardando memoria:', e); }
+}
+
+function memGetTodos() {
+  const result = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('alamo_memoria_')) {
+      try {
+        const leg = k.replace('alamo_memoria_', '');
+        result[leg] = JSON.parse(localStorage.getItem(k));
+      } catch(e) {}
+    }
+  }
+  return result;
+}
+
+function memBorrarLegajo(leg) {
+  localStorage.removeItem(`alamo_memoria_${leg}`);
+}
+
+function memBorrarTodo() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('alamo_memoria_')) keys.push(k);
+  }
+  keys.forEach(k => localStorage.removeItem(k));
+}
+
+// Genera el bloque de contexto histórico para inyectar en el prompt
+function memGenerarContexto(leg) {
+  const mem = memGetLegajo(leg);
+  if (!mem) return '';
+
+  let ctx = `\n=== HISTORIAL DE CORRECCIONES PARA LEGAJO ${leg} ===\n`;
+  ctx += `(Aprendido de ${mem.total_planillas || 0} planillas anteriores de este maquinista)\n\n`;
+
+  if (mem.telares_habituales && mem.telares_habituales.length > 0) {
+    ctx += `Telares habituales de este maquinista: ${mem.telares_habituales.join(', ')}\n`;
+  }
+  if (mem.ftos_habituales && mem.ftos_habituales.length > 0) {
+    ctx += `FTOs que usa frecuentemente: ${mem.ftos_habituales.join(', ')}\n`;
+  }
+  if (mem.rango_mts) {
+    ctx += `Rango típico de metros por telar por turno: ${mem.rango_mts.min}–${mem.rango_mts.max} mts\n`;
+    ctx += `  → Si leés un valor fuera de ese rango, es probable error de lectura. Revisá con cuidado.\n`;
+  }
+  if (mem.errores && mem.errores.length > 0) {
+    ctx += `\nERRORES HISTÓRICOS (la IA leyó X pero el valor correcto era Y):\n`;
+    // Mostrar solo los más recientes y más frecuentes
+    const errs = mem.errores.slice(-10);
+    errs.forEach(e => {
+      if (e.campo === 'mts_iniciales' || e.campo === 'mts_finales') {
+        ctx += `  • Telar ${e.telar} ${e.campo}: se leyó "${e.leido}" pero era "${e.correcto}" → prestá atención a los dígitos de este telar\n`;
+      } else if (e.campo === 'er') {
+        ctx += `  • E/R del telar ${e.telar}: se leyó "${e.leido}" pero era "${e.correcto}"\n`;
+      } else if (e.campo === 'motivo_parada') {
+        ctx += `  • Motivo de parada: se leyó "${e.leido}" pero era "${e.correcto}"\n`;
+      } else if (e.campo === 'hora_parada') {
+        ctx += `  • Hora de parada telar ${e.telar}: se leyó "${e.leido}" pero era "${e.correcto}"\n`;
+      } else {
+        ctx += `  • ${e.campo}: se leyó "${e.leido}" pero era "${e.correcto}"\n`;
+      }
+    });
+  }
+  ctx += `\nUsá este historial para ser más preciso. Si ves algo que coincide con un error anterior, corregilo.\n`;
+  ctx += `=== FIN DEL HISTORIAL ===\n`;
+  return ctx;
+}
+
+// Compara lo que leyó la IA vs lo que quedó después de edición manual
+// y guarda las diferencias como nuevos aprendizajes
+function memAprender(legajo, datosIA, datosEditados) {
+  if (!legajo || !datosIA || !datosEditados) return;
+
+  let mem = memGetLegajo(legajo) || {
+    legajo,
+    telares_habituales: [],
+    ftos_habituales: [],
+    rango_mts: null,
+    errores: [],
+    total_planillas: 0
+  };
+
+  mem.total_planillas = (mem.total_planillas || 0) + 1;
+  const fecha = datosEditados.fecha || new Date().toLocaleDateString('es-AR');
+
+  // Aprender telares habituales
+  const telaresEditados = (datosEditados.telares || []).filter(t=>!t.es_extra).map(t=>parseInt(t.numero)).filter(n=>!isNaN(n));
+  if (telaresEditados.length > 0) {
+    // Frecuencia de uso por telar
+    if (!mem._telares_freq) mem._telares_freq = {};
+    telaresEditados.forEach(t => { mem._telares_freq[t] = (mem._telares_freq[t]||0)+1; });
+    mem.telares_habituales = Object.entries(mem._telares_freq)
+      .sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t])=>parseInt(t));
+  }
+
+  // Aprender FTOs habituales
+  const ftosEditados = (datosEditados.telares||[]).filter(t=>!t.es_extra&&t.fto).map(t=>t.fto.toLowerCase().trim());
+  if (ftosEditados.length > 0) {
+    if (!mem._ftos_freq) mem._ftos_freq = {};
+    ftosEditados.forEach(f => { if(f) mem._ftos_freq[f] = (mem._ftos_freq[f]||0)+1; });
+    mem.ftos_habituales = Object.entries(mem._ftos_freq)
+      .sort((a,b)=>b[1]-a[1]).slice(0,5).map(([f])=>f);
+  }
+
+  // Aprender rango de metros
+  const mtsVals = (datosEditados.telares||[]).filter(t=>!t.es_extra).map(t=>{
+    const ini=parseFloat(t.mts_iniciales), fin=parseFloat(t.mts_finales);
+    if(isNaN(ini)||isNaN(fin)) return null;
+    return Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
+  }).filter(v=>v!==null&&v>0);
+  if (mtsVals.length > 0) {
+    const mn = Math.min(...mtsVals), mx = Math.max(...mtsVals);
+    if (!mem.rango_mts) {
+      mem.rango_mts = { min: mn, max: mx };
+    } else {
+      // Ampliar el rango con tolerancia del 20% para no ser demasiado estricto
+      mem.rango_mts.min = Math.min(mem.rango_mts.min, Math.round(mn*0.8));
+      mem.rango_mts.max = Math.max(mem.rango_mts.max, Math.round(mx*1.2));
+    }
+  }
+
+  // Detectar diferencias IA vs editado → nuevos errores
+  const telaresIA = datosIA.telares || [];
+  const telaresEd = datosEditados.telares || [];
+
+  telaresEd.filter(t=>!t.es_extra).forEach(te => {
+    const ti = telaresIA.find(x=>parseInt(x.numero)===parseInt(te.numero));
+    if (!ti) return;
+
+    // Comparar mts_iniciales
+    if (ti.mts_iniciales!=null && te.mts_iniciales!=null && String(ti.mts_iniciales)!==String(te.mts_iniciales)) {
+      mem.errores.push({ campo:'mts_iniciales', telar:te.numero, leido:String(ti.mts_iniciales), correcto:String(te.mts_iniciales), fecha });
+    }
+    // Comparar mts_finales
+    if (ti.mts_finales!=null && te.mts_finales!=null && String(ti.mts_finales)!==String(te.mts_finales)) {
+      mem.errores.push({ campo:'mts_finales', telar:te.numero, leido:String(ti.mts_finales), correcto:String(te.mts_finales), fecha });
+    }
+    // Comparar E/R
+    if (ti.er!=null && te.er!=null && parseFloat(ti.er)!==parseFloat(te.er)) {
+      mem.errores.push({ campo:'er', telar:te.numero, leido:String(ti.er), correcto:String(te.er), fecha });
+    }
+  });
+
+  // Comparar paradas
+  const paradasIA = datosIA.paradas || [];
+  const paradasEd = datosEditados.paradas || [];
+  paradasEd.forEach(pe => {
+    // Buscar la parada correspondiente en lo que leyó la IA
+    const pi = paradasIA.find(x=>parseInt(x.telar)===parseInt(pe.telar)&&(x.motivo===pe.motivo||x.desde===pe.desde));
+    if (!pi) return;
+    if (pi.motivo && pe.motivo && pi.motivo!==pe.motivo) {
+      mem.errores.push({ campo:'motivo_parada', telar:pe.telar, leido:pi.motivo, correcto:pe.motivo, fecha });
+    }
+    if (pi.desde && pe.desde && pi.desde!==pe.desde) {
+      mem.errores.push({ campo:'hora_parada', telar:pe.telar, leido:`${pi.desde}–${pi.hasta}`, correcto:`${pe.desde}–${pe.hasta}`, fecha });
+    }
+  });
+
+  // Mantener solo los últimos 20 errores (los más recientes son los más relevantes)
+  if (mem.errores.length > 20) mem.errores = mem.errores.slice(-20);
+
+  memSaveLegajo(legajo, mem);
+  console.log(`[Memoria] Legajo ${legajo}: ${mem.total_planillas} planillas, ${mem.errores.length} errores acumulados`);
+}
+
+// ═══════════════════════════════════════════════════
+// LECTURA CON IA (con memoria inyectada)
+// ═══════════════════════════════════════════════════
+
+// Almacena lo que leyó la IA antes de edición (para comparar después)
+let _lecturaIA_original = {}; // { legajo: datosIA }
+
 async function leerPlanillaIA(tarea) {
+  // Si el legajo ya se conoce (viene de otra página del mismo PDF),
+  // podemos inyectar el contexto. Si no, usamos memoria general.
+  // El contexto se inyecta ANTES de saber el legajo — usamos todos los legajos conocidos
+  // como fallback, y luego post-proceso inyecta el contexto del legajo detectado.
+
+  const todaMemoria = memGetTodos();
+  const legajosConMemoria = Object.keys(todaMemoria);
+
+  // Construir bloque de contexto global (para cuando aún no sabemos el legajo)
+  let contextoMemoria = '';
+  if (legajosConMemoria.length > 0) {
+    contextoMemoria += `\n=== MEMORIA ACUMULADA DE PLANILLAS ANTERIORES ===\n`;
+    contextoMemoria += `Se han aprendido patrones de estos legajos: ${legajosConMemoria.join(', ')}\n`;
+    // Inyectar contexto individual por legajo (máx 3 para no exceder tokens)
+    const legsConErrores = legajosConMemoria
+      .filter(l => todaMemoria[l]?.errores?.length > 0)
+      .slice(0, 5);
+    legsConErrores.forEach(l => {
+      contextoMemoria += memGenerarContexto(l);
+    });
+    contextoMemoria += `=== FIN DE MEMORIA ===\n`;
+  }
+
   const prompt = `Sos un sistema OCR industrial especializado en planillas de producción de telares de Álamo Bolsas Industriales, Argentina.
 
 Esta es una foto o scan de una planilla de control diario de producción. Extraé TODOS los datos visibles con máxima precisión.
-
+${contextoMemoria}
 === CÓMO LEER LA PLANILLA ===
 
 ENCABEZADO (parte superior):
@@ -726,762 +818,1032 @@ ENCABEZADO (parte superior):
   ${legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441'}
   * IMPORTANTE: Si leés un número que NO está en esa lista, es un error de lectura.
   * En ese caso buscá el número de esa lista que más se parezca visualmente al que leíste.
-  * Ejemplo: si leés "1698" → el más parecido es 408 (los dígitos 4-0-8 aparecen en 1698).
-  * Ejemplo: si leés "44l" → es 441. Si leés "4O8" → es 408.
   * NUNCA devuelvas un legajo que no esté en esa lista.
 - "N° Legajo Auxiliar" → puede estar vacío
 
 TABLA DE PRODUCCIÓN (columnas de izquierda a derecha):
 | N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad |
-
-- N° Telar: número del telar (1, 2, 3, 4, 5, 6, 7, 8...)
-- FTO: código alfanumérico (ej: "lo2", "102", "b3", "Lo2"). Leelo con cuidado.
-- Ancho Trama: número pequeño, usualmente 5
-- Mts Iniciales y Mts Finales: CRÍTICO — son contadores de metros entre 0 y 65535.
-  * Leé CADA dígito con cuidado. Un error aquí afecta toda la productividad.
-  * Ejemplo válido: 4085, 6706, 38194, 40808, 21333, 23864
-  * Si el número parece muy pequeño (menos de 3 dígitos) revisalo bien
-- E/R: velocidad lineal, número decimal como 5.5, 5.8, 5.9, 6.0
-- Velocidad: número como 1010, 1015, etc.
-
-Los primeros 4 telares son los "asignados" (es_extra: false).
-Si hay 5 o más telares en la tabla → los adicionales son "extra" (es_extra: true).
-  * Para saber cuáles son los 4 asignados: mirá el campo "Telares: X/Y/Z/W" en el encabezado.
-  * Los telares listados ahí son los asignados. Cualquier otro telar en la tabla es extra.
-  * Ejemplo: si dice "Telares: 5-6-7-8" y en la tabla aparece el telar 9 → telar 9 es extra.
+- Mts Iniciales y Mts Finales: CRÍTICO — son contadores entre 0 y 65535.
+  * Leé CADA dígito con cuidado. Ejemplos válidos: 4085, 6706, 38194, 40808, 21333, 23864
+  * Si el número tiene menos de 3 dígitos o más de 5, muy probablemente es error de lectura
+- E/R: velocidad decimal como 5.5, 5.8, 5.9, 6.0
+- Los primeros 4 telares son los "asignados" (es_extra: false). Si hay más → es_extra: true.
+  * Los telares asignados están listados en el campo "Telares: X/Y/Z/W" del encabezado.
 
 SECCIÓN TIEMPO PERDIDO (parte inferior izquierda):
 Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
-- Leé TODAS las filas que tengan datos escritos
-- Horarios: formato HH:MM (24 hs). Ej: "18:30", "23:50", "2:50", "4:00"
-  * IMPORTANTE: "Desde Hr" es siempre MENOR que "Hasta Hr" (es la hora de inicio de la parada)
-  * Si leés algo que parece invertido, revisalo — la parada empieza antes de terminar
-- Motivo: código P1 a P18. Leé exactamente lo que dice (ej: "P17", "P18", "P1")
-- IMPORTANTE: si hay paradas después de las 23:00 o entre 0:00 y 6:00 → es señal de turno de 12 hs
+- Horarios: formato HH:MM (24hs). Ej: "18:30", "23:50", "02:50", "04:00"
+- Motivo: código P1 a P18 — leé exactamente lo que dice
+- Incluí TODAS las filas con datos, no solo las primeras
 
-OBSERVACIONES (parte inferior):
-- Copiá textualmente todo lo que esté escrito en ese campo
+OBSERVACIONES: Copiá textualmente todo lo que esté escrito.
 
 === FORMATO DE RESPUESTA ===
-Devolvé ÚNICAMENTE el JSON válido, sin texto antes ni después, sin bloques de código markdown:
+Devolvé ÚNICAMENTE JSON válido, sin texto antes ni después, sin bloques de código:
 
-{
-  "legajo_maquinista": "405",
-  "legajo_auxiliar": null,
-  "fecha": "12/03/2026",
-  "turno": "tarde",
-  "telares": [
-    {"numero": 1, "fto": "lo2", "ancho_trama": 5, "mts_iniciales": 4085, "mts_finales": 6706, "er": 5.9, "velocidad": 1010, "es_extra": false},
-    {"numero": 2, "fto": "lo2", "ancho_trama": 5, "mts_iniciales": 38194, "mts_finales": 40808, "er": 5.9, "velocidad": 1010, "es_extra": false},
-    {"numero": 3, "fto": "lo2", "ancho_trama": 5, "mts_iniciales": 28941, "mts_finales": 29814, "er": 5.9, "velocidad": 1010, "es_extra": false},
-    {"numero": 4, "fto": "lo2", "ancho_trama": 5, "mts_iniciales": 21333, "mts_finales": 23864, "er": 5.8, "velocidad": 1010, "es_extra": false}
-  ],
-  "paradas": [
-    {"telar": 3, "desde": "18:30", "hasta": "19:55", "motivo": "P18"},
-    {"telar": 3, "desde": "22:45", "hasta": "23:50", "motivo": "P17"},
-    {"telar": 2, "desde": "23:00", "hasta": "23:50", "motivo": "P18"},
-    {"telar": 3, "desde": "02:50", "hasta": "03:10", "motivo": "P17"},
-    {"telar": 3, "desde": "03:20", "hasta": "04:00", "motivo": "P17"}
-  ],
-  "observaciones": "Máquina 3 se para mucho por trama chica"
-}
+{"legajo_maquinista":"405","legajo_auxiliar":null,"fecha":"12/03/2026","turno":"tarde","telares":[{"numero":5,"fto":"lo2","ancho_trama":5,"mts_iniciales":4085,"mts_finales":6706,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":6,"fto":"lo2","ancho_trama":5,"mts_iniciales":38194,"mts_finales":40808,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":7,"fto":"lo2","ancho_trama":5,"mts_iniciales":28941,"mts_finales":29814,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":8,"fto":"lo2","ancho_trama":5,"mts_iniciales":21333,"mts_finales":23864,"er":5.8,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":7,"desde":"18:30","hasta":"19:55","motivo":"P18"}],"observaciones":""}
 
 Si algún campo no es legible usá null. NO inventes datos.`;
 
   const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1800,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: tarea.b64 } },
-          { type: 'text', text: prompt }
-        ]
-      }]
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: tarea.b64 } },
+        { type: 'text', text: prompt }
+      ]}]
     })
   });
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`HTTP ${res.status}: ${errText.substring(0,200)}`);
-  }
+  if (!res.ok) { const errText=await res.text(); throw new Error(`HTTP ${res.status}: ${errText.substring(0,200)}`); }
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
-  console.log('Respuesta IA raw:', JSON.stringify(data).substring(0, 500));
-  const raw = data.content.map(b => b.text||'').join('').trim();
-  console.log('Raw text:', raw.substring(0, 500));
-  // Limpiar markdown y extraer JSON aunque venga con texto alrededor
+  const raw = data.content.map(b=>b.text||'').join('').trim();
   let clean = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-  // Buscar el JSON dentro del texto si no empieza con {
-  if (!clean.startsWith('{')) {
-    const match = clean.match(/\{[\s\S]*\}/);
-    if (match) clean = match[0];
-    else throw new Error('No se encontró JSON en la respuesta: ' + clean.substring(0, 200));
-  }
-  try {
-    return JSON.parse(clean);
-  } catch(e) {
-    throw new Error('JSON inválido: ' + e.message + ' | Respuesta: ' + clean.substring(0, 300));
-  }
+  if (!clean.startsWith('{')) { const match=clean.match(/\{[\s\S]*\}/); if(match)clean=match[0]; else throw new Error('No se encontró JSON: '+clean.substring(0,200)); }
+  const resultado = JSON.parse(clean);
+
+  // Guardar copia de lo que leyó la IA (para aprender después de la edición)
+  const legIA = String(resultado.legajo_maquinista||'').trim();
+  if (legIA) _lecturaIA_original[legIA] = JSON.parse(JSON.stringify(resultado));
+
+  return resultado;
 }
 
-// ═══════════════════════════════════════════════════
-// AGRUPAR POR LEGAJO
-// ═══════════════════════════════════════════════════
 function agruparPorLegajo(resultados) {
-  const mapa = {};
-  resultados.forEach(r => {
-    if (!r.datos) return;
-    const d = r.datos;
-    const leg = String(d.legajo_maquinista||'').trim();
-    if (!leg) return;
-    if (!mapa[leg]) {
-      mapa[leg] = { legajo: leg, fecha: d.fecha||'', turno: d.turno||'manana', telares: [], paradas: [], mtsExtra: 0, obs: '', alertas: [] };
-    }
-    (d.telares||[]).forEach(t => { if (!mapa[leg].telares.find(x=>x.numero===t.numero)) mapa[leg].telares.push(t); });
-    (d.paradas||[]).forEach(p => mapa[leg].paradas.push(p));
-    if (d.observaciones && !mapa[leg].obs.includes(d.observaciones))
-      mapa[leg].obs = [mapa[leg].obs, d.observaciones].filter(Boolean).join(' / ');
-    // Detectar turno extra por paradas nocturnas si no vino del encabezado
-    if (mapa[leg].turno !== 'extra') {
-      const tieneNocturna = mapa[leg].paradas.some(p => {
-        const h = parseInt((p.desde||'0:0').split(':')[0]);
-        return h >= 0 && h < 6;
-      });
-      if (tieneNocturna) mapa[leg].turno = 'extra';
-    }
+  const mapa={};
+  resultados.forEach(r=>{
+    if(!r.datos)return; const d=r.datos; const leg=String(d.legajo_maquinista||'').trim(); if(!leg)return;
+    if(!mapa[leg])mapa[leg]={legajo:leg,fecha:d.fecha||'',turno:d.turno||'manana',telares:[],paradas:[],mtsExtra:0,obs:'',alertas:[]};
+    (d.telares||[]).forEach(t=>{if(!mapa[leg].telares.find(x=>x.numero===t.numero))mapa[leg].telares.push(t);});
+    (d.paradas||[]).forEach(p=>mapa[leg].paradas.push(p));
+    if(d.observaciones&&!mapa[leg].obs.includes(d.observaciones))mapa[leg].obs=[mapa[leg].obs,d.observaciones].filter(Boolean).join(' / ');
+    if(mapa[leg].turno!=='extra'){const tieneNocturna=mapa[leg].paradas.some(p=>{const h=parseInt((p.desde||'0:0').split(':')[0]);return h>=0&&h<6;});if(tieneNocturna)mapa[leg].turno='extra';}
   });
-  Object.values(mapa).forEach(m => {
-    m.telares.sort((a,b)=>(a.numero||0)-(b.numero||0));
-    const extras = m.telares.filter(t=>t.es_extra);
-    m.mtsExtra = extras.reduce((s,t)=>{ const v=(t.mts_finales||0)-(t.mts_iniciales||0); return s+Math.max(v,0); }, 0);
-  });
+  Object.values(mapa).forEach(m=>{m.telares.sort((a,b)=>(a.numero||0)-(b.numero||0));const extras=m.telares.filter(t=>t.es_extra);m.mtsExtra=extras.reduce((s,t)=>{const v=(t.mts_finales||0)-(t.mts_iniciales||0);return s+Math.max(v,0);},0);});
   return Object.values(mapa);
 }
 
-// ═══════════════════════════════════════════════════
-// VALIDACIÓN
-// ═══════════════════════════════════════════════════
 function calcAlertas() {
-  maquinistas.forEach((m, mi) => {
-    m.alertas = [];
-    const minT = m.turno==='extra'?720:540;
-    m.telares.filter(t=>!t.es_extra).forEach(t => {
-      const ini=parseFloat(t.mts_iniciales), fin=parseFloat(t.mts_finales), er=parseFloat(t.er);
-      if (isNaN(ini)||isNaN(fin)||!er) return;
-      const mts=(ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini;
-      if (mts<=0) return;
-      const minP = m.paradas.reduce((s,p)=>{
-        if(p.telar!==t.numero) return s;
-        const[dh,dm]=(p.desde||'0:0').split(':').map(Number);
-        const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);
-        let d=dh*60+dm,h=hh*60+hm; if(h<d)h+=1440; return s+(h-d);
-      }, 0);
-      const teo = er*(minT-minP);
-      if (mts<teo*0.15&&minP===0) {
-        t._w='err';
-        m.alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas (esperado ~${Math.round(teo).toLocaleString()}). Probable error de lectura.`});
-      } else if (mts<teo*0.35&&minP<30) {
-        t._w='warn';
-        m.alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts con solo ${minP} min parada. Verificar.`});
-      } else { t._w=null; }
+  maquinistas.forEach((m,mi)=>{
+    m.alertas=[];const minT=m.turno==='extra'?720:540;
+    m.telares.filter(t=>!t.es_extra).forEach(t=>{
+      const ini=parseFloat(t.mts_iniciales),fin=parseFloat(t.mts_finales),er=parseFloat(t.er);
+      if(isNaN(ini)||isNaN(fin)||!er)return;
+      const mts=(ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini;if(mts<=0)return;
+      const minP=m.paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d)h+=1440;return s+(h-d);},0);
+      const teo=er*(minT-minP);
+      if(mts<teo*0.15&&minP===0){t._w='err';m.alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas (esperado ~${Math.round(teo).toLocaleString()}). Probable error de lectura.`});}
+      else if(mts<teo*0.35&&minP<30){t._w='warn';m.alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts con solo ${minP} min parada. Verificar.`});}
+      else{t._w=null;}
     });
   });
 }
 
-// ═══════════════════════════════════════════════════
-// RENDER MAQUINISTAS
-// ═══════════════════════════════════════════════════
-function renderMaquinistas() {
-  const c = document.getElementById('maqBlocks');
-  c.innerHTML = '';
-  maquinistas.forEach((m,mi) => c.appendChild(buildBlock(m,mi)));
-}
+function renderMaquinistas(){const c=document.getElementById('maqBlocks');c.innerHTML='';maquinistas.forEach((m,mi)=>c.appendChild(buildBlock(m,mi)));}
 
-function buildBlock(m, mi) {
-  const wrap = document.createElement('div');
-  wrap.className = 'mblock' + (m.alertas.length>0?' has-alerts':'');
-  wrap.id = `mb-${mi}`;
-  const asig = m.telares.filter(t=>!t.es_extra);
-  const alertBadge = m.alertas.length>0 ? `<span class="tag orange">⚠️ ${m.alertas.length}</span>` : '<span class="tag green">✓ OK</span>';
-  const turnoBadge = m.turno==='extra'?'<span class="tag orange">⚡ 12hs</span>':m.turno==='tarde'?'<span class="tag">🌆 Tarde</span>':'<span class="tag">🌅 Mañana</span>';
-  wrap.innerHTML = `
-    <div class="mhdr" onclick="toggleBlock(${mi})">
-      <div class="mbadge">${m.legajo}</div>
-      <div class="mname">${m.legajo}</div>
-      <div class="mmeta" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${turnoBadge}${alertBadge}<span style="color:var(--text3)">${asig.length} telares · ${m.paradas.length} paradas</span></div>
-      <div class="mtog" id="tog-${mi}">▼</div>
-    </div>
+function buildBlock(m,mi){
+  const wrap=document.createElement('div');wrap.className='mblock'+(m.alertas.length>0?' has-alerts':'');wrap.id=`mb-${mi}`;
+  const asig=m.telares.filter(t=>!t.es_extra);
+  const alertBadge=m.alertas.length>0?`<span class="tag orange">⚠️ ${m.alertas.length}</span>`:'<span class="tag green">✓ OK</span>';
+  const turnoBadge=m.turno==='extra'?'<span class="tag orange">⚡ 12hs</span>':m.turno==='tarde'?'<span class="tag">🌆 Tarde</span>':'<span class="tag">🌅 Mañana</span>';
+  wrap.innerHTML=`<div class="mhdr" onclick="toggleBlock(${mi})"><div class="mbadge">${m.legajo}</div><div class="mname">${m.legajo}</div><div class="mmeta" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${turnoBadge}${alertBadge}<span style="color:var(--text3)">${asig.length} telares · ${m.paradas.length} paradas</span></div><div class="mtog" id="tog-${mi}">▼</div></div>
     <div class="mbody" id="body-${mi}">
       ${m.alertas.length>0?`<div class="apanel"><div class="aptitle">⚠️ Datos a revisar</div>${m.alertas.map(a=>`<div class="aitem"><span>${a.nivel==='error'?'🔴':'🟡'}</span><span>${a.msg}</span></div>`).join('')}</div>`:''}
       <div class="fgrid">
         <div class="fg"><label>Fecha</label><input type="date" id="f-${mi}" value="${fv(m.fecha)}"></div>
         <div class="fg"><label>N° Legajo</label><input type="text" id="l-${mi}" value="${m.legajo}" placeholder="408"></div>
-        <div class="fg full">
-          <label>Turno</label>
-          <div class="trow">
-            <div class="tb ${m.turno==='manana'?'active':''}" onclick="setT(${mi},'manana')">🌅 Mañana</div>
-            <div class="tb ${m.turno==='tarde'?'active':''}"  onclick="setT(${mi},'tarde')">🌆 Tarde</div>
-            <div class="tb ${m.turno==='extra'?'active':''}"  onclick="setT(${mi},'extra')">⚡ 12 hs extra</div>
-          </div>
-          <div class="ichip" id="ti-${mi}">${tl(m.turno)}</div>
-        </div>
+        <div class="fg full"><label>Turno</label><div class="trow"><div class="tb ${m.turno==='manana'?'active':''}" onclick="setT(${mi},'manana')">🌅 Mañana</div><div class="tb ${m.turno==='tarde'?'active':''}" onclick="setT(${mi},'tarde')">🌆 Tarde</div><div class="tb ${m.turno==='extra'?'active':''}" onclick="setT(${mi},'extra')">⚡ 12 hs extra</div></div><div class="ichip" id="ti-${mi}">${tl(m.turno)}</div></div>
       </div>
       <div class="sdiv"><span>telares asignados</span></div>
-      <table class="tt">
-        <thead><tr><th>#</th><th>FTO</th><th>Ancho</th><th>Mts Iniciales</th><th>Mts Finales</th><th>E/R</th><th></th></tr></thead>
-        <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr>
-          <td><input type="number" value="${t.numero||(i+1)}" style="width:44px;font-size:13px;color:var(--accent);font-weight:700;text-align:center;" oninput="reval(${mi})"></td>
-          <td><input type="text" value="${t.fto||''}" placeholder="FTO" style="width:72px"></td>
-          <td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td>
-          <td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td>
-          <td><input type="number" value="${t.mts_finales||''}"   placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td>
-          <td><input type="number" value="${t.er||''}" placeholder="5.5" step="0.1" style="width:60px"></td>
-          <td style="width:20px;font-size:13px;">${t._w==='err'?'🔴':t._w==='warn'?'🟡':''}</td>
-        </tr>`).join('')}</tbody>
-      </table>
+      <table class="tt"><thead><tr><th>#</th><th>FTO</th><th>Ancho</th><th>Mts Iniciales</th><th>Mts Finales</th><th>E/R</th><th></th></tr></thead>
+      <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr><td><input type="number" value="${t.numero||(i+1)}" style="width:44px;font-size:13px;color:var(--accent);font-weight:700;text-align:center;" oninput="reval(${mi})"></td><td><input type="text" value="${t.fto||''}" placeholder="FTO" style="width:72px"></td><td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td><td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.mts_finales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.er||''}" placeholder="5.5" step="0.1" style="width:60px"></td><td style="width:20px;font-size:13px;">${t._w==='err'?'🔴':t._w==='warn'?'🟡':''}</td></tr>`).join('')}</tbody></table>
       <div class="sdiv"><span>paradas</span></div>
       <div class="plist" id="pl-${mi}">${m.paradas.map(p=>prow(p,mi)).join('')}</div>
       <button class="btn-add" onclick="addP(${mi})">+ Agregar parada</button>
       <div class="sdiv"><span>metros extra</span></div>
-      <div id="extbody-${mi}">
-        ${buildExtrasTable(m.telares.filter(t=>t.es_extra), mi)}
-      </div>
+      <div id="extbody-${mi}">${buildExtrasTable(m.telares.filter(t=>t.es_extra),mi)}</div>
       <div class="sdiv"><span>observaciones</span></div>
       <div class="fg"><label>Observaciones del maquinista</label><textarea id="ob-${mi}">${m.obs||''}</textarea></div>
     </div>`;
   return wrap;
 }
 
-function normHora(h) {
-  if (!h) return '';
-  const p = h.split(':');
-  if (p.length !== 2) return h;
-  const hh = p[0].padStart(2,'0');
-  const mm = p[1].padStart(2,'0');
-  return `${hh}:${mm}`;
+function normHora(h){if(!h)return'';const p=h.split(':');if(p.length!==2)return h;return`${p[0].padStart(2,'0')}:${p[1].padStart(2,'0')}`;}
+function calcMinutos(desde,hasta){if(!desde||!hasta)return null;const[dh,dm]=desde.split(':').map(Number);const[hh,hm]=hasta.split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d&&(d-h)<360){const tmp=d;d=h;h=tmp;}else if(h<d)h+=1440;return h-d;}
+function minLabel(min){if(min===null)return{txt:'--',cls:''};if(min>=30)return{txt:min+'m',cls:'high'};if(min>=16)return{txt:min+'m',cls:'med'};return{txt:min+'m',cls:'low'};}
+
+function prow(p,mi){
+  const opts=MOTIVOS.map(m=>{const k=m.split(' ')[0];return`<option value="${k}" ${(p.motivo&&p.motivo.toUpperCase()===k)?'selected':''}>${m}</option>`;}).join('');
+  const desde=normHora(p.desde);const hasta=normHora(p.hasta);const min=calcMinutos(desde,hasta);const lbl=minLabel(min);
+  return`<div class="prow" data-mi="${mi}"><input type="number" placeholder="Telar" value="${p.telar||''}" class="p-t" oninput="revalProw(this,${mi})"><input type="time" value="${desde}" class="p-d" onchange="revalProw(this,${mi})"><input type="time" value="${hasta}" class="p-h" onchange="revalProw(this,${mi})"><span class="pmin ${lbl.cls}" id="pmin-${mi}-${Math.random().toString(36).substr(2,5)}">${lbl.txt}</span><select class="motsel">${opts}</select><button class="btn-rp" onclick="this.parentElement.remove();reval(${mi})">✕</button></div>`;
 }
 
-function calcMinutos(desde, hasta) {
-  if (!desde || !hasta) return null;
-  const [dh,dm] = desde.split(':').map(Number);
-  const [hh,hm] = hasta.split(':').map(Number);
-  let d = dh*60+dm, h = hh*60+hm;
-  // Si la diferencia es enorme (más de 6 horas) probablemente están invertidas
-  if (h < d && (d - h) < 360) {
-    // Están invertidas dentro del mismo día — las intercambiamos
-    const tmp = d; d = h; h = tmp;
-  } else if (h < d) {
-    // Es turno nocturno que pasa la medianoche
-    h += 1440;
+function revalProw(el,mi){const row=el.closest('.prow');const desde=row.querySelector('.p-d').value;const hasta=row.querySelector('.p-h').value;const min=calcMinutos(desde,hasta);const lbl=minLabel(min);const pmin=row.querySelector('.pmin');if(pmin){pmin.textContent=lbl.txt;pmin.className='pmin '+lbl.cls;}reval(mi);mostrarAlertasParadas(mi);}
+
+function mostrarAlertasParadas(mi){
+  const prows=document.querySelectorAll(`#pl-${mi} .prow`);
+  const paradas=Array.from(prows).map(pr=>({telar:parseInt(pr.querySelector('.p-t').value)||null,desde:pr.querySelector('.p-d').value,hasta:pr.querySelector('.p-h').value,motivo:pr.querySelector('.motsel').value,min:calcMinutos(pr.querySelector('.p-d').value,pr.querySelector('.p-h').value)})).filter(p=>p.telar&&p.desde&&p.hasta);
+  const alertas=[];
+  paradas.filter(p=>p.min>=30).forEach(p=>{alertas.push(`⏱ Telar ${p.telar}: parada de ${p.min} min (${p.desde}–${p.hasta}) — ${p.motivo}. ¿Es correcta?`);});
+  const motCount={};paradas.forEach(p=>{const k=`${p.telar}-${p.motivo}`;motCount[k]=(motCount[k]||0)+1;});
+  Object.entries(motCount).filter(([k,v])=>v>=3).forEach(([k,v])=>{const[tel,mot]=k.split('-');alertas.push(`🔁 Telar ${tel}: ${mot} se repite ${v} veces. Verificar.`);});
+  const telaresUnicos=[...new Set(paradas.map(p=>p.telar))];
+  telaresUnicos.forEach(tel=>{const pTel=paradas.filter(p=>p.telar===tel&&p.min!==null);pTel.forEach((p1,i)=>{pTel.slice(i+1).forEach(p2=>{const[d1h,d1m]=p1.desde.split(':').map(Number);const[h1h,h1m]=p1.hasta.split(':').map(Number);const[d2h,d2m]=p2.desde.split(':').map(Number);const[h2h,h2m]=p2.hasta.split(':').map(Number);let ini1=d1h*60+d1m,fin1=h1h*60+h1m;let ini2=d2h*60+d2m,fin2=h2h*60+h2m;if(fin1<ini1)fin1+=1440;if(fin2<ini2)fin2+=1440;if(ini2<fin1&&fin2>ini1)alertas.push(`🚫 Telar ${tel}: paradas superpuestas (${p1.desde}–${p1.hasta} y ${p2.desde}–${p2.hasta}). Corregir.`);});});});
+  let palertDiv=document.getElementById(`palert-${mi}`);
+  if(alertas.length>0){if(!palertDiv){palertDiv=document.createElement('div');palertDiv.id=`palert-${mi}`;palertDiv.className='palert';const pl=document.getElementById(`pl-${mi}`);pl.parentElement.insertBefore(palertDiv,pl);}palertDiv.innerHTML=`<div class="palert-title">⚠️ Paradas sospechosas — revisá antes de publicar</div>`+alertas.map(a=>`<div style="padding:2px 0;border-bottom:1px solid rgba(192,48,48,.1);">${a}</div>`).join('');}
+  else if(palertDiv)palertDiv.remove();
+}
+
+function buildExtrasTable(extras,mi){
+  if(!extras||extras.length===0)return`<div style="font-size:12px;font-family:var(--mono);color:var(--text2);padding:8px 0;">Sin telares extra este día. <button class="btn-add" style="display:inline;width:auto;padding:4px 10px;margin-left:8px;" onclick="addTelarExtra(${mi})">+ Agregar telar extra</button></div>`;
+  const rows=extras.map((t,i)=>{const ini=t.mts_iniciales||'';const fin=t.mts_finales||'';const tot=(!isNaN(ini)&&!isNaN(fin)&&ini!==''&&fin!=='')?Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini,0):0;return`<tr><td style="padding:4px 3px;"><input type="number" value="${t.numero||''}" placeholder="Telar" style="width:60px;font-size:12px;color:var(--accent2);font-weight:700;"></td><td style="padding:4px 3px;"><input type="number" value="${ini}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td><td style="padding:4px 3px;"><input type="number" value="${fin}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td><td style="padding:4px 6px;text-align:right;font-family:var(--mono);font-weight:700;">${tot.toLocaleString('es-AR')}</td><td style="padding:4px 3px;"><button class="btn-rp" onclick="quitarTelarExtra(${mi},${i})">✕</button></td></tr>`;}).join('');
+  const total=extras.reduce((s,t)=>{const ini=t.mts_iniciales||0,fin=t.mts_finales||0;if(isNaN(ini)||isNaN(fin))return s;return s+Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini,0);},0);
+  const por4=Math.round(total/4);
+  return`<table class="tt" style="margin-bottom:8px;"><thead><tr><th style="width:50px;"># Telar</th><th>Mts Iniciales</th><th>Mts Finales</th><th style="text-align:right;">Total</th><th style="width:32px;"></th></tr></thead><tbody>${rows}</tbody><tfoot><tr style="background:var(--surface2);"><td colspan="3" style="padding:6px;font-size:12px;font-family:var(--mono);color:var(--text2);">Total metros extra</td><td style="padding:6px;text-align:right;font-family:var(--mono);font-weight:700;" id="ext-total-${mi}">${total.toLocaleString('es-AR')}</td><td></td></tr><tr><td colspan="3" style="padding:4px 6px;font-size:11px;font-family:var(--mono);color:var(--text3);">Por telar (÷ 4) → columna J</td><td style="padding:4px 6px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text2);" id="ext-div4-${mi}">${por4.toLocaleString('es-AR')}</td><td></td></tr></tfoot></table><button class="btn-add" onclick="addTelarExtra(${mi})">+ Agregar telar extra</button>`;
+}
+function recalcExtras(mi){const body=document.getElementById(`extbody-${mi}`);if(!body)return;const rows=body.querySelectorAll('tbody tr');let total=0;rows.forEach(tr=>{const ins=tr.querySelectorAll('input');const ini=parseFloat(ins[1]?.value)||0;const fin=parseFloat(ins[2]?.value)||0;const mts=Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini,0);const tdTot=tr.querySelectorAll('td')[3];if(tdTot)tdTot.textContent=mts.toLocaleString('es-AR');total+=mts;});const t=document.getElementById(`ext-total-${mi}`);const d=document.getElementById(`ext-div4-${mi}`);if(t)t.textContent=total.toLocaleString('es-AR');if(d)d.textContent=Math.round(total/4).toLocaleString('es-AR');maquinistas[mi].mtsExtra=total;}
+function addTelarExtra(mi){maquinistas[mi].telares.push({numero:'?',mts_iniciales:'',mts_finales:'',es_extra:true});const body=document.getElementById(`extbody-${mi}`);if(body)body.innerHTML=buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra),mi);}
+function quitarTelarExtra(mi,idx){const extras=maquinistas[mi].telares.filter(t=>t.es_extra);const telarAQuitar=extras[idx];maquinistas[mi].telares=maquinistas[mi].telares.filter(t=>t!==telarAQuitar);const body=document.getElementById(`extbody-${mi}`);if(body)body.innerHTML=buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra),mi);recalcExtras(mi);}
+function addP(mi){const c=document.createElement('div');c.innerHTML=prow({},mi);document.getElementById(`pl-${mi}`).appendChild(c.firstElementChild);}
+function toggleBlock(mi){const b=document.getElementById(`body-${mi}`),t=document.getElementById(`tog-${mi}`);const h=b.style.display==='none';b.style.display=h?'':'none';t.textContent=h?'▼':'▶';}
+function setT(mi,t){maquinistas[mi].turno=t;document.getElementById(`mb-${mi}`).replaceWith(buildBlock(maquinistas[mi],mi));}
+function reval(mi){
+  const trows=document.querySelectorAll(`#tb-${mi} tr`);
+  maquinistas[mi].telares=Array.from(trows).map((tr,i)=>{const ins=tr.querySelectorAll('input');return{numero:parseInt(ins[0]?.value)||(i+1),fto:ins[1]?.value||'',ancho_trama:parseFloat(ins[2]?.value)||null,mts_iniciales:parseFloat(ins[3]?.value),mts_finales:parseFloat(ins[4]?.value),er:parseFloat(ins[5]?.value)||null,es_extra:false,_w:null};});
+  const prows=document.querySelectorAll(`#pl-${mi} .prow`);
+  maquinistas[mi].paradas=Array.from(prows).map(pr=>({telar:parseInt(pr.querySelector('.p-t').value)||null,desde:pr.querySelector('.p-d').value,hasta:pr.querySelector('.p-h').value,motivo:pr.querySelector('.motsel').value})).filter(p=>p.telar&&p.desde&&p.hasta);
+  maquinistas[mi].alertas=[];const minT=maquinistas[mi].turno==='extra'?720:540;
+  maquinistas[mi].telares.forEach(t=>{if(!t.er)return;const ini=t.mts_iniciales,fin=t.mts_finales;if(isNaN(ini)||isNaN(fin))return;const mts=(ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini;if(mts<=0)return;const minP=maquinistas[mi].paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d)h+=1440;return s+(h-d);},0);const teo=t.er*(minT-minP);const cells=document.querySelectorAll(`#tb-${mi} tr`)[maquinistas[mi].telares.indexOf(t)]?.querySelectorAll('input');if(cells){cells[3].classList.remove('warn','err');cells[4].classList.remove('warn','err');}if(mts<teo*0.15&&minP===0){t._w='err';maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`});if(cells){cells[3].classList.add('err');cells[4].classList.add('err');}}else if(mts<teo*0.35&&minP<30){t._w='warn';maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`});if(cells){cells[3].classList.add('warn');cells[4].classList.add('warn');}}});
+}
+function addMaqManual(){const leg=prompt('N° de Legajo:');if(!leg)return;maquinistas.push({legajo:leg,fecha:'',turno:'manana',telares:[{},{},{},{}],paradas:[],mtsExtra:0,obs:'',alertas:[]});const mi=maquinistas.length-1;document.getElementById('maqBlocks').appendChild(buildBlock(maquinistas[mi],mi));}
+
+function syncDom(){
+  maquinistas.forEach((m,mi)=>{
+    m.legajo=document.getElementById(`l-${mi}`)?.value.trim()||m.legajo;
+    m.fecha=document.getElementById(`f-${mi}`)?.value||m.fecha;
+    const extBody=document.getElementById(`extbody-${mi}`);
+    if(extBody){let totalExt=0;extBody.querySelectorAll('tbody tr').forEach((tr,i)=>{const ins=tr.querySelectorAll('input');const ini=parseFloat(ins[1]?.value)||0;const fin=parseFloat(ins[2]?.value)||0;const mts=Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini,0);totalExt+=mts;const extrasArr=maquinistas[mi].telares.filter(t=>t.es_extra);if(extrasArr[i]){extrasArr[i].mts_iniciales=ini;extrasArr[i].mts_finales=fin;}});m.mtsExtra=totalExt;}
+    m.obs=document.getElementById(`ob-${mi}`)?.value.trim()||'';
+    const trows=document.querySelectorAll(`#tb-${mi} tr`);m.telares=Array.from(trows).map((tr,i)=>{const ins=tr.querySelectorAll('input');return{numero:parseInt(ins[0]?.value)||(i+1),fto:ins[1]?.value||'',ancho_trama:parseFloat(ins[2]?.value)||null,mts_iniciales:parseFloat(ins[3]?.value),mts_finales:parseFloat(ins[4]?.value),er:parseFloat(ins[5]?.value)||null,es_extra:false};});
+    const prows=document.querySelectorAll(`#pl-${mi} .prow`);m.paradas=Array.from(prows).map(pr=>({telar:parseInt(pr.querySelector('.p-t').value)||null,desde:pr.querySelector('.p-d').value,hasta:pr.querySelector('.p-h').value,motivo:pr.querySelector('.motsel').value})).filter(p=>p.telar&&p.desde&&p.hasta);
+  });
+}
+
+async function publicarSheets(){
+  if(!gToken){showSB('error','No estás conectado a Google. Volvé al paso 1.');return;}
+  if(!quinceActual){showSB('error','Seleccioná una quincena primero.');return;}
+  syncDom();
+  if(legajosValidos.length>0){const legajosInvalidos=maquinistas.filter(m=>!legajosValidos.includes(String(m.legajo)));if(legajosInvalidos.length>0){showSB('error',`❌ Legajos no válidos: ${legajosInvalidos.map(m=>m.legajo).join(', ')}. Legajos válidos: ${legajosValidos.join(', ')}`);return;}}
+  document.getElementById('btnPublicar').disabled=true;showSB('loading',`⚡ Publicando en "${quinceActual.nombre}"...`);
+  const sheetId=quinceActual.sheetId;
+  let totalMtsGlobal=0, totalParadas=0, legajosCargados=[];
+  try{
+    for(const m of maquinistas){
+      const leg=m.legajo; if(!leg)continue;
+
+      // Leer columna D para encontrar primera fila vacía
+      const readRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(leg+'!D:D')}`,{headers:{Authorization:`Bearer ${gToken}`}});
+      if(!readRes.ok){const e=await readRes.json();throw new Error(`Hoja "${leg}" no encontrada: ${e.error?.message||readRes.status}`);}
+      const readData=await readRes.json(); const rows=readData.values||[];
+      let firstEmptyRow=5;
+      for(let i=4;i<rows.length;i++){if(rows[i]&&rows[i][0]&&rows[i][0].toString().trim()!=='')firstEmptyRow=i+2;}
+
+      const fecha=new Date((m.fecha||new Date().toISOString().split('T')[0])+'T12:00:00');
+      const fechaStr=fecha.toLocaleDateString('es-AR');
+
+      // ── CALCULAR MNP POR TELAR ──────────────────────────────────────────
+      // Clave: usamos SIEMPRE parseInt() para que "5" y 5 sean lo mismo.
+      // Solo contamos paradas de telares que NO son extra (telares asignados).
+      const telaresAsignadosNums = new Set(
+        m.telares.filter(t=>!t.es_extra).map(t=>parseInt(t.numero)).filter(n=>!isNaN(n))
+      );
+      const mnp={};
+      m.paradas.forEach(p=>{
+        if(!p.telar||!p.desde||!p.hasta)return;
+        const telarP=parseInt(p.telar);
+        if(isNaN(telarP))return;
+        // Solo suma si el telar de la parada corresponde a un telar asignado
+        if(!telaresAsignadosNums.has(telarP))return;
+        const[dh,dm]=p.desde.split(':').map(Number);
+        const[hh,hm]=p.hasta.split(':').map(Number);
+        let d=dh*60+dm, h=hh*60+hm;
+        // Si están invertidos dentro del mismo día (diferencia < 6hs) → intercambiar
+        if(h<d&&(d-h)<360){const tmp=d;d=h;h=tmp;}
+        // Si cruza medianoche
+        else if(h<d)h+=1440;
+        const mins=h-d;
+        if(mins>0)mnp[telarP]=(mnp[telarP]||0)+mins;
+      });
+
+      // ── CONSTRUIR FILAS PARA SHEETS ─────────────────────────────────────
+      const writeRows=[]; let firstTelar=true; let mtsMaquinista=0;
+      m.telares.filter(t=>!t.es_extra).forEach((t,idx)=>{
+        if(isNaN(t.mts_iniciales)||isNaN(t.mts_finales))return;
+        const mts=(t.mts_iniciales>63000&&t.mts_finales<3000)
+          ?(65535-t.mts_iniciales)+t.mts_finales
+          :t.mts_finales-t.mts_iniciales;
+        const mtsVal=Math.max(mts,0);
+        mtsMaquinista+=mtsVal;
+        // parseInt para asegurar match con las claves de mnp
+        const telarReal=parseInt(t.numero);
+        const np=(!isNaN(telarReal)&&mnp[telarReal])||0;
+        const hrsT=m.turno==='extra'?12:9;
+        // Columna J (mtsExtra÷4) solo en la PRIMERA fila del maquinista
+        const mtsExtraCol=firstTelar&&m.mtsExtra>0?Math.round(m.mtsExtra/4):'';
+        writeRows.push([
+          firstTelar?fechaStr:'',  // B - Fecha (solo primera fila)
+          hrsT,                    // C - Horas trabajadas
+          t.numero,                // D - N° Telar
+          t.mts_iniciales,         // E - Mts iniciales
+          t.mts_finales,           // F - Mts finales
+          t.er?String(t.er).replace('.',','):'', // G - E/R
+          np||'',                  // I - Min no productivos (suma de paradas de ese telar)
+          mtsExtraCol              // J - Mts extra ÷ 4
+        ]);
+        firstTelar=false;
+      });
+
+      if(writeRows.length===0)continue;
+
+      // Obtener sheetId numérico para insertar filas
+      const metaRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=sheets(properties(title,sheetId))`,{headers:{Authorization:`Bearer ${gToken}`}});
+      const metaData=await metaRes.json();
+      const sheetMeta=metaData.sheets?.find(s=>s.properties.title===leg);
+      const sheetGid=sheetMeta?.properties?.sheetId;
+      const nRows=writeRows.length;
+
+      // Insertar filas vacías
+      if(sheetGid!==undefined){
+        await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`,{
+          method:'POST',
+          headers:{Authorization:`Bearer ${gToken}`,'Content-Type':'application/json'},
+          body:JSON.stringify({requests:[{insertDimension:{range:{sheetId:sheetGid,dimension:'ROWS',startIndex:firstEmptyRow-1,endIndex:firstEmptyRow-1+nRows},inheritFromBefore:true}}]})
+        });
+      }
+
+      // Escribir datos en columnas separadas (no tocar H, K, L, M, N que tienen fórmulas)
+      const dataBCDEFG=writeRows.map(r=>r.slice(0,6));
+      const dataI=writeRows.map(r=>[r[6]]);
+      const dataJ=writeRows.map(r=>[r[7]]);
+      const batchData=[
+        {range:`${leg}!B${firstEmptyRow}:G${firstEmptyRow+nRows-1}`,values:dataBCDEFG},
+        {range:`${leg}!I${firstEmptyRow}:I${firstEmptyRow+nRows-1}`,values:dataI},
+        {range:`${leg}!J${firstEmptyRow}:J${firstEmptyRow+nRows-1}`,values:dataJ},
+      ];
+      const writeRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
+        method:'POST',
+        headers:{Authorization:`Bearer ${gToken}`,'Content-Type':'application/json'},
+        body:JSON.stringify({valueInputOption:'USER_ENTERED',data:batchData})
+      });
+      if(!writeRes.ok){const e=await writeRes.json();throw new Error(`Error al escribir hoja "${leg}": ${e.error?.message||writeRes.status}`);}
+
+      // ── APRENDER de las correcciones del usuario ──────────────────────
+      const datosOrigIA = _lecturaIA_original[leg];
+      if (datosOrigIA) {
+        // Reconstruir "datosEditados" desde el estado actual del maquinista
+        const datosEditados = {
+          legajo_maquinista: m.legajo,
+          fecha: m.fecha,
+          turno: m.turno,
+          telares: m.telares,
+          paradas: m.paradas
+        };
+        memAprender(leg, datosOrigIA, datosEditados);
+        delete _lecturaIA_original[leg]; // limpiar para no re-aprender
+      }
+
+      totalMtsGlobal+=mtsMaquinista;
+      totalParadas+=m.paradas.length;
+      legajosCargados.push({leg,mts:mtsMaquinista,paradas:m.paradas.length,alertas:m.alertas.length});
+    }
+
+    document.getElementById('sheetLink').href=`https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
+    document.getElementById('rDesc').textContent=`${legajosCargados.length} maquinista${legajosCargados.length!==1?'s':''} · ${totalMtsGlobal.toLocaleString()} metros · ${quinceActual.nombre}`;
+    document.getElementById('rResumen').innerHTML=legajosCargados.map(l=>`<div class="erow"><span class="el">Legajo ${l.leg}</span><span class="ev">${l.mts.toLocaleString()} mts · ${l.paradas} paradas${l.alertas>0?` · <span style="color:var(--warn)">⚠️ ${l.alertas} alerta${l.alertas>1?'s':''}</span>`:''}</span></div>`).join('')+`<div class="erow" style="margin-top:8px;"><span class="el" style="font-weight:700;">TOTAL</span><span class="ev" style="color:var(--accent)">${totalMtsGlobal.toLocaleString()} mts</span></div>`;
+    document.getElementById('paso3').classList.add('hidden');document.getElementById('paso4').classList.remove('hidden');setStep(4);hideStatus();
+  }catch(err){console.error(err);showSB('error','❌ '+err.message);document.getElementById('btnPublicar').disabled=false;}
+}
+
+function irP3(){
+  syncDom();const q=quinceActual;
+  document.getElementById('p3preview').innerHTML=`<div class="erow"><span class="el">Quincena</span><span class="ev">${q?.nombre||'Sin seleccionar'}</span></div><div class="erow"><span class="el">Spreadsheet ID</span><span class="ev" style="font-size:11px">${q?.sheetId?.substring(0,20)||'—'}...</span></div><div class="erow"><span class="el">Maquinistas</span><span class="ev">${maquinistas.length}</span></div><div class="erow"><span class="el">Total alertas</span><span class="ev" style="color:${maquinistas.reduce((s,m)=>s+m.alertas.length,0)>0?'var(--warn)':'var(--accent2)'}">${maquinistas.reduce((s,m)=>s+m.alertas.length,0)}</span></div>${!q?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No hay quincena seleccionada.</div>':''}${!gToken?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No estás conectado a Google.</div>':''}`;
+  document.getElementById('btnPublicar').disabled=!gToken||!q;
+  document.getElementById('paso2').classList.add('hidden');document.getElementById('paso3').classList.remove('hidden');setStep(3);
+}
+
+function back1(){document.getElementById('paso2').classList.add('hidden');document.getElementById('paso1').classList.remove('hidden');setStep(1);}
+function back2(){document.getElementById('paso3').classList.add('hidden');document.getElementById('paso2').classList.remove('hidden');setStep(2);}
+function nuevoDia(){archivos=[];maquinistas=[];document.getElementById('flist').innerHTML='';document.getElementById('progWrap').classList.add('hidden');document.getElementById('progBar').style.width='0%';document.getElementById('btnLeer').disabled=true;document.getElementById('maqBlocks').innerHTML='';document.getElementById('fInput').value='';document.getElementById('paso4').classList.add('hidden');document.getElementById('paso1').classList.remove('hidden');setStep(1);hideStatus();}
+
+function fv(f){if(!f)return'';const p=f.split('/');if(p.length===3)return`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;return f;}
+function tl(t){return{manana:'⏱ 540 min · Mañana 06:00–15:00',tarde:'⏱ 540 min · Tarde 15:00–23:30',extra:'⚡ 720 min · 12 horas extra'}[t]||'';}
+function showSB(type,msg){const b=document.getElementById('statusBar');b.className=`sbar ${type}`;b.classList.remove('hidden');b.innerHTML=type==='loading'?`<div class="spin"></div><span>${msg}</span>`:`<span>${msg}</span>`;}
+function hideStatus(){document.getElementById('statusBar').classList.add('hidden');}
+function setStep(n){for(let i=1;i<=4;i++){const el=document.getElementById(`s${i}`);el.className='step '+(i<n?'done':i===n?'active':'');el.querySelector('.step-n').textContent=i<n?'✓':i;}}
+
+// ═══════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════
+let dashData = null;
+let dashDataComp = null;
+let dashTabActual = 'operarios';
+
+// Estado del modo de vista
+let dashModo = 'todas';   // 'todas' | 'una' | 'comparar'
+let dashTodasQuincenas = {}; // { nombre: datosLeidos }
+
+function abrirDash() {
+  document.getElementById('dashModal').classList.remove('hidden');
+  // Poblar selectores individuales
+  const sel1 = document.getElementById('dashQselPrincipal');
+  const sel2 = document.getElementById('dashQselComparar');
+  sel1.innerHTML = '<option value="">— Seleccionar —</option>';
+  sel2.innerHTML = '<option value="">— Seleccionar —</option>';
+  quincenas.forEach((q, i) => {
+    sel1.innerHTML += `<option value="${i}">${q.nombre}</option>`;
+    sel2.innerHTML += `<option value="${i}">${q.nombre}</option>`;
+  });
+  if (quinceActual) {
+    const idx = quincenas.findIndex(q => q.nombre === quinceActual.nombre);
+    if (idx >= 0) sel1.value = idx;
   }
-  return h - d;
+  dashCambiarModo(); // aplicar estado visual del selector
 }
 
-function minLabel(min) {
-  if (min === null) return {txt: '--', cls: ''};
-  if (min >= 30) return {txt: min+'m', cls: 'high'};   // rojo
-  if (min >= 16) return {txt: min+'m', cls: 'med'};    // amarillo
-  return {txt: min+'m', cls: 'low'};                   // verde
+function cerrarDash() {
+  document.getElementById('dashModal').classList.add('hidden');
 }
 
-function prow(p, mi) {
-  const opts = MOTIVOS.map(m=>{ const k=m.split(' ')[0]; return `<option value="${k}" ${(p.motivo&&p.motivo.toUpperCase()===k)?'selected':''}>${m}</option>`; }).join('');
-  const desde = normHora(p.desde);
-  const hasta = normHora(p.hasta);
-  const min = calcMinutos(desde, hasta);
-  const lbl = minLabel(min);
-  return `<div class="prow" data-mi="${mi}">
-    <input type="number" placeholder="Telar" value="${p.telar||''}" class="p-t" oninput="revalProw(this,${mi})">
-    <input type="time" value="${desde}" class="p-d" onchange="revalProw(this,${mi})">
-    <input type="time" value="${hasta}" class="p-h" onchange="revalProw(this,${mi})">
-    <span class="pmin ${lbl.cls}" id="pmin-${mi}-${Math.random().toString(36).substr(2,5)}">${lbl.txt}</span>
-    <select class="motsel">${opts}</select>
-    <button class="btn-rp" onclick="this.parentElement.remove();reval(${mi})">✕</button>
-  </div>`;
+function dashCambiarModo() {
+  dashModo = document.getElementById('dashModoVista')?.value || 'todas';
+  const selRow = document.getElementById('dashSelRow');
+  const lbl2 = document.getElementById('dashSel2Label');
+  const sel2 = document.getElementById('dashQselComparar');
+  if (dashModo === 'todas') {
+    if (selRow) selRow.style.display = 'none';
+  } else if (dashModo === 'una') {
+    if (selRow) selRow.style.display = 'flex';
+    if (lbl2) lbl2.style.display = 'none';
+    if (sel2) sel2.style.display = 'none';
+  } else if (dashModo === 'comparar') {
+    if (selRow) selRow.style.display = 'flex';
+    if (lbl2) lbl2.style.display = 'inline';
+    if (sel2) sel2.style.display = 'inline-block';
+  }
+  // Reset datos al cambiar modo
+  dashData = null; dashDataComp = null; dashTodasQuincenas = {};
 }
 
-function revalProw(el, mi) {
-  // Actualizar el label de minutos de esa fila
-  const row = el.closest('.prow');
-  const desde = row.querySelector('.p-d').value;
-  const hasta = row.querySelector('.p-h').value;
-  const min = calcMinutos(desde, hasta);
-  const lbl = minLabel(min);
-  const pmin = row.querySelector('.pmin');
-  if (pmin) { pmin.textContent = lbl.txt; pmin.className = 'pmin ' + lbl.cls; }
-  reval(mi);
-  // Mostrar alertas de paradas sospechosas
-  mostrarAlertasParadas(mi);
+function dashTab(tab) {
+  dashTabActual = tab;
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('dt-' + tab).classList.add('active');
+  document.querySelectorAll('.dash-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  if (tab === 'memoria') dashRenderMemoria();
+  if (tab === 'historial' && Object.keys(dashTodasQuincenas).length > 0) dashRenderHistorial();
 }
 
-function mostrarAlertasParadas(mi) {
-  const prows = document.querySelectorAll(`#pl-${mi} .prow`);
-  const paradas = Array.from(prows).map(pr => ({
-    telar: parseInt(pr.querySelector('.p-t').value)||null,
-    desde: pr.querySelector('.p-d').value,
-    hasta: pr.querySelector('.p-h').value,
-    motivo: pr.querySelector('.motsel').value,
-    min: calcMinutos(pr.querySelector('.p-d').value, pr.querySelector('.p-h').value)
-  })).filter(p => p.telar && p.desde && p.hasta);
+function dashCambiarQuincena() {
+  dashData = null; dashDataComp = null;
+}
 
-  const alertas = [];
+async function dashCargarDatos() {
+  if (!gToken) { alert('Conectate a Google primero (Paso 1).'); return; }
+  const btn = document.getElementById('dashLoadBtn');
+  const status = document.getElementById('dashLoadStatus');
+  btn.disabled = true;
 
-  // Paradas muy largas (≥30 min)
-  paradas.filter(p => p.min >= 30).forEach(p => {
-    alertas.push(`⏱ Telar ${p.telar}: parada de ${p.min} min (${p.desde}–${p.hasta}) — ${p.motivo}. ¿Es correcta?`);
-  });
+  try {
+    if (dashModo === 'todas') {
+      // Cargar TODAS las quincenas
+      if (quincenas.length === 0) { alert('No hay quincenas configuradas.'); return; }
+      status.textContent = `⏳ cargando ${quincenas.length} quincenas...`;
+      dashTodasQuincenas = {};
+      let totalRegistros = 0;
 
-  // Motivo repetitivo en el mismo telar (3+ veces)
-  const motCount = {};
-  paradas.forEach(p => {
-    const k = `${p.telar}-${p.motivo}`;
-    motCount[k] = (motCount[k]||0) + 1;
-  });
-  Object.entries(motCount).filter(([k,v])=>v>=3).forEach(([k,v]) => {
-    const [tel, mot] = k.split('-');
-    alertas.push(`🔁 Telar ${tel}: ${mot} se repite ${v} veces. Verificar con el maquinista.`);
-  });
-
-  // Paradas superpuestas en el MISMO telar (esto sí es un error)
-  const telaresUnicos = [...new Set(paradas.map(p => p.telar))];
-  telaresUnicos.forEach(tel => {
-    const pTel = paradas.filter(p => p.telar === tel && p.min !== null);
-    pTel.forEach((p1, i) => {
-      pTel.slice(i+1).forEach(p2 => {
-        const [d1h,d1m] = p1.desde.split(':').map(Number);
-        const [h1h,h1m] = p1.hasta.split(':').map(Number);
-        const [d2h,d2m] = p2.desde.split(':').map(Number);
-        const [h2h,h2m] = p2.hasta.split(':').map(Number);
-        let ini1=d1h*60+d1m, fin1=h1h*60+h1m;
-        let ini2=d2h*60+d2m, fin2=h2h*60+h2m;
-        if (fin1 < ini1) fin1 += 1440;
-        if (fin2 < ini2) fin2 += 1440;
-        // Se superponen si ini2 < fin1 Y fin2 > ini1
-        if (ini2 < fin1 && fin2 > ini1) {
-          alertas.push(`🚫 Telar ${tel}: paradas superpuestas (${p1.desde}–${p1.hasta} y ${p2.desde}–${p2.hasta}). Esto es un error — corregir.`);
+      // Agrupar quincenas por sheetId para evitar cargar el mismo Sheet dos veces
+      const sheetIdVisto = {};
+      for (let i = 0; i < quincenas.length; i++) {
+        const q = quincenas[i];
+        status.textContent = `⏳ ${i+1}/${quincenas.length} · ${q.nombre}...`;
+        if (!sheetIdVisto[q.sheetId]) {
+          const datos = await dashLeerQuincena(q);
+          sheetIdVisto[q.sheetId] = datos;
         }
+        const datos = sheetIdVisto[q.sheetId];
+        dashTodasQuincenas[q.nombre] = { ...datos, quincena: q };
+        totalRegistros += datos.totalRegistros;
+      }
+
+      // Para las pestañas individuales, usar la suma de todas
+      dashData = dashMergeTodas(Object.values(dashTodasQuincenas));
+      dashDataComp = null;
+      document.getElementById('dashQuinceLabel').textContent = `${quincenas.length} quincenas · ${totalRegistros} registros totales`;
+      status.textContent = `✅ ${totalRegistros} registros de ${quincenas.length} quincenas`;
+      dashRenderAll(null, null);
+      dashRenderHistorial();
+      dashTab('historial');
+
+    } else if (dashModo === 'una') {
+      const idx1 = document.getElementById('dashQselPrincipal').value;
+      if (idx1 === '') { alert('Seleccioná una quincena.'); btn.disabled=false; return; }
+      const q1 = quincenas[parseInt(idx1)];
+      status.textContent = `⏳ cargando ${q1.nombre}...`;
+      dashData = await dashLeerQuincena(q1);
+      dashDataComp = null;
+      dashTodasQuincenas = { [q1.nombre]: { ...dashData, quincena: q1 } };
+      document.getElementById('dashQuinceLabel').textContent = q1.nombre + ' · ' + dashData.totalRegistros + ' registros';
+      status.textContent = '✅ ' + dashData.totalRegistros + ' registros';
+      dashRenderAll(q1, null);
+      dashRenderHistorial();
+      dashTab('historial');
+
+    } else if (dashModo === 'comparar') {
+      const idx1 = document.getElementById('dashQselPrincipal').value;
+      const idx2 = document.getElementById('dashQselComparar').value;
+      if (idx1 === '' || idx2 === '') { alert('Seleccioná ambas quincenas.'); btn.disabled=false; return; }
+      const q1 = quincenas[parseInt(idx1)];
+      const q2 = quincenas[parseInt(idx2)];
+      status.textContent = `⏳ cargando...`;
+      dashData = await dashLeerQuincena(q1);
+      dashDataComp = await dashLeerQuincena(q2);
+      dashTodasQuincenas = {
+        [q1.nombre]: { ...dashData, quincena: q1 },
+        [q2.nombre]: { ...dashDataComp, quincena: q2 }
+      };
+      document.getElementById('dashQuinceLabel').textContent = `${q1.nombre} vs ${q2.nombre}`;
+      status.textContent = '✅ ambas quincenas cargadas';
+      dashRenderAll(q1, q2);
+      dashRenderHistorial();
+      dashTab('comparativa');
+    }
+  } catch(e) {
+    status.textContent = '❌ ' + e.message.substring(0, 80);
+    console.error('Dashboard error:', e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Merge datos de múltiples quincenas en uno solo para las pestañas agregadas
+function dashMergeTodas(todasDatos) {
+  const merged = { legajos: {}, totalRegistros: 0, totalMetros: 0 };
+  todasDatos.forEach(d => {
+    merged.totalRegistros += d.totalRegistros;
+    merged.totalMetros += d.totalMetros;
+    Object.entries(d.legajos).forEach(([leg, ld]) => {
+      if (!merged.legajos[leg]) {
+        merged.legajos[leg] = { registros: [], telares: {}, totalMetros: 0, totalMinNoProd: 0 };
+      }
+      merged.legajos[leg].totalMetros += ld.totalMetros;
+      merged.legajos[leg].totalMinNoProd += ld.totalMinNoProd;
+      merged.legajos[leg].registros.push(...ld.registros);
+      Object.entries(ld.telares).forEach(([t, td]) => {
+        if (!merged.legajos[leg].telares[t]) merged.legajos[leg].telares[t] = { metros: 0, turnos: 0, mnp: 0 };
+        merged.legajos[leg].telares[t].metros += td.metros;
+        merged.legajos[leg].telares[t].turnos += td.turnos;
+        merged.legajos[leg].telares[t].mnp += td.mnp;
       });
     });
   });
-
-  let palertDiv = document.getElementById(`palert-${mi}`);
-  if (alertas.length > 0) {
-    if (!palertDiv) {
-      palertDiv = document.createElement('div');
-      palertDiv.id = `palert-${mi}`;
-      palertDiv.className = 'palert';
-      const pl = document.getElementById(`pl-${mi}`);
-      pl.parentElement.insertBefore(palertDiv, pl);
-    }
-    palertDiv.innerHTML = `<div class="palert-title">⚠️ Paradas sospechosas — revisá antes de publicar</div>` + alertas.map(a=>`<div style="padding:2px 0;border-bottom:1px solid rgba(192,48,48,.1);">${a}</div>`).join('');
-  } else if (palertDiv) {
-    palertDiv.remove();
-  }
+  return merged;
 }
 
-function buildExtrasTable(extras, mi) {
-  if (!extras || extras.length === 0) {
-    return `<div style="font-size:12px;font-family:var(--mono);color:var(--text2);padding:8px 0;">Sin telares extra este día. <button class="btn-add" style="display:inline;width:auto;padding:4px 10px;margin-left:8px;" onclick="addTelarExtra(${mi})">+ Agregar telar extra</button></div>`;
+async function dashLeerQuincena(q) {
+  // Obtener lista de hojas
+  const metaRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${q.sheetId}?fields=sheets(properties(title))`,
+    { headers: { Authorization: `Bearer ${gToken}` } }
+  );
+  const meta = await metaRes.json();
+  const hojas = (meta.sheets || []).map(s => s.properties.title);
+  const legajosEnSheet = hojas.filter(h => /^\d+$/.test(h.trim()));
+
+  if (legajosEnSheet.length === 0) return { legajos: {}, totalRegistros: 0, totalMetros: 0 };
+
+  // Leer hojas en lotes de 10
+  const allData = {};
+  for (let i = 0; i < legajosEnSheet.length; i += 10) {
+    const chunk = legajosEnSheet.slice(i, i + 10);
+    const chunkRanges = chunk.map(l => `${l}!B5:N500`);
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${q.sheetId}/values:batchGet?` +
+      chunkRanges.map(r => `ranges=${encodeURIComponent(r)}`).join('&') +
+      '&valueRenderOption=UNFORMATTED_VALUE';
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${gToken}` } });
+    if (!res.ok) throw new Error(`Error leyendo Sheet: ${res.status}`);
+    const data = await res.json();
+    (data.valueRanges || []).forEach((vr, j) => {
+      allData[chunk[j]] = vr.values || [];
+    });
   }
-  const rows = extras.map((t, i) => {
-    const ini = t.mts_iniciales||'';
-    const fin = t.mts_finales||'';
-    const tot = (!isNaN(ini)&&!isNaN(fin)&&ini!==''&&fin!=='') ? Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0) : 0;
-    return `<tr>
-      <td style="padding:4px 3px;"><input type="number" value="${t.numero||''}" placeholder="Telar" style="width:60px;font-size:12px;color:var(--accent2);font-weight:700;"></td>
-      <td style="padding:4px 3px;"><input type="number" value="${ini}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td>
-      <td style="padding:4px 3px;"><input type="number" value="${fin}" placeholder="0" style="width:100%;font-size:12px;" oninput="recalcExtras(${mi})"></td>
-      <td style="padding:4px 6px;text-align:right;font-family:var(--mono);font-weight:700;">${tot.toLocaleString('es-AR')}</td>
-      <td style="padding:4px 3px;"><button class="btn-rp" onclick="quitarTelarExtra(${mi},${i})">✕</button></td>
+
+  // Parsear datos
+  // Columnas desde B: [0]=Fecha [1]=Hrs [2]=Telar [3]=Entrada [4]=Salida [5]=ER [6]=Total(formula)
+  // [7]=MinNoProd(I) [8]=MtsExtra(J)
+  const legajos = {};
+  let totalRegistros = 0;
+  let totalMetros = 0;
+
+  legajosEnSheet.forEach(leg => {
+    const rows = allData[leg] || [];
+    legajos[leg] = { registros: [], telares: {}, totalMetros: 0, totalMinNoProd: 0 };
+    rows.forEach(row => {
+      if (!row || row.length < 5) return;
+      const telar = parseInt(row[2]);
+      const entrada = parseFloat(row[3]);
+      const salida = parseFloat(row[4]);
+      if (!telar || isNaN(entrada) || isNaN(salida)) return;
+      const mts = entrada > 63000 && salida < 3000 ? (65535 - entrada) + salida : salida > entrada ? salida - entrada : Math.abs(salida - entrada);
+      const mtsVal = Math.max(mts, 0);
+      const mnp = parseFloat(row[7]) || 0;
+      const hrs = parseFloat(row[1]) || 9;
+      const fecha = row[0] || '';
+      totalRegistros++;
+      totalMetros += mtsVal;
+      legajos[leg].totalMetros += mtsVal;
+      legajos[leg].totalMinNoProd += mnp;
+      if (!legajos[leg].telares[telar]) legajos[leg].telares[telar] = { metros: 0, turnos: 0, mnp: 0 };
+      legajos[leg].telares[telar].metros += mtsVal;
+      legajos[leg].telares[telar].turnos++;
+      legajos[leg].telares[telar].mnp += mnp;
+      legajos[leg].registros.push({ telar, mts: mtsVal, mnp, fecha, hrs });
+    });
+    if (legajos[leg].registros.length === 0) delete legajos[leg];
+  });
+
+  return { legajos, totalRegistros, totalMetros, quincena: q };
+}
+
+function dashRenderAll(q1, q2) {
+  if (!dashData) return;
+  document.getElementById('dashKpis').style.display = 'grid';
+  const d = dashData;
+  const legsList = Object.keys(d.legajos);
+  // KPIs
+  document.getElementById('kpi-metros').textContent = d.totalMetros >= 10000 ? (d.totalMetros/1000).toFixed(1)+'k' : d.totalMetros.toLocaleString('es-AR');
+  document.getElementById('kpi-metros-sub').textContent = d.totalMetros.toLocaleString('es-AR') + ' mts total';
+  document.getElementById('kpi-operarios').textContent = legsList.length;
+  document.getElementById('kpi-registros').textContent = d.totalRegistros;
+  const totalMnp = legsList.reduce((s, l) => s + (d.legajos[l].totalMinNoProd || 0), 0);
+  document.getElementById('kpi-paradas').textContent = Math.round(totalMnp) + 'm';
+  document.getElementById('kpi-paradas-sub').textContent = Math.round(totalMnp/60*10)/10 + ' horas sin producir';
+  const prom = d.totalRegistros > 0 ? Math.round(d.totalMetros / d.totalRegistros) : 0;
+  document.getElementById('kpi-prom').textContent = prom.toLocaleString('es-AR');
+  dashRenderOperarios();
+  dashRenderTelares();
+  dashRenderParadas();
+  dashRenderEvolucion();
+  if (dashDataComp) dashRenderComparativa(q1, q2);
+  else document.getElementById('panel-comparativa').innerHTML = '<div class="dash-empty">Seleccioná una segunda quincena en el selector "Comparar con" y presioná "Cargar datos".</div>';
+}
+
+function dashRenderHistorial() {
+  const panel = document.getElementById('panel-historial');
+  if (!panel) return;
+  const nombres = Object.keys(dashTodasQuincenas);
+  if (nombres.length === 0) {
+    panel.innerHTML = '<div class="dash-empty">Cargá datos primero.</div>';
+    return;
+  }
+
+  // Calcular totales por quincena
+  const filas = nombres.map(nombre => {
+    const d = dashTodasQuincenas[nombre];
+    const legs = Object.keys(d.legajos);
+    const totalMnp = legs.reduce((s,l) => s + (d.legajos[l].totalMinNoProd||0), 0);
+    const prom = d.totalRegistros > 0 ? Math.round(d.totalMetros / d.totalRegistros) : 0;
+    return { nombre, totalMetros: d.totalMetros, totalRegistros: d.totalRegistros, legs: legs.length, mnp: Math.round(totalMnp), prom };
+  });
+
+  const maxMts = Math.max(...filas.map(f => f.totalMetros), 1);
+  const totalGlobal = filas.reduce((s,f) => s + f.totalMetros, 0);
+
+  let html = `<div class="dash-section-title">Producción por quincena — visión histórica</div>`;
+
+  // Barras por quincena
+  html += '<div class="dash-bar-wrap" style="margin-bottom:28px;">';
+  filas.forEach(f => {
+    const pct = (f.totalMetros / maxMts * 100).toFixed(1);
+    const mtsK = f.totalMetros >= 10000 ? (f.totalMetros/1000).toFixed(1)+'k' : f.totalMetros.toLocaleString('es-AR');
+    html += `<div class="dash-bar-row" style="grid-template-columns:200px 1fr 100px;">
+      <div class="dash-bar-lbl" style="text-align:left;font-size:11px;">${f.nombre}</div>
+      <div class="dash-bar-track"><div class="dash-bar-fill green" style="width:${pct}%"></div></div>
+      <div class="dash-bar-val">${mtsK}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Tabla resumen por quincena
+  html += `<div class="dash-section-title">Resumen por quincena</div>
+  <div style="overflow-x:auto;">
+  <table class="dash-table"><thead><tr>
+    <th>Quincena</th>
+    <th style="text-align:right">Total Mts</th>
+    <th style="text-align:right">Registros</th>
+    <th style="text-align:right">Operarios</th>
+    <th style="text-align:right">Prom/turno</th>
+    <th style="text-align:right">Min no prod</th>
+  </tr></thead><tbody>`;
+
+  filas.forEach(f => {
+    const mtsK = f.totalMetros >= 10000 ? (f.totalMetros/1000).toFixed(1)+'k' : f.totalMetros.toLocaleString('es-AR');
+    html += `<tr>
+      <td style="font-weight:700;">${f.nombre}</td>
+      <td style="text-align:right" class="val good">${mtsK} <span style="font-weight:400;color:var(--text3);font-size:10px;">(${f.totalMetros.toLocaleString('es-AR')})</span></td>
+      <td style="text-align:right">${f.totalRegistros}</td>
+      <td style="text-align:right">${f.legs}</td>
+      <td style="text-align:right">${f.prom.toLocaleString('es-AR')}</td>
+      <td style="text-align:right;color:${f.mnp>300?'var(--warn)':'var(--text2)'}">${f.mnp} min</td>
     </tr>`;
-  }).join('');
-  const total = extras.reduce((s,t) => {
-    const ini=t.mts_iniciales||0, fin=t.mts_finales||0;
-    if(isNaN(ini)||isNaN(fin)) return s;
-    return s + Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
-  }, 0);
-  const por4 = Math.round(total/4);
-  return `<table class="tt" style="margin-bottom:8px;">
-    <thead><tr>
-      <th style="width:50px;"># Telar</th>
-      <th>Mts Iniciales</th>
-      <th>Mts Finales</th>
-      <th style="text-align:right;">Total</th>
-      <th style="width:32px;"></th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-    <tfoot>
-      <tr style="background:var(--surface2);">
-        <td colspan="3" style="padding:6px;font-size:12px;font-family:var(--mono);color:var(--text2);">Total metros extra</td>
-        <td style="padding:6px;text-align:right;font-family:var(--mono);font-weight:700;" id="ext-total-${mi}">${total.toLocaleString('es-AR')}</td>
-        <td></td>
-      </tr>
-      <tr>
-        <td colspan="3" style="padding:4px 6px;font-size:11px;font-family:var(--mono);color:var(--text3);">Por telar (÷ 4) → columna J</td>
-        <td style="padding:4px 6px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text2);" id="ext-div4-${mi}">${por4.toLocaleString('es-AR')}</td>
-        <td></td>
-      </tr>
-    </tfoot>
-  </table>
-  <button class="btn-add" onclick="addTelarExtra(${mi})">+ Agregar telar extra</button>`;
-}
-
-function recalcExtras(mi) {
-  // Leer inputs de telares extra y actualizar totales
-  const body = document.getElementById(`extbody-${mi}`);
-  if (!body) return;
-  const rows = body.querySelectorAll('tbody tr');
-  let total = 0;
-  rows.forEach(tr => {
-    const ins = tr.querySelectorAll('input');
-    const ini = parseFloat(ins[1]?.value)||0;  // ins[0] es el número de telar
-    const fin = parseFloat(ins[2]?.value)||0;
-    const mts = Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
-    const tdTot = tr.querySelectorAll('td')[3];
-    if (tdTot) tdTot.textContent = mts.toLocaleString('es-AR');
-    total += mts;
   });
-  const t = document.getElementById(`ext-total-${mi}`);
-  const d = document.getElementById(`ext-div4-${mi}`);
-  if (t) t.textContent = total.toLocaleString('es-AR');
-  if (d) d.textContent = Math.round(total/4).toLocaleString('es-AR');
-  // Actualizar estado
-  maquinistas[mi].mtsExtra = total;
-}
 
-function addTelarExtra(mi) {
-  maquinistas[mi].telares.push({ numero: '?', mts_iniciales: '', mts_finales: '', es_extra: true });
-  const body = document.getElementById(`extbody-${mi}`);
-  if (body) body.innerHTML = buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra), mi);
-}
+  // Fila de totales
+  const totalRegistros = filas.reduce((s,f)=>s+f.totalRegistros,0);
+  const totalMnp = filas.reduce((s,f)=>s+f.mnp,0);
+  const promGlobal = totalRegistros>0?Math.round(totalGlobal/totalRegistros):0;
+  html += `<tr style="background:var(--surface2);font-weight:700;border-top:2px solid var(--border);">
+    <td>TOTAL HISTÓRICO</td>
+    <td style="text-align:right;color:var(--accent2)">${(totalGlobal/1000).toFixed(1)}k <span style="font-weight:400;font-size:10px;color:var(--text3)">(${totalGlobal.toLocaleString('es-AR')})</span></td>
+    <td style="text-align:right">${totalRegistros}</td>
+    <td style="text-align:right">—</td>
+    <td style="text-align:right">${promGlobal.toLocaleString('es-AR')}</td>
+    <td style="text-align:right">${totalMnp} min</td>
+  </tr>`;
+  html += '</tbody></table></div>';
 
-function quitarTelarExtra(mi, idx) {
-  const extras = maquinistas[mi].telares.filter(t=>t.es_extra);
-  const telarAQuitar = extras[idx];
-  maquinistas[mi].telares = maquinistas[mi].telares.filter(t => t !== telarAQuitar);
-  const body = document.getElementById(`extbody-${mi}`);
-  if (body) body.innerHTML = buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra), mi);
-  recalcExtras(mi);
-}
+  // Tabla cruzada: Operario × Quincena (metros)
+  if (nombres.length > 1) {
+    const todosLegs = [...new Set(Object.values(dashTodasQuincenas).flatMap(d=>Object.keys(d.legajos)))].sort();
+    html += `<div class="dash-section-title" style="margin-top:24px;">Producción por operario × quincena</div>
+    <div style="overflow-x:auto;">
+    <table class="dash-compare-table"><thead><tr>
+      <th style="text-align:left;white-space:nowrap;">Operario</th>`;
+    nombres.forEach(n => {
+      // Abreviar nombre de quincena para que entre en la tabla
+      const abrev = n.replace('Quincena','Q').replace('Quincena','Q').replace('era ','ª ').replace('nda ','ª ').replace('rcer','cer');
+      html += `<th style="white-space:nowrap;">${abrev}</th>`;
+    });
+    html += `<th>Total</th></tr></thead><tbody>`;
 
-function addP(mi) {
-  const c = document.createElement('div'); c.innerHTML = prow({},mi);
-  document.getElementById(`pl-${mi}`).appendChild(c.firstElementChild);
-}
-
-function toggleBlock(mi) {
-  const b=document.getElementById(`body-${mi}`), t=document.getElementById(`tog-${mi}`);
-  const h=b.style.display==='none'; b.style.display=h?'':'none'; t.textContent=h?'▼':'▶';
-}
-
-function setT(mi, t) {
-  maquinistas[mi].turno=t;
-  document.getElementById(`mb-${mi}`).replaceWith(buildBlock(maquinistas[mi],mi));
-}
-
-function reval(mi) {
-  // Leer DOM → actualizar estado → recalcular alertas
-  const trows=document.querySelectorAll(`#tb-${mi} tr`);
-  maquinistas[mi].telares = Array.from(trows).map((tr,i)=>{ const ins=tr.querySelectorAll('input'); return { numero:parseInt(ins[0]?.value)||(i+1), fto:ins[1]?.value||'', ancho_trama:parseFloat(ins[2]?.value)||null, mts_iniciales:parseFloat(ins[3]?.value), mts_finales:parseFloat(ins[4]?.value), er:parseFloat(ins[5]?.value)||null, es_extra:false, _w:null }; });
-  const prows=document.querySelectorAll(`#pl-${mi} .prow`);
-  maquinistas[mi].paradas = Array.from(prows).map(pr=>({ telar:parseInt(pr.querySelector('.p-t').value)||null, desde:pr.querySelector('.p-d').value, hasta:pr.querySelector('.p-h').value, motivo:pr.querySelector('.motsel').value })).filter(p=>p.telar&&p.desde&&p.hasta);
-  // Recalcular alertas solo para este bloque
-  maquinistas[mi].alertas=[];
-  const minT=maquinistas[mi].turno==='extra'?720:540;
-  maquinistas[mi].telares.forEach(t=>{
-    if(!t.er) return;
-    const ini=t.mts_iniciales,fin=t.mts_finales;
-    if(isNaN(ini)||isNaN(fin)) return;
-    const mts=(ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini;
-    if(mts<=0) return;
-    const minP=maquinistas[mi].paradas.reduce((s,p)=>{ if(p.telar!==t.numero)return s; const[dh,dm]=(p.desde||'0:0').split(':').map(Number); const[hh,hm]=(p.hasta||'0:0').split(':').map(Number); let d=dh*60+dm,h=hh*60+hm; if(h<d)h+=1440; return s+(h-d); },0);
-    const teo=t.er*(minT-minP);
-    const cells=document.querySelectorAll(`#tb-${mi} tr`)[t.numero-1]?.querySelectorAll('input');
-    if(cells){cells[2].classList.remove('warn','err');cells[3].classList.remove('warn','err');}
-    if(mts<teo*0.15&&minP===0){ t._w='err'; maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`}); if(cells){cells[2].classList.add('err');cells[3].classList.add('err');} }
-    else if(mts<teo*0.35&&minP<30){ t._w='warn'; maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`}); if(cells){cells[2].classList.add('warn');cells[3].classList.add('warn');} }
-  });
-}
-
-function addMaqManual() {
-  const leg=prompt('N° de Legajo:'); if(!leg) return;
-  maquinistas.push({ legajo:leg, fecha:'', turno:'manana', telares:[{},{},{},{}], paradas:[], mtsExtra:0, obs:'', alertas:[] });
-  const mi=maquinistas.length-1;
-  document.getElementById('maqBlocks').appendChild(buildBlock(maquinistas[mi],mi));
-}
-
-// ═══════════════════════════════════════════════════
-// SINCRONIZAR DOM → ESTADO
-// ═══════════════════════════════════════════════════
-function syncDom() {
-  maquinistas.forEach((m,mi) => {
-    m.legajo  = document.getElementById(`l-${mi}`)?.value.trim() || m.legajo;
-    m.fecha   = document.getElementById(`f-${mi}`)?.value || m.fecha;
-    // Leer metros extra de la tabla de telares extra
-    const extBody = document.getElementById(`extbody-${mi}`);
-    if (extBody) {
-      let totalExt = 0;
-      extBody.querySelectorAll('tbody tr').forEach((tr, i) => {
-        const ins = tr.querySelectorAll('input');
-        const ini = parseFloat(ins[1]?.value)||0;  // ins[0] es el número de telar
-        const fin = parseFloat(ins[2]?.value)||0;
-        const mts = Math.max((ini>63000&&fin<3000)?(65535-ini)+fin:fin-ini, 0);
-        totalExt += mts;
-        // Actualizar telar extra en el estado
-        const extrasArr = maquinistas[mi].telares.filter(t=>t.es_extra);
-        if (extrasArr[i]) {
-          extrasArr[i].mts_iniciales = ini;
-          extrasArr[i].mts_finales = fin;
-        }
+    todosLegs.forEach(leg => {
+      const mtsTotal = nombres.reduce((s,n) => s+(dashTodasQuincenas[n].legajos[leg]?.totalMetros||0), 0);
+      html += `<tr><td><span class="leg-badge">${leg}</span></td>`;
+      nombres.forEach(n => {
+        const mts = dashTodasQuincenas[n].legajos[leg]?.totalMetros || 0;
+        html += `<td>${mts>0?mts.toLocaleString('es-AR'):'<span style="color:var(--text3)">—</span>'}</td>`;
       });
-      m.mtsExtra = totalExt;
-    }
-    m.obs     = document.getElementById(`ob-${mi}`)?.value.trim()||'';
-    const trows=document.querySelectorAll(`#tb-${mi} tr`);
-    m.telares=Array.from(trows).map((tr,i)=>{ const ins=tr.querySelectorAll('input'); return { numero:parseInt(ins[0]?.value)||(i+1), fto:ins[1]?.value||'', ancho_trama:parseFloat(ins[2]?.value)||null, mts_iniciales:parseFloat(ins[3]?.value), mts_finales:parseFloat(ins[4]?.value), er:parseFloat(ins[5]?.value)||null, es_extra:false }; });
-    const prows=document.querySelectorAll(`#pl-${mi} .prow`);
-    m.paradas=Array.from(prows).map(pr=>({ telar:parseInt(pr.querySelector('.p-t').value)||null, desde:pr.querySelector('.p-d').value, hasta:pr.querySelector('.p-h').value, motivo:pr.querySelector('.motsel').value })).filter(p=>p.telar&&p.desde&&p.hasta);
-  });
-}
-
-// ═══════════════════════════════════════════════════
-// PUBLICAR EN GOOGLE SHEETS
-// ═══════════════════════════════════════════════════
-async function publicarSheets() {
-  if (!gToken) { showSB('error','No estás conectado a Google. Volvé al paso 1.'); return; }
-  if (!quinceActual) { showSB('error','Seleccioná una quincena primero.'); return; }
-  syncDom();
-
-  // Validar legajos antes de publicar
-  if (legajosValidos.length > 0) {
-    const legajosInvalidos = maquinistas.filter(m => !legajosValidos.includes(String(m.legajo)));
-    if (legajosInvalidos.length > 0) {
-      const nombres = legajosInvalidos.map(m => m.legajo).join(', ');
-      showSB('error', `❌ Legajos no válidos: ${nombres}. Corregílos antes de publicar. Legajos válidos: ${legajosValidos.join(', ')}`);
-      return;
-    }
+      html += `<td class="delta-pos">${mtsTotal.toLocaleString('es-AR')}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
   }
-  document.getElementById('btnPublicar').disabled = true;
-  showSB('loading', `⚡ Publicando en "${quinceActual.nombre}"...`);
 
-  const sheetId = quinceActual.sheetId;
-  let totalMts = 0, totalParadas = 0, legajosCargados = [];
+  panel.innerHTML = html;
+}
 
-  try {
-    // Primero leer los datos actuales para encontrar la primera fila vacía por hoja
-    for (const m of maquinistas) {
-      const leg = m.legajo;
-      if (!leg) continue;
+function dashRenderOperarios() {
+  if (!dashData) return;
+  const d = dashData;
+  const legsList = Object.keys(d.legajos).sort((a,b) => d.legajos[b].totalMetros - d.legajos[a].totalMetros);
+  const maxMts = Math.max(...legsList.map(l => d.legajos[l].totalMetros), 1);
+  let html = '<div class="dash-section-title">Producción total por operario</div><div class="dash-bar-wrap">';
+  legsList.forEach(leg => {
+    const ld = d.legajos[leg];
+    const pct = (ld.totalMetros / maxMts * 100).toFixed(1);
+    html += `<div class="dash-bar-row">
+      <div class="dash-bar-lbl"><span class="leg-badge">${leg}</span></div>
+      <div class="dash-bar-track"><div class="dash-bar-fill green" style="width:${pct}%"></div></div>
+      <div class="dash-bar-val">${ld.totalMetros.toLocaleString('es-AR')}</div>
+    </div>`;
+  });
+  html += '</div>';
+  html += '<div class="dash-section-title">Detalle por operario</div>';
+  html += `<table class="dash-table"><thead><tr>
+    <th>Legajo</th><th style="text-align:right">Total Mts</th>
+    <th style="text-align:right">Turnos</th><th style="text-align:right">Prom/turno</th>
+    <th style="text-align:right">Min no prod</th><th style="text-align:right">Telares</th>
+  </tr></thead><tbody>`;
+  legsList.forEach(leg => {
+    const ld = d.legajos[leg];
+    const prom = ld.registros.length > 0 ? Math.round(ld.totalMetros / ld.registros.length) : 0;
+    const tels = Object.keys(ld.telares).sort((a,b)=>parseInt(a)-parseInt(b)).join(', ');
+    html += `<tr>
+      <td><span class="leg-badge">${leg}</span></td>
+      <td style="text-align:right" class="val good">${ld.totalMetros.toLocaleString('es-AR')}</td>
+      <td style="text-align:right">${ld.registros.length}</td>
+      <td style="text-align:right" class="val">${prom.toLocaleString('es-AR')}</td>
+      <td style="text-align:right">${Math.round(ld.totalMinNoProd)} min</td>
+      <td style="text-align:right;font-size:11px;color:var(--text2)">${tels}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('panel-operarios').innerHTML = html;
+}
 
-      // Leer cuántas filas ya hay en la hoja
-      const readRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(leg + '!D:D')}`,
-        { headers: { Authorization: `Bearer ${gToken}` } }
-      );
-      if (!readRes.ok) {
-        const e = await readRes.json();
-        throw new Error(`Hoja "${leg}" no encontrada: ${e.error?.message||readRes.status}`);
-      }
-      const readData = await readRes.json();
-      const rows = readData.values || [];
-      // Encontrar primera fila vacía mirando columna C (telar), datos desde fila 5
-      let firstEmptyRow = 5;
-      for (let i = 4; i < rows.length; i++) {
-        if (rows[i] && rows[i][0] && rows[i][0].toString().trim() !== '') {
-          firstEmptyRow = i + 2;
-        }
-      }
+function dashRenderTelares() {
+  if (!dashData) return;
+  const d = dashData;
+  const telares = {};
+  Object.keys(d.legajos).forEach(leg => {
+    Object.entries(d.legajos[leg].telares).forEach(([t, td]) => {
+      const tn = parseInt(t);
+      if (!telares[tn]) telares[tn] = { metros: 0, turnos: 0, mnp: 0, operarios: new Set() };
+      telares[tn].metros += td.metros;
+      telares[tn].turnos += td.turnos;
+      telares[tn].mnp += td.mnp;
+      telares[tn].operarios.add(leg);
+    });
+  });
+  const telarList = Object.keys(telares).map(Number).sort((a,b)=>a-b);
+  const maxMts = Math.max(...telarList.map(t => telares[t].metros), 1);
+  let html = '<div class="dash-section-title">Metros por telar</div><div class="dash-bar-wrap">';
+  telarList.forEach(t => {
+    const td = telares[t];
+    const pct = (td.metros / maxMts * 100).toFixed(1);
+    html += `<div class="dash-bar-row">
+      <div class="dash-bar-lbl">Telar ${t}</div>
+      <div class="dash-bar-track"><div class="dash-bar-fill blue" style="width:${pct}%"></div></div>
+      <div class="dash-bar-val">${td.metros.toLocaleString('es-AR')}</div>
+    </div>`;
+  });
+  html += '</div>';
+  html += '<div class="dash-section-title">Detalle por telar</div>';
+  html += `<table class="dash-table"><thead><tr>
+    <th>Telar</th><th style="text-align:right">Total Mts</th>
+    <th style="text-align:right">Turnos</th><th style="text-align:right">Prom/turno</th>
+    <th style="text-align:right">Min no prod</th><th style="text-align:right">Operarios</th>
+  </tr></thead><tbody>`;
+  telarList.forEach(t => {
+    const td = telares[t];
+    const prom = td.turnos > 0 ? Math.round(td.metros / td.turnos) : 0;
+    html += `<tr>
+      <td class="val">Telar ${t}</td>
+      <td style="text-align:right" class="val good">${td.metros.toLocaleString('es-AR')}</td>
+      <td style="text-align:right">${td.turnos}</td>
+      <td style="text-align:right">${prom.toLocaleString('es-AR')}</td>
+      <td style="text-align:right">${Math.round(td.mnp)} min</td>
+      <td style="text-align:right;font-size:11px;color:var(--text2)">${[...td.operarios].sort().join(', ')}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('panel-telares').innerHTML = html;
+}
 
-      const fecha = new Date((m.fecha||new Date().toISOString().split('T')[0])+'T12:00:00');
-      const fechaSerial = Math.floor(fecha.getTime()/86400000)+25569;
-      const fechaStr = fecha.toLocaleDateString('es-AR');
-      const minTurno = m.turno==='extra'?720:540;
-      const plusPorTelar = m.mtsExtra>0?Math.ceil((m.mtsExtra/5.5)/4):0;
+function dashRenderParadas() {
+  if (!dashData) return;
+  const d = dashData;
+  // Min no prod por telar
+  const paradasTelar = {};
+  Object.keys(d.legajos).forEach(leg => {
+    Object.entries(d.legajos[leg].telares).forEach(([t, td]) => {
+      const tn = parseInt(t);
+      if (!paradasTelar[tn]) paradasTelar[tn] = { mnp: 0, turnos: 0 };
+      paradasTelar[tn].mnp += td.mnp;
+      paradasTelar[tn].turnos += td.turnos;
+    });
+  });
+  const telarList = Object.keys(paradasTelar).map(Number).sort((a,b)=>a-b);
+  const maxMnp = Math.max(...telarList.map(t => paradasTelar[t].mnp), 1);
+  let html = '<div class="dash-section-title">Tiempo no productivo por telar</div><div class="dash-bar-wrap">';
+  telarList.forEach(t => {
+    const td = paradasTelar[t];
+    const pct = (td.mnp / maxMnp * 100).toFixed(1);
+    const cls = td.mnp > 300 ? 'orange' : 'green';
+    html += `<div class="dash-bar-row">
+      <div class="dash-bar-lbl">Telar ${t}</div>
+      <div class="dash-bar-track"><div class="dash-bar-fill ${cls}" style="width:${pct}%"></div></div>
+      <div class="dash-bar-val">${Math.round(td.mnp)} min</div>
+    </div>`;
+  });
+  html += '</div>';
+  // Tabla operario × telar
+  const legsList = Object.keys(d.legajos).sort();
+  html += '<div class="dash-section-title">Minutos no productivos: operario × telar</div>';
+  html += `<div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Legajo</th>`;
+  telarList.forEach(t => html += `<th style="text-align:right">T${t}</th>`);
+  html += `<th style="text-align:right">Total</th></tr></thead><tbody>`;
+  legsList.forEach(leg => {
+    const ld = d.legajos[leg];
+    html += `<tr><td><span class="leg-badge">${leg}</span></td>`;
+    telarList.forEach(t => {
+      const v = Math.round(ld.telares[t]?.mnp || 0);
+      const style = v > 120 ? 'style="color:var(--danger);font-weight:700"' : v > 60 ? 'style="color:var(--warn)"' : '';
+      html += `<td style="text-align:right" ${style}>${v || '—'}</td>`;
+    });
+    html += `<td style="text-align:right" class="val">${Math.round(ld.totalMinNoProd)}</td></tr>`;
+  });
+  // Totales
+  html += `<tr style="background:var(--surface2);font-weight:700;"><td style="color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:1px;">TOTAL</td>`;
+  telarList.forEach(t => {
+    html += `<td style="text-align:right">${Math.round(paradasTelar[t].mnp)}</td>`;
+  });
+  html += `<td style="text-align:right;color:var(--danger)">${Math.round(legsList.reduce((s,l)=>s+(d.legajos[l]?.totalMinNoProd||0),0))}</td></tr>`;
+  html += '</tbody></table></div>';
+  html += `<div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:4px;font-size:11px;font-family:var(--mono);color:var(--text2);">ℹ️ Los minutos no productivos se leen de la columna I del Sheet (suma de paradas por turno registradas al publicar).</div>`;
+  document.getElementById('panel-paradas').innerHTML = html;
+}
 
-      // Calcular minutos no productivos por telar (suma todas las paradas de ese telar)
-      const mnp = {};
-      m.paradas.forEach(p => {
-        if (!p.telar || !p.desde || !p.hasta) return;
-        const [dh,dm] = p.desde.split(':').map(Number);
-        const [hh,hm] = p.hasta.split(':').map(Number);
-        let d = dh*60+dm, h = hh*60+hm;
-        // Si están invertidas (error de lectura), las corrijo
-        if (h < d && (d-h) < 360) { const tmp=d; d=h; h=tmp; }
-        else if (h < d) h += 1440;
-        const mins = h - d;
-        if (mins > 0) mnp[parseInt(p.telar)] = (mnp[parseInt(p.telar)]||0) + mins;
-      });
+function dashRenderEvolucion() {
+  if (!dashData) return;
+  const d = dashData;
+  const legsList = Object.keys(d.legajos).sort((a,b) => d.legajos[b].totalMetros - d.legajos[a].totalMetros);
+  const maxMts = Math.max(...legsList.map(l => d.legajos[l].totalMetros), 1);
+  let html = '<div class="dash-section-title">Ranking de producción — quincena actual</div>';
+  html += '<div class="dash-timeline">';
+  legsList.forEach((leg, i) => {
+    const ld = d.legajos[leg];
+    const pct = (ld.totalMetros / maxMts * 100).toFixed(1);
+    const prom = ld.registros.length > 0 ? Math.round(ld.totalMetros / ld.registros.length) : 0;
+    const mitad = Math.floor(ld.registros.length / 2);
+    const p1 = ld.registros.slice(0, mitad).reduce((s,r)=>s+r.mts,0) / (mitad||1);
+    const p2 = ld.registros.slice(mitad).reduce((s,r)=>s+r.mts,0) / ((ld.registros.length-mitad)||1);
+    const tend = p2 > p1*1.05 ? '↑' : p2 < p1*0.95 ? '↓' : '→';
+    const tendColor = tend==='↑'?'var(--accent2)':tend==='↓'?'var(--danger)':'var(--text2)';
+    const medalla = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}°`;
+    html += `<div class="dash-tl-row">
+      <div style="display:flex;align-items:center;gap:8px;overflow:hidden;">
+        <span style="font-size:16px;flex-shrink:0">${medalla}</span>
+        <span class="leg-badge" style="flex-shrink:0">${leg}</span>
+        <span style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ld.registros.length} turnos · prom ${prom.toLocaleString('es-AR')} m/turno</span>
+        <span style="font-size:14px;font-weight:700;color:${tendColor};flex-shrink:0">${tend}</span>
+      </div>
+      <div class="dash-tl-bar-track"><div class="dash-tl-bar-fill" style="width:${pct}%"></div></div>
+      <div class="dash-tl-val">${ld.totalMetros.toLocaleString('es-AR')} m</div>
+    </div>`;
+  });
+  html += '</div>';
+  // Tabla con mejor y peor turno
+  html += '<div class="dash-section-title" style="margin-top:4px;">Estadísticas por operario</div>';
+  html += `<table class="dash-table"><thead><tr>
+    <th>#</th><th>Legajo</th><th style="text-align:right">Total</th>
+    <th style="text-align:right">Prom/turno</th><th style="text-align:right">Mejor turno</th>
+    <th style="text-align:right">Peor turno</th><th style="text-align:right">Tendencia</th>
+  </tr></thead><tbody>`;
+  legsList.forEach((leg, i) => {
+    const ld = d.legajos[leg];
+    if (ld.registros.length === 0) return;
+    const prom = Math.round(ld.totalMetros / ld.registros.length);
+    const mejor = Math.max(...ld.registros.map(r=>r.mts));
+    const peor = Math.min(...ld.registros.map(r=>r.mts));
+    const mitad = Math.floor(ld.registros.length / 2);
+    const p1 = ld.registros.slice(0, mitad).reduce((s,r)=>s+r.mts,0) / (mitad||1);
+    const p2 = ld.registros.slice(mitad).reduce((s,r)=>s+r.mts,0) / ((ld.registros.length-mitad)||1);
+    const tend = p2 > p1*1.05 ? '↑ Subiendo' : p2 < p1*0.95 ? '↓ Bajando' : '→ Estable';
+    const tendColor = tend.startsWith('↑')?'var(--accent2)':tend.startsWith('↓')?'var(--danger)':'var(--text2)';
+    html += `<tr>
+      <td style="text-align:center">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1+'°'}</td>
+      <td><span class="leg-badge">${leg}</span></td>
+      <td style="text-align:right" class="val good">${ld.totalMetros.toLocaleString('es-AR')}</td>
+      <td style="text-align:right">${prom.toLocaleString('es-AR')}</td>
+      <td style="text-align:right;color:var(--accent2);font-weight:700">${mejor.toLocaleString('es-AR')}</td>
+      <td style="text-align:right;color:var(--danger)">${peor.toLocaleString('es-AR')}</td>
+      <td style="text-align:right;color:${tendColor};font-weight:700">${tend}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('panel-evolucion').innerHTML = html;
+}
 
-      // Construir filas a escribir
-      const writeRows = [];
-      let firstTelar = true;
-      let filaActual = firstEmptyRow;
+function dashRenderComparativa(q1, q2) {
+  if (!dashData || !dashDataComp) return;
+  const d1 = dashData, d2 = dashDataComp;
+  const todosLegs = [...new Set([...Object.keys(d1.legajos), ...Object.keys(d2.legajos)])].sort();
+  const diff = d1.totalMetros - d2.totalMetros;
+  const diffPct = d2.totalMetros > 0 ? ((diff / d2.totalMetros) * 100).toFixed(1) : '—';
+  let html = `<div class="dash-section-title">Comparativa · ${q1.nombre} vs ${q2.nombre}</div>`;
+  html += `<div class="dash-kpis" style="margin-bottom:20px;">
+    <div class="dash-kpi green"><div class="dash-kpi-label">${q1.nombre}</div><div class="dash-kpi-val">${(d1.totalMetros/1000).toFixed(1)}k</div><div class="dash-kpi-sub">${d1.totalRegistros} registros</div></div>
+    <div class="dash-kpi"><div class="dash-kpi-label">${q2.nombre}</div><div class="dash-kpi-val">${(d2.totalMetros/1000).toFixed(1)}k</div><div class="dash-kpi-sub">${d2.totalRegistros} registros</div></div>
+    <div class="dash-kpi ${diff>=0?'green':'red'}"><div class="dash-kpi-label">Diferencia</div><div class="dash-kpi-val ${diff>=0?'delta-pos':'delta-neg'}">${diff>=0?'+':''}${(diff/1000).toFixed(1)}k</div><div class="dash-kpi-sub">${typeof diffPct==='string'?diffPct:(diffPct>=0?'+':'')+diffPct}%</div></div>
+  </div>`;
+  html += `<table class="dash-compare-table"><thead><tr>
+    <th>Legajo</th><th>${q1.nombre}</th><th>${q2.nombre}</th><th>Diferencia</th><th>%</th>
+  </tr></thead><tbody>`;
+  todosLegs.forEach(leg => {
+    const m1 = d1.legajos[leg]?.totalMetros || 0;
+    const m2 = d2.legajos[leg]?.totalMetros || 0;
+    const dif = m1 - m2;
+    const pct = m2 > 0 ? ((dif/m2)*100).toFixed(1) : (m1>0?'+100':'—');
+    const cls = dif > 0 ? 'delta-pos' : dif < 0 ? 'delta-neg' : '';
+    html += `<tr>
+      <td><span class="leg-badge">${leg}</span></td>
+      <td>${m1 > 0 ? m1.toLocaleString('es-AR') : '<span style="color:var(--text3)">—</span>'}</td>
+      <td>${m2 > 0 ? m2.toLocaleString('es-AR') : '<span style="color:var(--text3)">—</span>'}</td>
+      <td class="${cls}">${dif!==0?(dif>0?'+':'')+dif.toLocaleString('es-AR'):'—'}</td>
+      <td class="${cls}">${typeof pct==='string'&&pct!=='—'?(parseFloat(pct)>0?'+':'')+pct+'%':pct}</td>
+    </tr>`;
+  });
+  html += `<tr style="background:var(--surface2);">
+    <td style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2)">TOTAL</td>
+    <td class="val good">${d1.totalMetros.toLocaleString('es-AR')}</td>
+    <td class="val">${d2.totalMetros.toLocaleString('es-AR')}</td>
+    <td class="${diff>=0?'delta-pos':'delta-neg'}">${diff>=0?'+':''}${diff.toLocaleString('es-AR')}</td>
+    <td class="${diff>=0?'delta-pos':'delta-neg'}">${typeof diffPct==='string'?diffPct:(diffPct>=0?'+':'')+diffPct}%</td>
+  </tr>`;
+  html += '</tbody></table>';
+  document.getElementById('panel-comparativa').innerHTML = html;
+}
 
-      m.telares.filter(t=>!t.es_extra).forEach((t, idx) => {
-        if (isNaN(t.mts_iniciales)||isNaN(t.mts_finales)) return;
-        const mts=(t.mts_iniciales>63000&&t.mts_finales<3000)?(65535-t.mts_iniciales)+t.mts_finales:t.mts_finales-t.mts_iniciales;
-        const mtsVal = Math.max(mts,0);
-        totalMts += mtsVal;
-        // El número de telar real viene de t.numero (ej: 5,6,7,8)
-        // Las paradas también usan el número real, así que el match es directo
-        const telarReal = parseInt(t.numero) || (idx+1);
-        const np = mnp[telarReal] || 0;
-        console.log(`Telar ${telarReal}: mnp=${np}`, mnp);
-        const f = filaActual; // fila actual para fórmulas
+function dashRenderMemoria() {
+  const mem = memGetTodos();
+  const legs = Object.keys(mem).sort();
+  const cont = document.getElementById('mem-content');
+  if (!cont) return;
 
-        // Nuevo orden: B=Fecha, C=HrsTrabajadas, D=Telar, E=Entrada, F=Salida, G=E/R
-        // H=Total(fórmula), I=MinNoProd, J=MtsExtra, K=Plus, L=MinProd(fórmula), M=Metros100(fórmula), N=Productividad(fórmula)
-        const hrsT = m.turno === 'extra' ? 12 : 9;
-        const alertaT = m.alertas.find(a=>a.telar===t.numero);
-        const row = [
-          firstTelar ? fechaStr : '',                   // B fecha (solo primer telar)
-          hrsT,                                         // C hrs trabajadas (9 o 12)
-          t.numero,                                     // D telar
-          t.mts_iniciales,                              // E entrada
-          t.mts_finales,                                // F salida
-          t.er ? String(t.er).replace('.',',') : '',   // G E/R
-          // H, K, L, M, N — NO SE TOCAN, fórmulas del Sheet
-          np||'',                                       // I min no productivos (suma de paradas de este telar)
-          m.mtsExtra>0?Math.round(m.mtsExtra/4):''     // J mts extra dividido entre 4 telares
-        ];
-        writeRows.push(row);
-        firstTelar = false;
-        filaActual++;
-      });
+  if (legs.length === 0) {
+    cont.innerHTML = `
+      <div class="dash-empty" style="padding:40px 24px;">
+        <div style="font-size:32px;margin-bottom:12px;">🧠</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;">Sin memoria acumulada todavía</div>
+        <div style="font-size:12px;color:var(--text2);max-width:420px;margin:0 auto;line-height:1.7;">
+          La app aprende automáticamente cada vez que corregís una planilla antes de publicar.<br>
+          Después de la primera publicación vas a ver acá los patrones aprendidos.
+        </div>
+      </div>`;
+    return;
+  }
 
-      if (writeRows.length === 0) continue;
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div class="dash-section-title" style="margin-bottom:4px;">Patrones aprendidos por legajo</div>
+        <div style="font-size:11px;font-family:var(--mono);color:var(--text2);">${legs.length} maquinista${legs.length!==1?'s':', solo uno'} con memoria · Se inyecta automáticamente en cada lectura</div>
+      </div>
+      <button onclick="if(confirm('¿Borrar TODA la memoria acumulada?')){memBorrarTodo();dashRenderMemoria();}" style="background:rgba(192,48,48,.08);border:1px solid rgba(192,48,48,.25);border-radius:4px;color:var(--danger);cursor:pointer;font-family:var(--mono);font-size:11px;padding:6px 12px;">🗑 Borrar toda la memoria</button>
+    </div>`;
 
-      // Primero obtener el sheetId numérico para poder insertar filas
-      const metaRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?fields=sheets(properties(title,sheetId))`,
-        { headers: { Authorization: `Bearer ${gToken}` } }
-      );
-      const metaData = await metaRes.json();
-      const sheetMeta = metaData.sheets?.find(s => s.properties.title === leg);
-      const sheetGid = sheetMeta?.properties?.sheetId;
+  legs.forEach(leg => {
+    const m = mem[leg];
+    const errCount = m.errores?.length || 0;
+    const planillas = m.total_planillas || 0;
 
-      // Escribir en Sheets usando batchUpdate para no tocar columnas con fórmulas
-      // Solo escribimos B,C,D,E,F,G (rango continuo) e I,J por separado
-      const nRows = writeRows.length;
+    html += `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:12px;overflow:hidden;">
+      <div style="background:var(--surface2);padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);">
+        <span class="leg-badge">${leg}</span>
+        <span style="font-size:12px;font-family:var(--mono);flex:1;">
+          <span style="color:var(--accent2);font-weight:700;">${planillas}</span> planillas aprendidas ·
+          <span style="color:${errCount>0?'var(--warn)':'var(--text2)'};">${errCount} correcciones registradas</span>
+        </span>
+        <button onclick="if(confirm('¿Borrar memoria del legajo ${leg}?')){memBorrarLegajo('${leg}');dashRenderMemoria();}" style="background:none;border:1px solid var(--border);border-radius:3px;color:var(--text3);cursor:pointer;font-family:var(--mono);font-size:10px;padding:3px 8px;">Borrar</button>
+      </div>
+      <div style="padding:14px 16px;">`;
 
-      // Insertar filas vacías para expandir la tabla antes de escribir
-      if (sheetGid !== undefined) {
-        await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`,
-          {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              requests: [{
-                insertDimension: {
-                  range: { sheetId: sheetGid, dimension: 'ROWS', startIndex: firstEmptyRow-1, endIndex: firstEmptyRow-1+nRows },
-                  inheritFromBefore: true
-                }
-              }]
-            })
-          }
-        );
-      }
-      const dataBCDEFG = writeRows.map(r => r.slice(0,6)); // B,C,D,E,F,G
-      const dataI = writeRows.map(r => [r[6]]);             // I = min no productivos
-      const dataJ = writeRows.map(r => [r[7]]);             // J = mts extra
-
-      const batchData = [
-        { range: `${leg}!B${firstEmptyRow}:G${firstEmptyRow+nRows-1}`, values: dataBCDEFG },
-        { range: `${leg}!I${firstEmptyRow}:I${firstEmptyRow+nRows-1}`, values: dataI },
-        { range: `${leg}!J${firstEmptyRow}:J${firstEmptyRow+nRows-1}`, values: dataJ },
-      ];
-
-      const writeRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data: batchData })
-        }
-      );
-      if (!writeRes.ok) {
-        const e = await writeRes.json();
-        throw new Error(`Error al escribir hoja "${leg}": ${e.error?.message||writeRes.status}`);
-      }
-
-      totalParadas += m.paradas.length;
-      legajosCargados.push({ leg, mts: totalMts, paradas: m.paradas.length, alertas: m.alertas.length });
+    // Telares habituales
+    if (m.telares_habituales?.length > 0) {
+      html += `<div style="margin-bottom:10px;"><span style="font-size:10px;font-family:var(--mono);color:var(--text2);text-transform:uppercase;letter-spacing:1px;">Telares habituales</span><br>
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;">${m.telares_habituales.join('  ·  ')}</span></div>`;
     }
 
-    // Resultado
-    document.getElementById('sheetLink').href = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
-    document.getElementById('rDesc').textContent = `${legajosCargados.length} maquinista${legajosCargados.length!==1?'s':''} · ${totalMts.toLocaleString()} metros · ${quinceActual.nombre}`;
-    document.getElementById('rResumen').innerHTML = legajosCargados.map(l=>`
-      <div class="erow">
-        <span class="el">Legajo ${l.leg}</span>
-        <span class="ev">${l.mts.toLocaleString()} mts · ${l.paradas} paradas${l.alertas>0?` · <span style="color:var(--warn)">⚠️ ${l.alertas} alerta${l.alertas>1?'s':''}</span>`:''}</span>
-      </div>`).join('') + `<div class="erow" style="margin-top:8px;"><span class="el" style="font-weight:700;">TOTAL</span><span class="ev" style="color:var(--accent)">${totalMts.toLocaleString()} mts</span></div>`;
+    // FTOs habituales
+    if (m.ftos_habituales?.length > 0) {
+      html += `<div style="margin-bottom:10px;"><span style="font-size:10px;font-family:var(--mono);color:var(--text2);text-transform:uppercase;letter-spacing:1px;">FTOs frecuentes</span><br>
+        <span style="font-family:var(--mono);font-size:13px;">${m.ftos_habituales.join('  ·  ')}</span></div>`;
+    }
 
-    document.getElementById('paso3').classList.add('hidden');
-    document.getElementById('paso4').classList.remove('hidden');
-    setStep(4); hideStatus();
+    // Rango de metros
+    if (m.rango_mts) {
+      html += `<div style="margin-bottom:10px;"><span style="font-size:10px;font-family:var(--mono);color:var(--text2);text-transform:uppercase;letter-spacing:1px;">Rango típico de metros/telar/turno</span><br>
+        <span style="font-family:var(--mono);font-size:13px;">${m.rango_mts.min.toLocaleString('es-AR')} – ${m.rango_mts.max.toLocaleString('es-AR')} mts</span></div>`;
+    }
 
-  } catch(err) {
-    console.error(err);
-    showSB('error','❌ ' + err.message);
-    document.getElementById('btnPublicar').disabled = false;
-  }
+    // Errores recientes
+    if (m.errores?.length > 0) {
+      html += `<div><span style="font-size:10px;font-family:var(--mono);color:var(--text2);text-transform:uppercase;letter-spacing:1px;">Correcciones registradas (últimas ${Math.min(m.errores.length,8)})</span>
+        <table style="width:100%;border-collapse:collapse;margin-top:6px;font-family:var(--mono);font-size:11px;">
+        <thead><tr>
+          <th style="text-align:left;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 6px;border-bottom:1px solid var(--border);">Campo</th>
+          <th style="text-align:left;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 6px;border-bottom:1px solid var(--border);">IA leyó</th>
+          <th style="text-align:left;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 6px;border-bottom:1px solid var(--border);">Correcto era</th>
+          <th style="text-align:left;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 6px;border-bottom:1px solid var(--border);">Fecha</th>
+        </tr></thead><tbody>`;
+
+      m.errores.slice(-8).reverse().forEach(e => {
+        const campo = e.campo==='mts_iniciales'?`Mts inicio T${e.telar}`:e.campo==='mts_finales'?`Mts fin T${e.telar}`:e.campo==='er'?`E/R T${e.telar}`:e.campo==='motivo_parada'?`Motivo parada T${e.telar}`:e.campo==='hora_parada'?`Hora parada T${e.telar}`:e.campo;
+        html += `<tr>
+          <td style="padding:4px 6px;border-bottom:1px solid rgba(0,0,0,.04);">${campo}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid rgba(0,0,0,.04);color:var(--danger);">${e.leido}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid rgba(0,0,0,.04);color:var(--accent2);font-weight:700;">${e.correcto}</td>
+          <td style="padding:4px 6px;border-bottom:1px solid rgba(0,0,0,.04);color:var(--text3);">${e.fecha||'—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+    } else {
+      html += `<div style="font-size:11px;font-family:var(--mono);color:var(--text3);padding:4px 0;">Sin correcciones manuales registradas aún.</div>`;
+    }
+
+    html += `</div></div>`;
+  });
+
+  cont.innerHTML = html;
 }
-
-// ═══════════════════════════════════════════════════
-// PASO 3 PREVIEW
-// ═══════════════════════════════════════════════════
-function irP3() {
-  syncDom();
-  const q = quinceActual;
-  document.getElementById('p3preview').innerHTML = `
-    <div class="erow"><span class="el">Quincena</span><span class="ev">${q?.nombre||'Sin seleccionar'}</span></div>
-    <div class="erow"><span class="el">Spreadsheet ID</span><span class="ev" style="font-size:11px">${q?.sheetId?.substring(0,20)||'—'}...</span></div>
-    <div class="erow"><span class="el">Maquinistas</span><span class="ev">${maquinistas.length}</span></div>
-    <div class="erow"><span class="el">Total alertas</span><span class="ev" style="color:${maquinistas.reduce((s,m)=>s+m.alertas.length,0)>0?'var(--warn)':'var(--accent2)'}">${maquinistas.reduce((s,m)=>s+m.alertas.length,0)}</span></div>
-    ${!q?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No hay quincena seleccionada. Volvé al paso 1 y elegí una.</div>':''}
-    ${!gToken?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No estás conectado a Google. Volvé al paso 1.</div>':''}
-  `;
-  document.getElementById('btnPublicar').disabled = !gToken || !q;
-  document.getElementById('paso2').classList.add('hidden');
-  document.getElementById('paso3').classList.remove('hidden');
-  setStep(3);
-}
-
-// ═══════════════════════════════════════════════════
-// NAVEGACIÓN
-// ═══════════════════════════════════════════════════
-function back1(){ document.getElementById('paso2').classList.add('hidden'); document.getElementById('paso1').classList.remove('hidden'); setStep(1); }
-function back2(){ document.getElementById('paso3').classList.add('hidden'); document.getElementById('paso2').classList.remove('hidden'); setStep(2); }
-function nuevoDia(){
-  archivos=[]; maquinistas=[];
-  document.getElementById('flist').innerHTML='';
-  document.getElementById('progWrap').classList.add('hidden');
-  document.getElementById('progBar').style.width='0%';
-  document.getElementById('btnLeer').disabled=true;
-  document.getElementById('maqBlocks').innerHTML='';
-  document.getElementById('fInput').value='';
-  document.getElementById('paso4').classList.add('hidden');
-  document.getElementById('paso1').classList.remove('hidden');
-  setStep(1); hideStatus();
-}
-
-// ═══════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════
-function fv(f){ if(!f)return''; const p=f.split('/'); if(p.length===3)return`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; return f; }
-function tl(t){ return{manana:'⏱ 540 min · Mañana 06:00–15:00',tarde:'⏱ 540 min · Tarde 15:00–23:30',extra:'⚡ 720 min · 12 horas extra'}[t]||''; }
-function showSB(type,msg){ const b=document.getElementById('statusBar'); b.className=`sbar ${type}`; b.classList.remove('hidden'); b.innerHTML=type==='loading'?`<div class="spin"></div><span>${msg}</span>`:`<span>${msg}</span>`; }
-function hideStatus(){ document.getElementById('statusBar').classList.add('hidden'); }
-function setStep(n){ for(let i=1;i<=4;i++){ const el=document.getElementById(`s${i}`); el.className='step '+(i<n?'done':i===n?'active':''); el.querySelector('.step-n').textContent=i<n?'✓':i; } }
 
 // INIT
 checkTokenFromURL();
 renderQuincenas();
 </script>
+</div>
 </body>
 </html>
