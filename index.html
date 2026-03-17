@@ -216,6 +216,16 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
 
 /* FTO color chips */
 .fto-chip{display:inline-block;padding:2px 7px;border-radius:3px;font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;text-align:center;min-width:36px;}
+.fto-input.fto-40 {background:#7f3c5c;border-color:#7f3c5c;color:#fff;}
+.fto-input.fto-47 {background:#1248ac;border-color:#1248ac;color:#fff;}
+.fto-input.fto-53 {background:#7a7a7a;border-color:#7a7a7a;color:#fff;}
+.fto-input.fto-57 {background:#356d1d;border-color:#356d1d;color:#fff;}
+.fto-input.fto-60 {background:#e30504;border-color:#e30504;color:#fff;}
+.fto-input.fto-71 {background:#6e3a06;border-color:#6e3a06;color:#fff;}
+.fto-input.fto-82 {background:#df8708;border-color:#df8708;color:#fff;}
+.fto-input.fto-102{background:#d706d7;border-color:#d706d7;color:#fff;}
+.fto-input.fto-120{background:#dcdb10;border-color:#dcdb10;color:#333;}
+.fto-input.fto-sin{background:var(--surface2);border-color:var(--border);color:var(--text2);}
 .fto-40 {background:#7f3c5c;}
 .fto-47 {background:#1248ac;}
 .fto-53 {background:#7a7a7a;}
@@ -314,7 +324,23 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
     <div class="prog hidden" id="progWrap"><div class="prog-bar" id="progBar" style="width:0%"></div></div>
   </div>
 
-  <div class="actions">
+  <!-- Cantidad esperada de planillas -->
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-top:4px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:10px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Planillas esperadas hoy</div>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);">Opcional · si lo completás, la app verifica que haya encontrado todas</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;">
+      <button onclick="ajustarEsperadas(-1)" style="width:32px;height:32px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;font-size:18px;font-family:var(--mono);color:var(--text2);display:flex;align-items:center;justify-content:center;">−</button>
+      <input type="number" id="cantEsperadas" min="0" max="50" value="0"
+        style="width:64px;text-align:center;font-size:22px;font-weight:700;font-family:var(--mono);padding:4px 8px;border:2px solid var(--border);border-radius:4px;"
+        oninput="this.value=Math.max(0,parseInt(this.value)||0)">
+      <button onclick="ajustarEsperadas(1)" style="width:32px;height:32px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;font-size:18px;font-family:var(--mono);color:var(--text2);display:flex;align-items:center;justify-content:center;">+</button>
+      <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">planillas</span>
+    </div>
+  </div>
+
+  <div class="actions" style="margin-top:10px;">
     <button class="btn-p" id="btnLeer" onclick="leerTodas()" disabled>✨ Leer con IA →</button>
   </div>
 </div>
@@ -479,12 +505,15 @@ function ftoLabel(fto) {
   return String(fto);
 }
 function actualizarFtoChip(input) {
-  const chip = input.previousElementSibling;
-  if (!chip) return;
+  // Actualizar color del input según el FTO ingresado
   const cls = ftoClass(input.value);
-  chip.className = 'fto-chip ' + cls;
-  chip.textContent = ftoLabel(input.value);
-  reval(parseInt(input.closest('[id^=body-]').id.replace('body-','')));
+  input.className = 'fto-input ' + cls;
+  // Color de texto: amarillo (120) → oscuro, resto → blanco
+  input.style.color = (parseInt(input.value) === 120) ? '#333' : '#fff';
+  // Si el FTO no es válido → texto normal oscuro
+  if (cls === 'fto-sin') input.style.color = 'var(--text)';
+  const mi = parseInt(input.closest('[id^=body-]')?.id.replace('body-','') || -1);
+  if (mi >= 0) reval(mi);
 }
 
 const MOTIVOS = ['P1 - Falta de Urdimbre','P2 - Falta de Trama','P3 - Falta de Aceite','P4 - Falta de Aro/Plato','P5 - Falta de Auxiliar','P6 - Falta de Cono','P7 - Falta de Herramienta','P8 - Falta de Tapas Trama','P9 - Mant. Preventivo','P10 - Capacitación','P11 - Cambio de FTO','P12 - Falla Sensor Trama','P13 - Falla Sensor Urdimbre','P14 - Falla Ultrasonido','P15 - Falla Eléctrica','P16 - Falla Mecánica','P17 - Falla de Trama','P18 - Falla de Urdimbre'];
@@ -614,8 +643,37 @@ async function leerTodas() {
     document.getElementById('progBar').style.width=`${((i+1)/tareas.length)*100}%`;
   }
   maquinistas=agruparPorLegajo(resultados); calcAlertas();
+
+  // Detectar si hubo telares duplicados descartados
+  const telaresLeidos = resultados.reduce((s,r)=>s+(r.datos?.telares?.length||0),0);
+  const telaresFinales = maquinistas.reduce((s,m)=>s+m.telares.length,0);
+  const dedupCount = telaresLeidos - telaresFinales;
+
+  // Verificar cantidad esperada vs encontrada
+  const cantEsp = parseInt(document.getElementById('cantEsperadas')?.value||0) || 0;
+  const cantEncontradas = maquinistas.length; // un maquinista = una planilla del día
+
   document.getElementById('paso1').classList.add('hidden'); document.getElementById('paso2').classList.remove('hidden');
-  renderMaquinistas(); document.getElementById('p2sum').textContent=`${maquinistas.length} maquinista${maquinistas.length!==1?'s':''} · ${tareas.length} páginas procesadas`; setStep(2);
+  renderMaquinistas();
+
+  let sumTxt = `${cantEncontradas} maquinista${cantEncontradas!==1?'s':''} · ${tareas.length} página${tareas.length!==1?'s':''} procesadas`;
+  if(dedupCount>0) sumTxt += ` · <span style="color:var(--warn)">⚠️ ${dedupCount} duplicado${dedupCount!==1?'s':''} descartado${dedupCount!==1?'s':''}</span>`;
+  document.getElementById('p2sum').innerHTML=sumTxt;
+
+  // Mostrar alerta de cantidad si el usuario especificó una esperada
+  if(cantEsp > 0) {
+    if(cantEncontradas === cantEsp) {
+      showSB('success', `✅ Encontradas ${cantEncontradas} de ${cantEsp} planillas esperadas — todo completo`);
+    } else if(cantEncontradas < cantEsp) {
+      const faltan = cantEsp - cantEncontradas;
+      showSB('error', `⚠️ Faltan ${faltan} planilla${faltan!==1?'s':''}: encontré ${cantEncontradas} de ${cantEsp} esperadas. Revisá que todas las páginas del PDF estén incluidas.`);
+    } else {
+      const sobran = cantEncontradas - cantEsp;
+      showSB('info', `ℹ️ Encontré ${cantEncontradas} maquinistas pero esperabas ${cantEsp}. Puede haber un legajo duplicado — revisá antes de publicar.`);
+    }
+  }
+
+  setStep(2);
 }
 
 // ═══════════════════════════════════════════════════
@@ -938,16 +996,152 @@ Si algún campo no es legible usá null. NO inventes datos.`;
 }
 
 function agruparPorLegajo(resultados) {
-  const mapa={};
-  resultados.forEach(r=>{
-    if(!r.datos)return; const d=r.datos; const leg=String(d.legajo_maquinista||'').trim(); if(!leg)return;
-    if(!mapa[leg])mapa[leg]={legajo:leg,fecha:d.fecha||'',turno:d.turno||'manana',telares:[],paradas:[],mtsExtra:0,obs:'',alertas:[],sinAuxiliar:false};
-    (d.telares||[]).forEach(t=>{if(!mapa[leg].telares.find(x=>x.numero===t.numero))mapa[leg].telares.push(t);});
-    (d.paradas||[]).forEach(p=>mapa[leg].paradas.push(p));
-    if(d.observaciones&&!mapa[leg].obs.includes(d.observaciones))mapa[leg].obs=[mapa[leg].obs,d.observaciones].filter(Boolean).join(' / ');
-    if(mapa[leg].turno!=='extra'){const tieneNocturna=mapa[leg].paradas.some(p=>{const h=parseInt((p.desde||'0:0').split(':')[0]);return h>=0&&h<6;});if(tieneNocturna)mapa[leg].turno='extra';}
+  const mapa = {};
+  // Guardamos también las páginas leídas por legajo para detectar superposición
+  const paginasPorLegajo = {}; // { legajo: [ {telares, paradas, fecha, pagina} ] }
+
+  resultados.forEach(r => {
+    if (!r.datos) return;
+    const d = r.datos;
+    const leg = String(d.legajo_maquinista||'').trim();
+    if (!leg) return;
+
+    if (!mapa[leg]) {
+      mapa[leg] = {legajo:leg,fecha:d.fecha||'',turno:d.turno||'manana',telares:[],paradas:[],mtsExtra:0,obs:'',alertas:[],sinAuxiliar:false};
+      paginasPorLegajo[leg] = [];
+    }
+
+    // Guardar página leída
+    paginasPorLegajo[leg].push({
+      telares: (d.telares||[]).filter(t=>{ const n=parseInt(t.numero); return !isNaN(n)&&n>=1&&n<=16; }),
+      paradas: d.paradas||[],
+      fecha: d.fecha,
+      nombre: r.nombre||''
+    });
+
+    // Tomar fecha y turno
+    if (!mapa[leg].fecha && d.fecha) mapa[leg].fecha = d.fecha;
+    if (d.turno==='extra') mapa[leg].turno = 'extra';
+    if (d.observaciones && !mapa[leg].obs.includes(d.observaciones))
+      mapa[leg].obs = [mapa[leg].obs, d.observaciones].filter(Boolean).join(' / ');
   });
-  Object.values(mapa).forEach(m=>{m.telares.sort((a,b)=>(a.numero||0)-(b.numero||0));const extras=m.telares.filter(t=>t.es_extra);m.mtsExtra=extras.reduce((s,t)=>{const v=(t.mts_finales||0)-(t.mts_iniciales||0);return s+Math.max(v,0);},0);});
+
+  // ── RESOLVER TELARES POR LEGAJO ─────────────────────────────────────────
+  Object.keys(mapa).forEach(leg => {
+    const m = mapa[leg];
+    const paginas = paginasPorLegajo[leg];
+
+    if (paginas.length === 1) {
+      // Caso normal: una sola página → usar directo
+      m.telares = paginas[0].telares;
+      m.paradas = paginas[0].paradas.filter(p=>p.telar&&p.desde&&p.hasta);
+    } else {
+      // Múltiples páginas del mismo maquinista
+      // Cada página es una planilla distinta que puede repetir telares
+      // Estrategia: detectar si las páginas tienen telares DISTINTOS (páginas de distintos días)
+      // o IGUALES (escaneos duplicados de la misma planilla)
+
+      // Recolectar todos los telares de todas las páginas
+      const todosLosTelares = [];
+      paginas.forEach(pag => {
+        pag.telares.forEach(t => {
+          const numT = parseInt(t.numero);
+          if (isNaN(numT)||numT<1||numT>16) return;
+          todosLosTelares.push({ ...t, _pagina: pag.nombre });
+        });
+      });
+
+      // Detectar telares duplicados (mismo número aparece en más de una página)
+      const contPorTelar = {};
+      todosLosTelares.forEach(t => {
+        const n = parseInt(t.numero);
+        if (!contPorTelar[n]) contPorTelar[n] = [];
+        contPorTelar[n].push(t);
+      });
+
+      const telaresConDup = Object.entries(contPorTelar).filter(([n, arr]) => arr.length > 1);
+
+      if (telaresConDup.length > 0) {
+        // HAY DUPLICADOS → elegir el mejor ejemplar de cada telar
+        // Criterio: el que tenga más metros producidos (más probable que sea el correcto)
+        m.alertas.push({
+          nivel: 'warning',
+          telar: null,
+          msg: `⚠️ Se detectaron ${telaresConDup.length} telares duplicados entre ${paginas.length} páginas del PDF. Se conservó la lectura con más metros por telar. Revisá que los datos sean correctos.`
+        });
+
+        const telaresFinales = [];
+        Object.entries(contPorTelar).forEach(([numStr, arr]) => {
+          if (arr.length === 1) {
+            telaresFinales.push(arr[0]);
+          } else {
+            // Elegir el que tenga mayor diferencia fin-ini
+            const mejor = arr.reduce((best, t) => {
+              const mtsB = Math.max((parseFloat(best.mts_finales)||0)-(parseFloat(best.mts_iniciales)||0), 0);
+              const mtsT = Math.max((parseFloat(t.mts_finales)||0)-(parseFloat(t.mts_iniciales)||0), 0);
+              return mtsT > mtsB ? t : best;
+            });
+            telaresFinales.push(mejor);
+            console.log(`[Dedup] Legajo ${leg} telar ${numStr}: elegido de ${arr.length} lecturas (${Math.max((parseFloat(mejor.mts_finales)||0)-(parseFloat(mejor.mts_iniciales)||0),0)} mts)`);
+          }
+        });
+        m.telares = telaresFinales;
+      } else {
+        // No hay duplicados en números de telar → son páginas con telares distintos (ej: 5°, 6° telar extra)
+        // Acumular todos
+        m.telares = todosLosTelares;
+      }
+
+      // ── PARADAS: acumular de todas las páginas, deduplicar exactas ──
+      const todasParadas = [];
+      paginas.forEach(pag => {
+        pag.paradas.forEach(p => {
+          if (!p.telar||!p.desde||!p.hasta) return;
+          const yaExiste = todasParadas.some(x =>
+            parseInt(x.telar)===parseInt(p.telar) && x.desde===p.desde && x.hasta===p.hasta
+          );
+          if (!yaExiste) todasParadas.push(p);
+        });
+      });
+      m.paradas = todasParadas;
+    }
+
+    // ── Detectar turno extra por paradas nocturnas ──
+    if (m.turno !== 'extra') {
+      const tieneNocturna = m.paradas.some(p => {
+        const h = parseInt((p.desde||'0:0').split(':')[0]);
+        return h >= 0 && h < 6;
+      });
+      if (tieneNocturna) m.turno = 'extra';
+    }
+
+    // ── Separar asignados vs extra según límite de 4 ──
+    // Los telares deben tener es_extra correcto según la cantidad
+    // Si hay más de 4 asignados, los últimos pasan a extra
+    const asignadosRaw = m.telares.filter(t => !t.es_extra);
+    const extrasRaw    = m.telares.filter(t => t.es_extra);
+    if (asignadosRaw.length > 4) {
+      // Ordenar por número y tomar los primeros 4 como asignados, el resto como extra
+      asignadosRaw.sort((a,b) => (parseInt(a.numero)||0)-(parseInt(b.numero)||0));
+      const asignados4 = asignadosRaw.slice(0, 4).map(t => ({...t, es_extra:false}));
+      const extrasAdicionales = asignadosRaw.slice(4).map(t => ({...t, es_extra:true}));
+      m.telares = [...asignados4, ...extrasAdicionales, ...extrasRaw];
+      m.alertas.push({
+        nivel: 'warning',
+        telar: null,
+        msg: `⚠️ Se encontraron ${asignadosRaw.length} telares asignados (máximo 4). Los últimos ${extrasAdicionales.length} se marcaron como "extra". Revisá si es correcto.`
+      });
+    }
+
+    // Ordenar y calcular metros extra
+    m.telares.sort((a,b) => (parseInt(a.numero)||0)-(parseInt(b.numero)||0));
+    const extras = m.telares.filter(t => t.es_extra);
+    m.mtsExtra = extras.reduce((s,t) => {
+      const v = (parseFloat(t.mts_finales)||0)-(parseFloat(t.mts_iniciales)||0);
+      return s+Math.max(v,0);
+    }, 0);
+  });
+
   return Object.values(mapa);
 }
 
@@ -995,7 +1189,7 @@ function buildBlock(m,mi){
       </div>
       <div class="sdiv"><span>telares asignados</span></div>
       <table class="tt"><thead><tr><th>#</th><th>FTO</th><th>Ancho</th><th>Mts Iniciales</th><th>Mts Finales</th><th>E/R</th><th></th></tr></thead>
-      <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr><td><input type="number" value="${t.numero||(i+1)}" style="width:58px;font-size:13px;color:var(--accent);font-weight:700;text-align:center;" oninput="reval(${mi})"></td><td><div style="display:flex;flex-direction:column;gap:3px;align-items:center;"><span class="fto-chip ${ftoClass(t.fto)}">${ftoLabel(t.fto)}</span><input type="text" value="${t.fto||''}" placeholder="FTO" style="width:58px;font-size:11px;padding:3px 4px;text-align:center;" oninput="actualizarFtoChip(this)"></div></td><td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td><td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.mts_finales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.er||''}" placeholder="5.5" step="0.1" style="width:60px"></td><td style="width:20px;font-size:13px;">${t._w==='err'?'🔴':t._w==='warn'?'🟡':''}</td></tr>`).join('')}</tbody></table>
+      <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr><td><input type="number" value="${t.numero||(i+1)}" style="width:58px;font-size:13px;color:var(--accent);font-weight:700;text-align:center;" oninput="reval(${mi})"></td><td><input type="text" value="${t.fto||''}" placeholder="FTO" class="fto-input ${ftoClass(t.fto)}" style="width:58px;font-size:12px;font-weight:700;text-align:center;color:#fff;" oninput="actualizarFtoChip(this)"></td><td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td><td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.mts_finales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.er||''}" placeholder="5.5" step="0.1" style="width:60px"></td><td style="width:20px;font-size:13px;">${t._w==='err'?'🔴':t._w==='warn'?'🟡':''}</td></tr>`).join('')}</tbody></table>
       <div class="sdiv"><span>paradas</span></div>
       <div class="plist" id="pl-${mi}">${m.paradas.map(p=>prow(p,mi)).join('')}</div>
       <button class="btn-add" onclick="addP(${mi})">+ Agregar parada</button>
@@ -1044,6 +1238,13 @@ function recalcExtras(mi){const body=document.getElementById(`extbody-${mi}`);if
 function addTelarExtra(mi){maquinistas[mi].telares.push({numero:'?',mts_iniciales:'',mts_finales:'',es_extra:true});const body=document.getElementById(`extbody-${mi}`);if(body)body.innerHTML=buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra),mi);}
 function quitarTelarExtra(mi,idx){const extras=maquinistas[mi].telares.filter(t=>t.es_extra);const telarAQuitar=extras[idx];maquinistas[mi].telares=maquinistas[mi].telares.filter(t=>t!==telarAQuitar);const body=document.getElementById(`extbody-${mi}`);if(body)body.innerHTML=buildExtrasTable(maquinistas[mi].telares.filter(t=>t.es_extra),mi);recalcExtras(mi);}
 function addP(mi){const c=document.createElement('div');c.innerHTML=prow({},mi);document.getElementById(`pl-${mi}`).appendChild(c.firstElementChild);}
+
+
+function ajustarEsperadas(delta) {
+  const inp = document.getElementById('cantEsperadas');
+  if (!inp) return;
+  inp.value = Math.max(0, (parseInt(inp.value)||0) + delta);
+}
 
 function toggleAuxiliar(mi) {
   maquinistas[mi].sinAuxiliar = !maquinistas[mi].sinAuxiliar;
@@ -1229,7 +1430,7 @@ function irP3(){
 
 function back1(){document.getElementById('paso2').classList.add('hidden');document.getElementById('paso1').classList.remove('hidden');setStep(1);}
 function back2(){document.getElementById('paso3').classList.add('hidden');document.getElementById('paso2').classList.remove('hidden');setStep(2);}
-function nuevoDia(){archivos=[];maquinistas=[];document.getElementById('flist').innerHTML='';document.getElementById('progWrap').classList.add('hidden');document.getElementById('progBar').style.width='0%';document.getElementById('btnLeer').disabled=true;document.getElementById('maqBlocks').innerHTML='';document.getElementById('fInput').value='';document.getElementById('paso4').classList.add('hidden');document.getElementById('paso1').classList.remove('hidden');setStep(1);hideStatus();}
+function nuevoDia(){archivos=[];maquinistas=[];document.getElementById('flist').innerHTML='';document.getElementById('progWrap').classList.add('hidden');document.getElementById('progBar').style.width='0%';document.getElementById('btnLeer').disabled=true;document.getElementById('maqBlocks').innerHTML='';document.getElementById('fInput').value='';if(document.getElementById('cantEsperadas'))document.getElementById('cantEsperadas').value=0;document.getElementById('paso4').classList.add('hidden');document.getElementById('paso1').classList.remove('hidden');setStep(1);hideStatus();}
 
 function fv(f){if(!f)return'';const p=f.split('/');if(p.length===3)return`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;return f;}
 function tl(t){return{manana:'⏱ 540 min · Mañana 06:00–15:00',tarde:'⏱ 510 min · Tarde 14:30–23:00 (8.5 hs prod.)',extra:'⚡ 720 min · 12 horas extra'}[t]||'';}
