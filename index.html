@@ -1731,15 +1731,34 @@ async function publicarSheets(){
       // ── GRABAR PARADAS EN HOJA "Paradas" ────────────────────────────────
       if (m.paradas.length > 0) {
         const hojaParadas = 'Paradas';
-        // Leer cuántas filas hay ya en la hoja Paradas
         let paradasStartRow = 2; // fila 1 = headers
+
+        // Verificar si la hoja existe; si no, crearla con headers automáticamente
         try {
-          const rp = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(hojaParadas + '!A:A')}`);
-          if (rp.ok) {
-            const dp = await rp.json();
-            paradasStartRow = Math.max((dp.values||[]).length + 1, 2);
+          const checkRes = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(hojaParadas + '!A1:A1')}`);
+          if (!checkRes.ok) {
+            // La hoja no existe → crearla
+            await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}:batchUpdate`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ requests: [{ addSheet: { properties: { title: hojaParadas } } }] })
+            });
+            // Escribir headers
+            await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(hojaParadas + '!A1:H1')}?valueInputOption=USER_ENTERED`, {
+              method: 'PUT',
+              headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ values: [['Fecha','Legajo','Telar','Desde','Hasta','Minutos','Código','Descripción']] })
+            });
+            paradasStartRow = 2;
+          } else {
+            // La hoja existe → buscar primera fila vacía
+            const rp = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(hojaParadas + '!A:A')}`);
+            if (rp.ok) {
+              const dp = await rp.json();
+              paradasStartRow = Math.max((dp.values||[]).length + 1, 2);
+            }
           }
-        } catch(e) {}
+        } catch(e) { console.warn('Error verificando hoja Paradas:', e); }
 
         const paradasRows = m.paradas.map(p => {
           const telarNum = parseInt(p.telar)||0;
