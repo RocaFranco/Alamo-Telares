@@ -1203,10 +1203,14 @@ Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Ve
 
 - N° Telar: número del 1 al 16. Aplicar REGLA 1 si hay dudas con telares de 2 dígitos.
 - FTO: REGLA 2 — solo los 9 números válidos o "SIN FTO". Nunca letras.
-- Ancho Trama: SOLO puede ser uno de estos 3 valores: 3, 5 o 5.5 — nada más existe en esta fábrica.
-  * Si leés otro número → error de lectura. El más probable es 5, luego 5.5, luego 3.
+- Ancho Trama: SOLO puede ser uno de estos 3 valores: 3, 5 o 5.5.
+  * Si podés leerlo claramente → usá el valor correcto.
+  * Si el campo está vacío o ilegible → devolvé null (NO uses 5 como default).
 - E/R (velocidad): decimal entre 4.0 y 6.4. Valores típicos: 5.5, 5.6, 5.7, 5.8, 5.9, 6.0
-- Mts Iniciales y Mts Finales: contadores entre 0 y 65535.
+  * Si el campo está vacío o ilegible → devolvé null (NO uses 5.5 como default).
+- Mts Iniciales y Mts Finales: contadores entre 0 y 65535 INCLUSIVE.
+  * NUNCA puede haber un valor mayor a 65535 — si leés algo así (ej: 165535, 265000) es error de lectura.
+  * El tope exacto es 65535 — luego el contador se resetea a 0.
   * Ejemplos válidos: 4085, 6706, 38194, 40808, 21333, 23864
   * Menos de 3 dígitos o más de 5 → error de lectura probable, revisá.
   * VALIDACIÓN FÍSICA CRÍTICA: la diferencia (fin - ini) representa los metros producidos en el turno.
@@ -1231,6 +1235,12 @@ Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Ve
 Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
 - Horarios HH:MM (24hs). Motivo: P1 a P18.
 - REGLA 1 aplica aquí también para el número de telar.
+- REGLA CRÍTICA — TELARES VÁLIDOS EN PARADAS:
+  * Las paradas SOLO pueden ser de telares que el maquinista tiene asignados en la tabla de producción.
+  * Ejemplo: si la tabla tiene telares 10, 11, 12, 13 → paradas SOLO de telar 10, 11, 12 o 13.
+  * Si ves una parada con telar 5 pero el maquinista trabaja en 10-13 → error de lectura, revisá el número.
+  * Probablemente el 5 sea un 15, o el primer dígito fue cortado por la celda angosta.
+  * NUNCA incluyas una parada de un telar que no figure en la tabla de producción.
 - CRÍTICO — ANTI-INVENTADO: SOLO copiá filas que tengan datos VISIBLES Y ESCRITOS.
   * Si una fila está vacía o en blanco → NO la incluyas.
   * Si no hay ninguna parada escrita → devolvé "paradas": []
@@ -1310,7 +1320,14 @@ function agruparPorLegajo(resultados) {
     if (existente) {
       // Consolidar: mismo maquinista, mismo día, 2ª hoja del escaneo
       existente._paginas.push({
-        telares: (d.telares||[]).filter(t => { const n=parseInt(t.numero); return !isNaN(n)&&n>=1&&n<=16; }),
+        telares: (d.telares||[]).filter(t => { const n=parseInt(t.numero); return !isNaN(n)&&n>=1&&n<=16; }).map(t => ({
+          ...t,
+          fto:         (!t.fto||String(t.fto).toUpperCase()==='SIN FTO'||String(t.fto).trim()==='')?'':t.fto,
+          ancho_trama: [3,5,5.5].includes(parseFloat(t.ancho_trama))?t.ancho_trama:null,
+          er:          (parseFloat(t.er)>=3&&parseFloat(t.er)<=7)?t.er:null,
+          mts_iniciales: parseFloat(t.mts_iniciales)>65535?null:t.mts_iniciales,
+          mts_finales:   parseFloat(t.mts_finales)>65535?null:t.mts_finales,
+        })),
         paradas: (d.paradas||[]).filter(p => p.telar&&p.desde&&p.hasta),
       });
       if (d.turno === 'extra') existente.turno = 'extra';
@@ -1330,7 +1347,14 @@ function agruparPorLegajo(resultados) {
         sinAuxiliar: false,
         _paginaOrigen: r.pagina || (idxOriginal + 1),
         _paginas: [{
-          telares: (d.telares||[]).filter(t => { const n=parseInt(t.numero); return !isNaN(n)&&n>=1&&n<=16; }),
+          telares: (d.telares||[]).filter(t => { const n=parseInt(t.numero); return !isNaN(n)&&n>=1&&n<=16; }).map(t => ({
+          ...t,
+          fto:         (!t.fto||String(t.fto).toUpperCase()==='SIN FTO'||String(t.fto).trim()==='')?'':t.fto,
+          ancho_trama: [3,5,5.5].includes(parseFloat(t.ancho_trama))?t.ancho_trama:null,
+          er:          (parseFloat(t.er)>=3&&parseFloat(t.er)<=7)?t.er:null,
+          mts_iniciales: parseFloat(t.mts_iniciales)>65535?null:t.mts_iniciales,
+          mts_finales:   parseFloat(t.mts_finales)>65535?null:t.mts_finales,
+        })),
           paradas: (d.paradas||[]).filter(p => p.telar&&p.desde&&p.hasta),
         }]
       });
@@ -1375,6 +1399,12 @@ function agruparPorLegajo(resultados) {
       m.paradas = todasParadas;
     }
 
+    // Filtrar paradas de telares fuera de rango (1-16)
+    m.paradas = m.paradas.filter(p => {
+      const n = parseInt(p.telar);
+      return !isNaN(n) && n >= 1 && n <= 16;
+    });
+
     delete m._paginas;
 
     // Detectar turno extra por paradas nocturnas
@@ -1414,11 +1444,36 @@ function calcAlertas() {
     m.alertas=[];
     const minT = m.turno==='extra'?720 : m.turno==='tarde'?510 : 540;
 
+    // Detectar paradas de telares no asignados
+    const telaresAsignados = new Set(m.telares.map(t=>parseInt(t.numero)).filter(n=>!isNaN(n)));
+    m.paradas.forEach(p => {
+      const telarParada = parseInt(p.telar);
+      if(!isNaN(telarParada) && telaresAsignados.size > 0 && !telaresAsignados.has(telarParada)) {
+        m.alertas.push({nivel:'error', telar:telarParada,
+          msg:`Parada de telar ${telarParada} pero este maquinista opera los telares ${[...telaresAsignados].sort((a,b)=>a-b).join(', ')}. Probable error de lectura.`
+        });
+      }
+      // Telar fuera de rango 1-16
+      if(!isNaN(telarParada) && (telarParada < 1 || telarParada > 16)) {
+        m.alertas.push({nivel:'error', telar:telarParada,
+          msg:`Parada con telar ${telarParada} fuera del rango válido (1-16). Error de lectura.`
+        });
+      }
+    });
+
     m.telares.filter(t=>!t.es_extra).forEach(t=>{
       const ini = parseFloat(t.mts_iniciales);
       const fin = parseFloat(t.mts_finales);
       const er  = parseFloat(t.er) || ER_TIPICO;
       if(isNaN(ini)||isNaN(fin)) return;
+      // Valores fuera del rango válido 0-65535
+      if(ini > 65535 || fin > 65535) {
+        t._w='err';
+        m.alertas.push({nivel:'error', telar:t.numero,
+          msg:`Telar ${t.numero}: valor fuera de rango (máx 65535) — ini=${ini.toLocaleString()} fin=${fin.toLocaleString()}. Error de lectura.`
+        });
+        return;
+      }
       // Si ini > fin pero NO es rollover válido (ini < 50000) → error de lectura
       if(fin < ini && ini < 50000) {
         t._w='err';
@@ -1509,7 +1564,7 @@ function buildBlock(m,mi){
       </div>
       <div class="sdiv"><span>telares asignados</span></div>
       <table class="tt"><thead><tr><th>#</th><th>FTO</th><th>Ancho</th><th>Mts Iniciales</th><th>Mts Finales</th><th>E/R</th><th></th></tr></thead>
-      <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr><td><input type="number" value="${t.numero||(i+1)}" style="width:58px;font-size:13px;color:var(--accent);font-weight:700;text-align:center;" oninput="reval(${mi})"></td><td><input type="text" value="${t.fto||''}" placeholder="FTO" class="fto-input ${ftoClass(t.fto)}" style="width:58px;font-size:12px;font-weight:700;text-align:center;color:#fff;" oninput="actualizarFtoChip(this)"></td><td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td><td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.mts_finales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.er||''}" placeholder="5.5" step="0.1" style="width:60px"></td><td style="width:20px;font-size:13px;">${t._w==='err'?'🔴':t._w==='warn'?'🟡':''}</td></tr>`).join('')}</tbody></table>
+      <tbody id="tb-${mi}">${asig.map((t,i)=>`<tr><td><input type="number" value="${t.numero||(i+1)}" style="width:58px;font-size:13px;color:var(--accent);font-weight:700;text-align:center;" oninput="reval(${mi})"></td><td><input type="text" value="${(!t.fto||String(t.fto).toUpperCase()==='SIN FTO')?'':t.fto}" placeholder="FTO" class="fto-input ${ftoClass(t.fto)}" style="width:58px;font-size:12px;font-weight:700;text-align:center;color:#fff;" oninput="actualizarFtoChip(this)"></td><td><input type="number" value="${t.ancho_trama||''}" placeholder="5" style="width:48px"></td><td><input type="number" value="${t.mts_iniciales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.mts_finales||''}" placeholder="0" class="${t._w||''}" oninput="reval(${mi})"></td><td><input type="number" value="${t.er||''}" placeholder="5.5" step="0.1" style="width:60px"></td><td style="width:20px;font-size:13px;">${t._w==='err'?'🔴':t._w==='warn'?'🟡':''}</td></tr>`).join('')}</tbody></table>
       <div class="sdiv"><span>paradas</span></div>
       <div class="plist" id="pl-${mi}">${m.paradas.map(p=>prow(p,mi)).join('')}</div>
       <button class="btn-add" onclick="addP(${mi})">+ Agregar parada</button>
@@ -1522,8 +1577,22 @@ function buildBlock(m,mi){
 }
 
 function normHora(h){if(!h)return'';const p=h.split(':');if(p.length!==2)return h;return`${p[0].padStart(2,'0')}:${p[1].padStart(2,'0')}`;}
-function calcMinutos(desde,hasta){if(!desde||!hasta)return null;const[dh,dm]=desde.split(':').map(Number);const[hh,hm]=hasta.split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d&&(d-h)<360){const tmp=d;d=h;h=tmp;}else if(h<d)h+=1440;return h-d;}
-function minLabel(min){if(min===null)return{txt:'--',cls:''};if(min>=30)return{txt:min+'m',cls:'high'};if(min>=16)return{txt:min+'m',cls:'med'};return{txt:min+'m',cls:'low'};}
+function calcMinutos(desde,hasta){
+  if(!desde||!hasta)return null;
+  const[dh,dm]=desde.split(':').map(Number);
+  const[hh,hm]=hasta.split(':').map(Number);
+  let d=dh*60+dm, h=hh*60+hm;
+  if(h===d) return 0;
+  if(h>d) return h-d; // caso normal: hasta > desde
+  // hasta < desde: puede ser cruce de medianoche o error
+  const conMedianoche = 1440-d+h;
+  // Si con medianoche da un resultado razonable (≤ 720 min = 12hs) → cruce de medianoche
+  // Si da algo muy grande o si la diferencia sin medianoche es pequeña → error
+  if(conMedianoche<=720) return conMedianoche; // cruce de medianoche válido
+  return null; // imposible → error
+}
+function minLabel(min){
+  if(min===null||min===undefined) return {txt:'⚠️ Error',cls:'err'};if(min===null)return{txt:'--',cls:''};if(min>=30)return{txt:min+'m',cls:'high'};if(min>=16)return{txt:min+'m',cls:'med'};return{txt:min+'m',cls:'low'};}
 
 function prow(p,mi){
   const opts=MOTIVOS.map(m=>{const k=m.split(' ')[0];return`<option value="${k}" ${(p.motivo&&p.motivo.toUpperCase()===k)?'selected':''}>${m}</option>`;}).join('');
@@ -1604,7 +1673,7 @@ function reval(mi){
   const prows=document.querySelectorAll(`#pl-${mi} .prow`);
   maquinistas[mi].paradas=Array.from(prows).map(pr=>({telar:parseInt(pr.querySelector('.p-t').value)||null,desde:pr.querySelector('.p-d').value,hasta:pr.querySelector('.p-h').value,motivo:pr.querySelector('.motsel').value})).filter(p=>p.telar&&p.desde&&p.hasta);
   maquinistas[mi].alertas=[];const minT=maquinistas[mi].turno==='extra'?720:maquinistas[mi].turno==='tarde'?510:540;
-  maquinistas[mi].telares.forEach(t=>{if(!t.er)return;const ini=t.mts_iniciales,fin=t.mts_finales;if(isNaN(ini)||isNaN(fin))return;const mts=fin<ini?(65535-ini)+fin:fin-ini;if(mts<=0)return;const minP=maquinistas[mi].paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d)h+=1440;return s+(h-d);},0);const teo=t.er*(minT-minP);const cells=document.querySelectorAll(`#tb-${mi} tr`)[maquinistas[mi].telares.indexOf(t)]?.querySelectorAll('input');if(cells){cells[3].classList.remove('warn','err');cells[4].classList.remove('warn','err');}if(mts<teo*0.15&&minP===0){t._w='err';maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`});if(cells){cells[3].classList.add('err');cells[4].classList.add('err');}}else if(mts<teo*0.35&&minP<30){t._w='warn';maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`});if(cells){cells[3].classList.add('warn');cells[4].classList.add('warn');}}});
+  maquinistas[mi].telares.forEach(t=>{if(!t.er)return;const ini=t.mts_iniciales,fin=t.mts_finales;if(isNaN(ini)||isNaN(fin))return;const mts=fin<ini?(65535-ini)+fin:fin-ini;if(mts<=0)return;const minP=maquinistas[mi].paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d){const cm=1440-d+h;h=cm<=720?d+cm:d;}return s+(h-d);},0);const teo=t.er*(minT-minP);const cells=document.querySelectorAll(`#tb-${mi} tr`)[maquinistas[mi].telares.indexOf(t)]?.querySelectorAll('input');if(cells){cells[3].classList.remove('warn','err');cells[4].classList.remove('warn','err');}if(mts<teo*0.15&&minP===0){t._w='err';maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`});if(cells){cells[3].classList.add('err');cells[4].classList.add('err');}}else if(mts<teo*0.35&&minP<30){t._w='warn';maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`});if(cells){cells[3].classList.add('warn');cells[4].classList.add('warn');}}});
 }
 function addMaqManual(){const leg=prompt('N° de Legajo:');if(!leg)return;maquinistas.push({legajo:leg,fecha:'',turno:'manana',telares:[{},{},{},{}],paradas:[],mtsExtra:0,obs:'',alertas:[],sinAuxiliar:false});const mi=maquinistas.length-1;document.getElementById('maqBlocks').appendChild(buildBlock(maquinistas[mi],mi));}
 
@@ -1765,9 +1834,12 @@ async function publicarSheets(){
           const [dh,dm] = (p.desde||'0:0').split(':').map(Number);
           const [hh,hm] = (p.hasta||'0:0').split(':').map(Number);
           let d = dh*60+dm, h = hh*60+hm;
-          if (h < d && (d-h) < 360) { const tmp=d; d=h; h=tmp; }
-          else if (h < d) h += 1440;
-          const minParada = h - d;
+          let minParada = 0;
+          if(h > d) { minParada = h-d; }
+          else if(h < d) {
+            const conMed = 1440-d+h;
+            minParada = conMed <= 720 ? conMed : 0; // cruce medianoche válido si ≤ 12hs
+          }
           const motivoDesc = MOTIVOS.find(mv => mv.startsWith(p.motivo+' ')) || p.motivo || '';
           return [
             fechaStr,           // A - Fecha
@@ -1992,10 +2064,11 @@ function dashMergeTodas(todasDatos) {
     merged.totalMetros += d.totalMetros;
     Object.entries(d.legajos).forEach(([leg, ld]) => {
       if (!merged.legajos[leg]) {
-        merged.legajos[leg] = { registros: [], telares: {}, totalMetros: 0, totalMinNoProd: 0 };
+        merged.legajos[leg] = { registros: [], telares: {}, totalMetros: 0, totalMinNoProd: 0, totalMtsExtra: 0 };
       }
       merged.legajos[leg].totalMetros += ld.totalMetros;
       merged.legajos[leg].totalMinNoProd += ld.totalMinNoProd;
+      merged.legajos[leg].totalMtsExtra = (merged.legajos[leg].totalMtsExtra||0) + (ld.totalMtsExtra||0);
       merged.legajos[leg].registros.push(...ld.registros);
       Object.entries(ld.telares).forEach(([t, td]) => {
         if (!merged.legajos[leg].telares[t]) merged.legajos[leg].telares[t] = { metros: 0, turnos: 0, mnp: 0 };
@@ -2007,6 +2080,7 @@ function dashMergeTodas(todasDatos) {
   });
   // Merge paradasDetalle de todas las quincenas
   merged.paradasDetalle = todasDatos.flatMap(d => d.paradasDetalle || []);
+  merged.totalMtsExtra = todasDatos.reduce((s,d) => s+(d.totalMtsExtra||0), 0);
   return merged;
 }
 
@@ -2047,7 +2121,7 @@ async function dashLeerQuincena(q) {
 
   legajosEnSheet.forEach(leg => {
     const rows = allData[leg] || [];
-    legajos[leg] = { registros: [], telares: {}, totalMetros: 0, totalMinNoProd: 0 };
+    legajos[leg] = { registros: [], telares: {}, totalMetros: 0, totalMinNoProd: 0, totalMtsExtra: 0 };
     rows.forEach(row => {
       if (!row || row.length < 5) return;
       const telar = parseInt(row[2]);
@@ -2060,10 +2134,14 @@ async function dashLeerQuincena(q) {
       const hrs = parseFloat(row[1]) || 9;
       const minTurno = hrs >= 11 ? 720 : hrs >= 8 && hrs < 9 ? 510 : 540;
       const fecha = row[0] || '';
+      // Columna J: mtsExtra÷4 — solo sumar cuando hay fecha (= primera fila del turno)
+      const mtsExtraDiv4 = fecha ? (parseFloat(row[8]) || 0) : 0;
+      const mtsExtraTurno = mtsExtraDiv4 * 4; // total extra del turno
       totalRegistros++;
       totalMetros += mtsVal;
       legajos[leg].totalMetros += mtsVal;
       legajos[leg].totalMinNoProd += mnp;
+      if (mtsExtraDiv4 > 0) legajos[leg].totalMtsExtra += mtsExtraTurno;
       if (!legajos[leg].telares[telar]) legajos[leg].telares[telar] = { metros: 0, turnos: 0, mnp: 0 };
       legajos[leg].telares[telar].metros += mtsVal;
       legajos[leg].telares[telar].turnos++;
@@ -2111,7 +2189,8 @@ async function dashLeerQuincena(q) {
     }
   } catch(e) { console.log('Hoja Paradas no encontrada o sin datos'); }
 
-  return { legajos, totalRegistros, totalMetros, quincena: q, paradasDetalle };
+  const totalMtsExtra = Object.values(legajos).reduce((s,l) => s+(l.totalMtsExtra||0), 0);
+  return { legajos, totalRegistros, totalMetros, totalMtsExtra, quincena: q, paradasDetalle };
 }
 
 function dashRenderAll(q1, q2) {
@@ -2121,13 +2200,16 @@ function dashRenderAll(q1, q2) {
   const legsList = Object.keys(d.legajos);
   // KPIs
   document.getElementById('kpi-metros').textContent = d.totalMetros >= 10000 ? (d.totalMetros/1000).toFixed(1)+'k' : d.totalMetros.toLocaleString('es-AR');
-  document.getElementById('kpi-metros-sub').textContent = d.totalMetros.toLocaleString('es-AR') + ' mts total';
+  document.getElementById('kpi-metros-sub').textContent = d.totalMetros.toLocaleString('es-AR') + ' mts total' + (totalMtsExtra>0?' · incl. '+totalMtsExtra.toLocaleString('es-AR')+' mts extra':'');
   document.getElementById('kpi-operarios').textContent = legsList.length;
   document.getElementById('kpi-registros').textContent = d.totalRegistros;
   const totalMnp = legsList.reduce((s, l) => s + (d.legajos[l].totalMinNoProd || 0), 0);
   document.getElementById('kpi-paradas').textContent = Math.round(totalMnp) + 'm';
   document.getElementById('kpi-paradas-sub').textContent = Math.round(totalMnp/60*10)/10 + ' horas sin producir';
   const prom = d.totalRegistros > 0 ? Math.round(d.totalMetros / d.totalRegistros) : 0;
+  // Metros extra
+  const totalMtsExtra = d.totalMtsExtra || 0;
+  const pctExtra = d.totalMetros > 0 ? (totalMtsExtra / d.totalMetros * 100).toFixed(1) : 0;
   document.getElementById('kpi-prom').textContent = prom.toLocaleString('es-AR');
   dashRenderOperarios();
   dashRenderTelares();
@@ -2249,32 +2331,61 @@ function dashRenderOperarios() {
   legsList.forEach(leg => {
     const ld = d.legajos[leg];
     const pct = (ld.totalMetros / maxMts * 100).toFixed(1);
-    html += `<div class="dash-bar-row">
+    const mtsExBar = ld.totalMtsExtra || 0;
+    const pctExBar = ld.totalMetros > 0 ? (mtsExBar / ld.totalMetros * 100).toFixed(0) : 0;
+    html += `<div class="dash-bar-row" style="grid-template-columns:80px 1fr 160px;">
       <div class="dash-bar-lbl"><span class="leg-badge">${leg}</span></div>
       <div class="dash-bar-track"><div class="dash-bar-fill green" style="width:${pct}%"></div></div>
-      <div class="dash-bar-val">${ld.totalMetros.toLocaleString('es-AR')}</div>
+      <div class="dash-bar-val" style="font-size:11px;">
+        ${ld.totalMetros.toLocaleString('es-AR')}
+        ${mtsExBar>0?`<span style="color:var(--warn);margin-left:4px;">+${mtsExBar.toLocaleString('es-AR')} extra</span>`:''}
+      </div>
     </div>`;
   });
   html += '</div>';
   html += '<div class="dash-section-title">Detalle por operario</div>';
   html += `<table class="dash-table"><thead><tr>
-    <th>Legajo</th><th style="text-align:right">Total Mts</th>
-    <th style="text-align:right">Turnos</th><th style="text-align:right">Prom/turno</th>
-    <th style="text-align:right">Min no prod</th><th style="text-align:right">Telares</th>
+    <th>Legajo</th>
+    <th style="text-align:right">Total Mts</th>
+    <th style="text-align:right">Mts Extra</th>
+    <th style="text-align:right">% Extra</th>
+    <th style="text-align:right">Turnos</th>
+    <th style="text-align:right">Prom/turno</th>
+    <th style="text-align:right">Min no prod</th>
+    <th style="text-align:right">Telares</th>
   </tr></thead><tbody>`;
   legsList.forEach(leg => {
     const ld = d.legajos[leg];
     const prom = ld.registros.length > 0 ? Math.round(ld.totalMetros / ld.registros.length) : 0;
     const tels = Object.keys(ld.telares).sort((a,b)=>parseInt(a)-parseInt(b)).join(', ');
+    const mtsEx = ld.totalMtsExtra || 0;
+    const pctEx = ld.totalMetros > 0 ? (mtsEx / ld.totalMetros * 100).toFixed(1) : 0;
     html += `<tr>
       <td><span class="leg-badge">${leg}</span></td>
       <td style="text-align:right" class="val good">${ld.totalMetros.toLocaleString('es-AR')}</td>
+      <td style="text-align:right;color:${mtsEx>0?'var(--warn)':'var(--text3)'}">
+        ${mtsEx>0?mtsEx.toLocaleString('es-AR'):'—'}
+      </td>
+      <td style="text-align:right;font-size:11px;color:${mtsEx>0?'var(--warn)':'var(--text3)'}">
+        ${mtsEx>0?pctEx+'%':'—'}
+      </td>
       <td style="text-align:right">${ld.registros.length}</td>
       <td style="text-align:right" class="val">${prom.toLocaleString('es-AR')}</td>
       <td style="text-align:right">${Math.round(ld.totalMinNoProd)} min</td>
       <td style="text-align:right;font-size:11px;color:var(--text2)">${tels}</td>
     </tr>`;
   });
+  // Totales
+  const totalEx = legsList.reduce((s,l)=>s+(d.legajos[l].totalMtsExtra||0),0);
+  const totalMts = legsList.reduce((s,l)=>s+d.legajos[l].totalMetros,0);
+  const pctTotalEx = totalMts>0?(totalEx/totalMts*100).toFixed(1):0;
+  html += `<tr style="background:var(--surface2);font-weight:700;">
+    <td>TOTAL</td>
+    <td style="text-align:right">${totalMts.toLocaleString('es-AR')}</td>
+    <td style="text-align:right;color:var(--warn)">${totalEx>0?totalEx.toLocaleString('es-AR'):'—'}</td>
+    <td style="text-align:right;color:var(--warn)">${totalEx>0?pctTotalEx+'%':'—'}</td>
+    <td colspan="4"></td>
+  </tr>`;
   html += '</tbody></table>';
   document.getElementById('panel-operarios').innerHTML = html;
 }
