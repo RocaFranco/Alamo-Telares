@@ -2038,6 +2038,7 @@ async function dashLeerQuincena(q) {
       const mtsVal = Math.max(mts, 0);
       const mnp = parseFloat(row[7]) || 0;
       const hrs = parseFloat(row[1]) || 9;
+      const minTurno = hrs >= 11 ? 720 : hrs >= 8 && hrs < 9 ? 510 : 540;
       const fecha = row[0] || '';
       totalRegistros++;
       totalMetros += mtsVal;
@@ -2047,7 +2048,7 @@ async function dashLeerQuincena(q) {
       legajos[leg].telares[telar].metros += mtsVal;
       legajos[leg].telares[telar].turnos++;
       legajos[leg].telares[telar].mnp += mnp;
-      legajos[leg].registros.push({ telar, mts: mtsVal, mnp, fecha, hrs });
+      legajos[leg].registros.push({ telar, mts: mtsVal, mnp, fecha, hrs, minTurno });
     });
     if (legajos[leg].registros.length === 0) delete legajos[leg];
   });
@@ -2309,25 +2310,37 @@ function dashRenderParadas() {
   // Minutos totales trabajados vs minutos no productivos
   const legsList = Object.keys(d.legajos);
   const totalMnp = legsList.reduce((s,l) => s + (d.legajos[l].totalMinNoProd||0), 0);
-  const totalRegistros = d.totalRegistros; // filas = turnos × telares (4 por turno)
-  const turnosProm = Math.round(totalRegistros / 4); // aprox turnos completos
-  // Minutos totales posibles = turnos × minutos promedio por turno (asumimos 540 como base)
-  const minTotalesPosibles = turnosProm * 540;
+
+  // Calcular minutos totales posibles usando las horas reales de cada registro
+  // Cada registro = 1 telar en 1 turno. Sumamos los minutos de turno de cada registro.
+  // Dividimos por 4 (telares asignados) para obtener los turnos únicos
+  let minTotalesPosibles = 0;
+  legsList.forEach(leg => {
+    const regs = d.legajos[leg].registros || [];
+    // Agrupar por turno: cada turno tiene ~4 telares, tomar el primer registro de cada grupo
+    // Ordenar y tomar 1 de cada 4 para no contar 4 veces
+    const turnosMinutos = regs.map(r => r.minTurno || (r.hrs === 12 ? 720 : r.hrs === 8.5 ? 510 : 540));
+    // Suma total dividida por 4 (cada turno aparece 4 veces, uno por telar)
+    minTotalesPosibles += turnosMinutos.reduce((s,m) => s+m, 0) / 4;
+  });
+  minTotalesPosibles = Math.round(minTotalesPosibles);
+
   const eficiencia = minTotalesPosibles > 0
     ? Math.min(((minTotalesPosibles - totalMnp) / minTotalesPosibles * 100), 100).toFixed(1)
     : '—';
   const mnpHoras  = Math.floor(totalMnp / 60);
   const mnpMins   = Math.round(totalMnp % 60);
   const mnpDias   = (totalMnp / (60*8)).toFixed(1); // días de 8 hs
+  const turnosProm = Math.round(minTotalesPosibles / 540); // referencia
 
   let html = '';
 
   // ── BLOQUE DE EFICIENCIA ──────────────────────────────────────────────────
   html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px;">
-    <div class="dash-kpi ${parseFloat(eficiencia)>=90?'green':parseFloat(eficiencia)>=75?'':'red'}">
+    <div class="dash-kpi" style="border-color:${parseFloat(eficiencia)>=90?'var(--accent2)':parseFloat(eficiencia)>=75?'var(--warn)':'var(--danger)'}">
       <div class="dash-kpi-label">Eficiencia productiva</div>
-      <div class="dash-kpi-val" style="font-size:32px;">${eficiencia}%</div>
-      <div class="dash-kpi-sub">${eficiencia>=90?'✅ Excelente':eficiencia>=80?'🟡 Buena':eficiencia>=70?'🟠 Regular':'🔴 Baja'}</div>
+      <div class="dash-kpi-val" style="font-size:30px;color:${parseFloat(eficiencia)>=90?'var(--accent2)':parseFloat(eficiencia)>=75?'var(--warn)':'var(--danger)'};">${eficiencia}%</div>
+      <div class="dash-kpi-sub">${parseFloat(eficiencia)>=90?'✅ Excelente':parseFloat(eficiencia)>=80?'🟡 Buena':parseFloat(eficiencia)>=70?'🟠 Regular':'🔴 Baja'}</div>
     </div>
     <div class="dash-kpi orange">
       <div class="dash-kpi-label">Tiempo no productivo</div>
@@ -2337,7 +2350,7 @@ function dashRenderParadas() {
     <div class="dash-kpi">
       <div class="dash-kpi-label">Tiempo posible total</div>
       <div class="dash-kpi-val">${minTotalesPosibles.toLocaleString('es-AR')}</div>
-      <div class="dash-kpi-sub">min · ${turnosProm} turnos × 540 min</div>
+      <div class="dash-kpi-sub">min equivalentes · ${turnosProm} turnos</div>
     </div>
     <div class="dash-kpi">
       <div class="dash-kpi-label">Prod. efectiva</div>
