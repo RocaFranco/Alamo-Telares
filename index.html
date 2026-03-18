@@ -965,9 +965,17 @@ function memGenerarContexto(leg) {
     const errs = mem.errores.slice(-10);
     errs.forEach(e => {
       if (e.campo === 'mts_iniciales' || e.campo === 'mts_finales') {
-        ctx += `  • Telar ${e.telar} ${e.campo}: se leyó "${e.leido}" pero era "${e.correcto}" → prestá atención a los dígitos de este telar\n`;
+        ctx += `  • Telar ${e.telar} ${e.campo}: se leyó "${e.leido}" pero era "${e.correcto}"${e.nota||''} → revisá bien cada dígito\n`;
       } else if (e.campo === 'er') {
         ctx += `  • E/R del telar ${e.telar}: se leyó "${e.leido}" pero era "${e.correcto}"\n`;
+      } else if (e.campo === 'fto') {
+        ctx += `  • FTO del telar ${e.telar}: se leyó "${e.leido}" pero era "${e.correcto}"\n`;
+      } else if (e.campo === 'numero_telar') {
+        ctx += `  • Número de telar: se leyó "${e.leido}" pero era "${e.correcto}" → probable corte del segundo dígito\n`;
+      } else if (e.campo === 'legajo') {
+        ctx += `  • Legajo: se leyó "${e.leido}" pero era "${e.correcto}"\n`;
+      } else if (e.campo === 'fecha') {
+        ctx += `  • Fecha: se leyó "${e.leido}" pero era "${e.correcto}"\n`;
       } else if (e.campo === 'motivo_parada') {
         ctx += `  • Motivo de parada: se leyó "${e.leido}" pero era "${e.correcto}"\n`;
       } else if (e.campo === 'hora_parada') {
@@ -1045,17 +1053,46 @@ function memAprender(legajo, datosIA, datosEditados) {
 
     // Comparar mts_iniciales
     if (ti.mts_iniciales!=null && te.mts_iniciales!=null && String(ti.mts_iniciales)!==String(te.mts_iniciales)) {
-      mem.errores.push({ campo:'mts_iniciales', telar:te.numero, leido:String(ti.mts_iniciales), correcto:String(te.mts_iniciales), fecha });
+      // Calcular cuánto difiere para entender el patrón de error
+      const leido = parseInt(ti.mts_iniciales), correcto = parseInt(te.mts_iniciales);
+      const nota = !isNaN(leido) && !isNaN(correcto)
+        ? ` (diferencia: ${Math.abs(leido-correcto).toLocaleString()} — posible dígito mal leído)`
+        : '';
+      mem.errores.push({ campo:'mts_iniciales', telar:te.numero, leido:String(ti.mts_iniciales), correcto:String(te.mts_iniciales), fecha, nota });
     }
     // Comparar mts_finales
     if (ti.mts_finales!=null && te.mts_finales!=null && String(ti.mts_finales)!==String(te.mts_finales)) {
-      mem.errores.push({ campo:'mts_finales', telar:te.numero, leido:String(ti.mts_finales), correcto:String(te.mts_finales), fecha });
+      const leido = parseInt(ti.mts_finales), correcto = parseInt(te.mts_finales);
+      const nota = !isNaN(leido) && !isNaN(correcto)
+        ? ` (diferencia: ${Math.abs(leido-correcto).toLocaleString()})`
+        : '';
+      mem.errores.push({ campo:'mts_finales', telar:te.numero, leido:String(ti.mts_finales), correcto:String(te.mts_finales), fecha, nota });
     }
     // Comparar E/R
     if (ti.er!=null && te.er!=null && parseFloat(ti.er)!==parseFloat(te.er)) {
       mem.errores.push({ campo:'er', telar:te.numero, leido:String(ti.er), correcto:String(te.er), fecha });
     }
+    // Comparar FTO
+    if (ti.fto!=null && te.fto!=null && String(ti.fto)!==String(te.fto)) {
+      mem.errores.push({ campo:'fto', telar:te.numero, leido:String(ti.fto), correcto:String(te.fto), fecha });
+    }
+    // Comparar número de telar (si la IA lo leyó mal)
+    if (parseInt(ti.numero)!==parseInt(te.numero)) {
+      mem.errores.push({ campo:'numero_telar', telar:te.numero, leido:String(ti.numero), correcto:String(te.numero), fecha });
+    }
   });
+
+  // Comparar legajo (si lo corrigieron)
+  if (datosIA.legajo_maquinista && datosEditados.legajo_maquinista &&
+      String(datosIA.legajo_maquinista) !== String(datosEditados.legajo_maquinista)) {
+    mem.errores.push({ campo:'legajo', telar:null, leido:String(datosIA.legajo_maquinista), correcto:String(datosEditados.legajo_maquinista), fecha });
+  }
+
+  // Comparar fecha
+  if (datosIA.fecha && datosEditados.fecha &&
+      String(datosIA.fecha) !== String(datosEditados.fecha)) {
+    mem.errores.push({ campo:'fecha', telar:null, leido:String(datosIA.fecha), correcto:String(datosEditados.fecha), fecha });
+  }
 
   // Comparar paradas
   const paradasIA = datosIA.paradas || [];
@@ -1130,7 +1167,7 @@ REGLA 1 — TELARES VÁLIDOS: La fábrica tiene exactamente 16 telares, numerado
 REGLA 2 — FORMATOS (FTO) VÁLIDOS: Los únicos formatos que existen son estos números: 40, 47, 53, 57, 60, 71, 82, 102, 120
   → Son SOLO números enteros. NO existen formatos con letras ("lo2", "b3", "L02", etc. son errores).
   → Si ves algo que parece letras, interpretalo como el número más cercano visualmente:
-    "lo2" o "L02" → 102 | "b0" o "G0" → 60 | "s7" → 57 | "4o" → 40 | "4?" → 47
+    "lo2" o "L02" o "l02" → 102 | "b0" o "G0" → 60 | "s7" → 57 | "4o" → 40 | "4?" → 47 | "b7" → 47
   → Si no podés determinarlo con certeza → devolvé el número como string "SIN FTO".
   → NUNCA devuelvas un valor que no sea uno de esos 9 números o "SIN FTO".
 
@@ -1189,6 +1226,12 @@ Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
   * Una parada válida tiene: número de telar + hora desde + hora hasta + motivo P1-P18.
   * Si falta cualquiera de esos 4 datos → no incluir esa fila.
 - Incluí SOLO las filas que tengan los 4 campos completos y visibles.
+- ATENCIÓN CON LAS HORAS: leé cada dígito de la hora con mucho cuidado.
+  * Error frecuente detectado: confundir el 0 con el 1 en la decena de las horas
+    (ej: leer "11:45" cuando realmente dice "10:45", o "09:05" cuando dice "08:05")
+  * Si el turno es mañana (desde 06:00), las paradas no pueden ser después de las 15:00
+  * Si el turno es tarde (desde 14:30), las paradas no pueden ser antes de las 14:00
+  * Usá el contexto del turno para validar si las horas tienen sentido
 
 OBSERVACIONES: copiá textualmente lo escrito.
 
@@ -1219,8 +1262,11 @@ Si algún campo no es legible usá null. NO inventes datos.`;
   const resultado = JSON.parse(clean);
 
   // Guardar copia de lo que leyó la IA (para aprender después de la edición)
-  const legIA = String(resultado.legajo_maquinista||'').trim();
-  if (legIA) _lecturaIA_original[legIA] = JSON.parse(JSON.stringify(resultado));
+  // Clave = legajo+fecha igual que en agruparPorLegajo
+  const legIA   = String(resultado.legajo_maquinista||'').trim();
+  const fechaIA = String(resultado.fecha||'').trim();
+  const claveIA = fechaIA ? `${legIA}|${fechaIA}` : `${legIA}|pag_${tarea.pagina||Date.now()}`;
+  if (legIA) _lecturaIA_original[claveIA] = JSON.parse(JSON.stringify(resultado));
 
   return resultado;
 }
@@ -1663,9 +1709,12 @@ async function publicarSheets(){
       if(!writeRes.ok){const e=await writeRes.json();throw new Error(`Error al escribir hoja "${leg}": ${e.error?.message||writeRes.status}`);}
 
       // ── APRENDER de las correcciones del usuario ──────────────────────
-      const datosOrigIA = _lecturaIA_original[leg];
+      // Buscar la lectura IA original con clave legajo+fecha
+      const claveAprender = m.fecha ? `${leg}|${m.fecha}` : null;
+      const datosOrigIA = claveAprender
+        ? (_lecturaIA_original[claveAprender] || _lecturaIA_original[leg])
+        : _lecturaIA_original[leg];
       if (datosOrigIA) {
-        // Reconstruir "datosEditados" desde el estado actual del maquinista
         const datosEditados = {
           legajo_maquinista: m.legajo,
           fecha: m.fecha,
@@ -1674,7 +1723,9 @@ async function publicarSheets(){
           paradas: m.paradas
         };
         memAprender(leg, datosOrigIA, datosEditados);
-        delete _lecturaIA_original[leg]; // limpiar para no re-aprender
+        // Limpiar ambas claves posibles
+        if (claveAprender) delete _lecturaIA_original[claveAprender];
+        delete _lecturaIA_original[leg];
       }
 
       totalMtsGlobal+=mtsMaquinista;
