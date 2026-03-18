@@ -1203,7 +1203,8 @@ Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Ve
 
 - N° Telar: número del 1 al 16. Aplicar REGLA 1 si hay dudas con telares de 2 dígitos.
 - FTO: REGLA 2 — solo los 9 números válidos o "SIN FTO". Nunca letras.
-- Ancho Trama: número pequeño, usualmente 5.
+- Ancho Trama: SOLO puede ser uno de estos 3 valores: 3, 5 o 5.5 — nada más existe en esta fábrica.
+  * Si leés otro número → error de lectura. El más probable es 5, luego 5.5, luego 3.
 - E/R (velocidad): decimal entre 4.0 y 6.4. Valores típicos: 5.5, 5.6, 5.7, 5.8, 5.9, 6.0
 - Mts Iniciales y Mts Finales: contadores entre 0 y 65535.
   * Ejemplos válidos: 4085, 6706, 38194, 40808, 21333, 23864
@@ -2057,18 +2058,32 @@ async function dashLeerQuincena(q) {
   let paradasDetalle = []; // [{fecha, legajo, telar, motivo, minutos}]
   try {
     const rpRes = await gFetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${q.sheetId}/values/${encodeURIComponent('Paradas!A2:H1000')}&valueRenderOption=UNFORMATTED_VALUE`
+      `https://sheets.googleapis.com/v4/spreadsheets/${q.sheetId}/values/${encodeURIComponent('Paradas!A2:H5000')}?valueRenderOption=UNFORMATTED_VALUE`
     );
     if (rpRes.ok) {
       const rpData = await rpRes.json();
+      // Helpers para convertir números seriales de Excel → fecha/hora legible
+      const serialToDateStr = (v) => {
+        if (!v || isNaN(v)) return String(v||'');
+        const d = new Date((v - 25569) * 86400 * 1000);
+        return `${d.getUTCDate()}/${d.getUTCMonth()+1}/${d.getUTCFullYear()}`;
+      };
+      const serialToTimeStr = (v) => {
+        if (!v || isNaN(v)) return String(v||'');
+        const totalMins = Math.round(parseFloat(v) * 24 * 60);
+        const h = Math.floor(totalMins/60) % 24;
+        const m = totalMins % 60;
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      };
+
       (rpData.values || []).forEach(row => {
         if (!row || row.length < 7) return;
         paradasDetalle.push({
-          fecha:   row[0]||'',
+          fecha:   typeof row[0]==='number' ? serialToDateStr(row[0]) : String(row[0]||''),
           legajo:  String(row[1]||''),
           telar:   parseInt(row[2])||0,
-          desde:   row[3]||'',
-          hasta:   row[4]||'',
+          desde:   typeof row[3]==='number' ? serialToTimeStr(row[3]) : String(row[3]||''),
+          hasta:   typeof row[4]==='number' ? serialToTimeStr(row[4]) : String(row[4]||''),
           minutos: parseFloat(row[5])||0,
           codigo:  String(row[6]||'').trim().toUpperCase(),
           desc:    row[7]||''
