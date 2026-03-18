@@ -2336,26 +2336,23 @@ function dashRenderParadas() {
   let html = '';
 
   // ── BLOQUE DE EFICIENCIA ──────────────────────────────────────────────────
-  html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px;">
-    <div class="dash-kpi" style="border-color:${parseFloat(eficiencia)>=90?'var(--accent2)':parseFloat(eficiencia)>=75?'var(--warn)':'var(--danger)'}">
+  const efColor = parseFloat(eficiencia)>=90?'var(--accent2)':parseFloat(eficiencia)>=75?'var(--warn)':'var(--danger)';
+  const efLabel = parseFloat(eficiencia)>=90?'✅ Excelente':parseFloat(eficiencia)>=80?'🟡 Buena':parseFloat(eficiencia)>=70?'🟠 Regular':'🔴 Baja';
+  html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px;">
+    <div class="dash-kpi" style="border-color:${efColor};border-width:2px;">
       <div class="dash-kpi-label">Eficiencia productiva</div>
-      <div class="dash-kpi-val" style="font-size:30px;color:${parseFloat(eficiencia)>=90?'var(--accent2)':parseFloat(eficiencia)>=75?'var(--warn)':'var(--danger)'};">${eficiencia}%</div>
-      <div class="dash-kpi-sub">${parseFloat(eficiencia)>=90?'✅ Excelente':parseFloat(eficiencia)>=80?'🟡 Buena':parseFloat(eficiencia)>=70?'🟠 Regular':'🔴 Baja'}</div>
+      <div class="dash-kpi-val" style="font-size:32px;color:${efColor};">${eficiencia}%</div>
+      <div class="dash-kpi-sub">${efLabel} · sobre ${minTotalesPosibles.toLocaleString('es-AR')} min posibles</div>
+    </div>
+    <div class="dash-kpi green">
+      <div class="dash-kpi-label">Tiempo productivo</div>
+      <div class="dash-kpi-val">${(minTotalesPosibles - totalMnp).toLocaleString('es-AR')}</div>
+      <div class="dash-kpi-sub">min · ${((minTotalesPosibles-totalMnp)/60).toFixed(1)}h efectivas</div>
     </div>
     <div class="dash-kpi orange">
-      <div class="dash-kpi-label">Tiempo no productivo</div>
+      <div class="dash-kpi-label">Tiempo perdido</div>
       <div class="dash-kpi-val">${Math.round(totalMnp).toLocaleString('es-AR')}</div>
-      <div class="dash-kpi-sub">min · ${mnpHoras}h ${mnpMins}m · ${mnpDias} días</div>
-    </div>
-    <div class="dash-kpi">
-      <div class="dash-kpi-label">Tiempo posible total</div>
-      <div class="dash-kpi-val">${minTotalesPosibles.toLocaleString('es-AR')}</div>
-      <div class="dash-kpi-sub">min equivalentes · ${turnosProm} turnos</div>
-    </div>
-    <div class="dash-kpi">
-      <div class="dash-kpi-label">Prod. efectiva</div>
-      <div class="dash-kpi-val green">${(minTotalesPosibles - totalMnp).toLocaleString('es-AR')}</div>
-      <div class="dash-kpi-sub">min productivos</div>
+      <div class="dash-kpi-sub">min · ${mnpHoras}h ${mnpMins}m · ${mnpDias} días · ${(100-parseFloat(eficiencia)).toFixed(1)}% del total</div>
     </div>
   </div>`;
 
