@@ -1178,9 +1178,16 @@ REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
 
 === CÓMO LEER EL ENCABEZADO ===
 
-- "Turno" con horario:
-  * Mañana (6 a 15 aprox.) → "manana" | Tarde (15 a 23:30 aprox.) → "tarde"
-  * 12 horas de diferencia entre inicio y fin → SIEMPRE "extra"
+- "Turno" — puede estar indicado de distintas formas en la planilla:
+  * CÍRCULO rodeando la opción correcta (ej: un círculo en "Tarde")
+  * TACHANDO la opción incorrecta (ej: "Mañana" tachado → el turno es Tarde)
+  * ESCRITO A MANO al costado (ej: "tarde" escrito cerca del campo Turno)
+  * Con el HORARIO solamente → usá las horas para determinarlo
+  Valores posibles:
+  * Mañana (06:00–15:00 aprox.) → "manana" (540 min productivos)
+  * Tarde (14:30–23:00 aprox.) → "tarde" (510 min, produce desde las 15:00)
+  * 12 horas de diferencia → "extra" (720 min)
+  * Si no podés determinarlo → "manana" como default
 - "Telares: X/Y/Z/W" → los 4 telares asignados. USALO para validar los números de la tabla.
 - "Fecha": formato argentino DD/MM/AAAA. Leé con cuidado cada dígito.
   * Ejemplos válidos: "17/03/2026", "5/3/2026", "05/03/26" → siempre devolvé "17/03/2026"
@@ -1211,7 +1218,11 @@ Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Ve
       El error probablemente sea en las decenas de miles: ini correcto es probablemente 20526
       (el "1" al inicio fue leído en vez de "2")
     → Revisá especialmente el primer dígito de los valores cuando la diferencia parece imposible
-    → Si hay rollover (fin < ini): metros = (65535 - ini) + fin → también debe ser ≤ máximo teórico
+    → ROLLOVER DEL CONTADOR: el único caso válido donde inicio > final.
+      El contador llega a 65535 y se resetea a 0.
+      Ejemplo válido: ini=64323, fin=265 → metros=(65535-64323)+265=1477 mts ✓
+      Si inicio > final Y ini < 50000 → ERROR DE LECTURA (no es rollover).
+      En ese caso un dígito fue mal leído — intentá corregirlo antes de devolver el JSON.
 - Los 4 telares del encabezado → es_extra: false. 5° telar en adelante → es_extra: true.
 
 === CÓMO LEER TIEMPO PERDIDO ===
@@ -1407,6 +1418,14 @@ function calcAlertas() {
       const fin = parseFloat(t.mts_finales);
       const er  = parseFloat(t.er) || ER_TIPICO;
       if(isNaN(ini)||isNaN(fin)) return;
+      // Si ini > fin pero NO es rollover válido (ini < 50000) → error de lectura
+      if(fin < ini && ini < 50000) {
+        t._w='err';
+        m.alertas.push({nivel:'error', telar:t.numero,
+          msg:`Telar ${t.numero}: inicio (${ini.toLocaleString()}) > final (${fin.toLocaleString()}) sin ser rollover. Un dígito está mal leído.`
+        });
+        return;
+      }
       const mts = fin<ini ? (65535-ini)+fin : fin-ini;
       if(mts<=0) return;
 
@@ -1708,6 +1727,49 @@ async function publicarSheets(){
       });
       if(!writeRes.ok){const e=await writeRes.json();throw new Error(`Error al escribir hoja "${leg}": ${e.error?.message||writeRes.status}`);}
 
+      // ── GRABAR PARADAS EN HOJA "Paradas" ────────────────────────────────
+      if (m.paradas.length > 0) {
+        const hojaParadas = 'Paradas';
+        // Leer cuántas filas hay ya en la hoja Paradas
+        let paradasStartRow = 2; // fila 1 = headers
+        try {
+          const rp = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(hojaParadas + '!A:A')}`);
+          if (rp.ok) {
+            const dp = await rp.json();
+            paradasStartRow = Math.max((dp.values||[]).length + 1, 2);
+          }
+        } catch(e) {}
+
+        const paradasRows = m.paradas.map(p => {
+          const telarNum = parseInt(p.telar)||0;
+          const [dh,dm] = (p.desde||'0:0').split(':').map(Number);
+          const [hh,hm] = (p.hasta||'0:0').split(':').map(Number);
+          let d = dh*60+dm, h = hh*60+hm;
+          if (h < d && (d-h) < 360) { const tmp=d; d=h; h=tmp; }
+          else if (h < d) h += 1440;
+          const minParada = h - d;
+          const motivoDesc = MOTIVOS.find(mv => mv.startsWith(p.motivo+' ')) || p.motivo || '';
+          return [
+            fechaStr,           // A - Fecha
+            leg,                // B - Legajo
+            telarNum,           // C - Telar
+            p.desde||'',        // D - Desde
+            p.hasta||'',        // E - Hasta
+            minParada||'',      // F - Minutos
+            p.motivo||'',       // G - Código (P1, P2...)
+            motivoDesc          // H - Descripción completa
+          ];
+        });
+
+        if (paradasRows.length > 0) {
+          await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(hojaParadas + '!A' + paradasStartRow)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: paradasRows })
+          });
+        }
+      }
+
       // ── APRENDER de las correcciones del usuario ──────────────────────
       // Buscar la lectura IA original con clave legajo+fecha
       const claveAprender = m.fecha ? `${leg}|${m.fecha}` : null;
@@ -1923,6 +1985,8 @@ function dashMergeTodas(todasDatos) {
       });
     });
   });
+  // Merge paradasDetalle de todas las quincenas
+  merged.paradasDetalle = todasDatos.flatMap(d => d.paradasDetalle || []);
   return merged;
 }
 
@@ -1988,7 +2052,31 @@ async function dashLeerQuincena(q) {
     if (legajos[leg].registros.length === 0) delete legajos[leg];
   });
 
-  return { legajos, totalRegistros, totalMetros, quincena: q };
+  // Leer hoja Paradas para análisis de frecuencia P1-P18
+  let paradasDetalle = []; // [{fecha, legajo, telar, motivo, minutos}]
+  try {
+    const rpRes = await gFetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${q.sheetId}/values/${encodeURIComponent('Paradas!A2:H1000')}&valueRenderOption=UNFORMATTED_VALUE`
+    );
+    if (rpRes.ok) {
+      const rpData = await rpRes.json();
+      (rpData.values || []).forEach(row => {
+        if (!row || row.length < 7) return;
+        paradasDetalle.push({
+          fecha:   row[0]||'',
+          legajo:  String(row[1]||''),
+          telar:   parseInt(row[2])||0,
+          desde:   row[3]||'',
+          hasta:   row[4]||'',
+          minutos: parseFloat(row[5])||0,
+          codigo:  String(row[6]||'').trim().toUpperCase(),
+          desc:    row[7]||''
+        });
+      });
+    }
+  } catch(e) { console.log('Hoja Paradas no encontrada o sin datos'); }
+
+  return { legajos, totalRegistros, totalMetros, quincena: q, paradasDetalle };
 }
 
 function dashRenderAll(q1, q2) {
@@ -2208,7 +2296,151 @@ function dashRenderTelares() {
 function dashRenderParadas() {
   if (!dashData) return;
   const d = dashData;
-  // Min no prod por telar
+
+  // ── Recopilar paradas detalladas de todas las quincenas cargadas ──────────
+  const todasParadas = [];
+  Object.values(dashTodasQuincenas).forEach(qd => {
+    (qd.paradasDetalle || []).forEach(p => todasParadas.push(p));
+  });
+  // Fallback: si no hay hoja Paradas, usar solo mnp por telar
+  const hayParadasDetalle = todasParadas.length > 0;
+
+  // ── EFICIENCIA PRODUCTIVA ─────────────────────────────────────────────────
+  // Minutos totales trabajados vs minutos no productivos
+  const legsList = Object.keys(d.legajos);
+  const totalMnp = legsList.reduce((s,l) => s + (d.legajos[l].totalMinNoProd||0), 0);
+  const totalRegistros = d.totalRegistros; // filas = turnos × telares (4 por turno)
+  const turnosProm = Math.round(totalRegistros / 4); // aprox turnos completos
+  // Minutos totales posibles = turnos × minutos promedio por turno (asumimos 540 como base)
+  const minTotalesPosibles = turnosProm * 540;
+  const eficiencia = minTotalesPosibles > 0
+    ? Math.min(((minTotalesPosibles - totalMnp) / minTotalesPosibles * 100), 100).toFixed(1)
+    : '—';
+  const mnpHoras  = Math.floor(totalMnp / 60);
+  const mnpMins   = Math.round(totalMnp % 60);
+  const mnpDias   = (totalMnp / (60*8)).toFixed(1); // días de 8 hs
+
+  let html = '';
+
+  // ── BLOQUE DE EFICIENCIA ──────────────────────────────────────────────────
+  html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px;">
+    <div class="dash-kpi ${parseFloat(eficiencia)>=90?'green':parseFloat(eficiencia)>=75?'':'red'}">
+      <div class="dash-kpi-label">Eficiencia productiva</div>
+      <div class="dash-kpi-val" style="font-size:32px;">${eficiencia}%</div>
+      <div class="dash-kpi-sub">${eficiencia>=90?'✅ Excelente':eficiencia>=80?'🟡 Buena':eficiencia>=70?'🟠 Regular':'🔴 Baja'}</div>
+    </div>
+    <div class="dash-kpi orange">
+      <div class="dash-kpi-label">Tiempo no productivo</div>
+      <div class="dash-kpi-val">${Math.round(totalMnp).toLocaleString('es-AR')}</div>
+      <div class="dash-kpi-sub">min · ${mnpHoras}h ${mnpMins}m · ${mnpDias} días</div>
+    </div>
+    <div class="dash-kpi">
+      <div class="dash-kpi-label">Tiempo posible total</div>
+      <div class="dash-kpi-val">${minTotalesPosibles.toLocaleString('es-AR')}</div>
+      <div class="dash-kpi-sub">min · ${turnosProm} turnos × 540 min</div>
+    </div>
+    <div class="dash-kpi">
+      <div class="dash-kpi-label">Prod. efectiva</div>
+      <div class="dash-kpi-val green">${(minTotalesPosibles - totalMnp).toLocaleString('es-AR')}</div>
+      <div class="dash-kpi-sub">min productivos</div>
+    </div>
+  </div>`;
+
+  // ── RANKING DE MOTIVOS P1-P18 ─────────────────────────────────────────────
+  if (hayParadasDetalle) {
+    // Agrupar por código de motivo
+    const porMotivo = {};
+    todasParadas.forEach(p => {
+      const cod = p.codigo || 'S/C';
+      if (!porMotivo[cod]) porMotivo[cod] = { codigo: cod, cantidad: 0, minutos: 0, telares: new Set(), legajos: new Set() };
+      porMotivo[cod].cantidad++;
+      porMotivo[cod].minutos += p.minutos || 0;
+      if (p.telar) porMotivo[cod].telares.add(p.telar);
+      if (p.legajo) porMotivo[cod].legajos.add(p.legajo);
+    });
+
+    // Ordenar por minutos (más impacto primero)
+    const motivoList = Object.values(porMotivo).sort((a,b) => b.minutos - a.minutos);
+    const maxMin = Math.max(...motivoList.map(m => m.minutos), 1);
+    const totalMinParadas = motivoList.reduce((s,m) => s + m.minutos, 0);
+
+    // Descripción de cada código
+    const MOTIVOS_DESC = {
+      'P1':'Falta de Urdimbre','P2':'Falta de Trama','P3':'Falta de Aceite',
+      'P4':'Falta de Aro/Plato','P5':'Falta de Auxiliar','P6':'Falta de Cono',
+      'P7':'Falta de Herramienta','P8':'Falta de Tapas Trama','P9':'Mant. Preventivo',
+      'P10':'Capacitación','P11':'Cambio de FTO','P12':'Falla Sensor Trama',
+      'P13':'Falla Sensor Urdimbre','P14':'Falla Ultrasonido','P15':'Falla Eléctrica',
+      'P16':'Falla Mecánica','P17':'Falla de Trama','P18':'Falla de Urdimbre'
+    };
+
+    html += `<div class="dash-section-title">Ranking de causas de parada (por impacto en minutos)</div>`;
+    html += `<div class="dash-bar-wrap">`;
+    motivoList.forEach((m, i) => {
+      const pct = (m.minutos / maxMin * 100).toFixed(1);
+      const pctTotal = totalMinParadas > 0 ? (m.minutos / totalMinParadas * 100).toFixed(1) : 0;
+      const desc = MOTIVOS_DESC[m.codigo] || m.codigo;
+      const color = i === 0 ? 'orange' : i <= 2 ? 'orange' : 'blue';
+      const medal = i === 0 ? '🔴 ' : i === 1 ? '🟠 ' : i === 2 ? '🟡 ' : '';
+      html += `<div class="dash-bar-row" style="grid-template-columns:200px 1fr 130px;">
+        <div class="dash-bar-lbl" style="text-align:left;font-size:11px;">
+          ${medal}<strong>${m.codigo}</strong> · ${desc}
+        </div>
+        <div class="dash-bar-track"><div class="dash-bar-fill ${color}" style="width:${pct}%"></div></div>
+        <div class="dash-bar-val" style="font-size:11px;">${Math.round(m.minutos)} min (${pctTotal}%)</div>
+      </div>`;
+    });
+    html += `</div>`;
+
+    // Tabla detallada
+    html += `<div class="dash-section-title">Detalle por causa de parada</div>`;
+    html += `<div style="overflow-x:auto;"><table class="dash-table"><thead><tr>
+      <th>#</th><th>Código</th><th>Descripción</th>
+      <th style="text-align:right">Cant.</th>
+      <th style="text-align:right">Minutos</th>
+      <th style="text-align:right">Horas</th>
+      <th style="text-align:right">% del total</th>
+      <th style="text-align:right">Telares</th>
+    </tr></thead><tbody>`;
+    motivoList.forEach((m, i) => {
+      const desc = MOTIVOS_DESC[m.codigo] || m.codigo;
+      const pctT = totalMinParadas > 0 ? (m.minutos / totalMinParadas * 100).toFixed(1) : 0;
+      const horas = (m.minutos / 60).toFixed(1);
+      const rowStyle = i < 3 ? 'background:rgba(201,146,10,.04)' : '';
+      html += `<tr style="${rowStyle}">
+        <td style="text-align:center;font-weight:700;color:var(--text3)">${i+1}</td>
+        <td><strong>${m.codigo}</strong></td>
+        <td>${desc}</td>
+        <td style="text-align:right">${m.cantidad}</td>
+        <td style="text-align:right;font-weight:700;color:${i<3?'var(--danger)':'var(--text)'}">${Math.round(m.minutos)}</td>
+        <td style="text-align:right">${horas}h</td>
+        <td style="text-align:right">
+          <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+            <div style="width:60px;background:var(--surface2);border-radius:2px;height:8px;overflow:hidden;">
+              <div style="width:${pctT}%;background:var(--warn);height:100%;border-radius:2px;"></div>
+            </div>
+            ${pctT}%
+          </div>
+        </td>
+        <td style="text-align:right;font-size:11px;color:var(--text2)">${[...m.telares].sort((a,b)=>a-b).join(', ')}</td>
+      </tr>`;
+    });
+    html += `<tr style="background:var(--surface2);font-weight:700;">
+      <td colspan="3">TOTAL</td>
+      <td style="text-align:right">${todasParadas.length}</td>
+      <td style="text-align:right;color:var(--danger)">${Math.round(totalMinParadas)}</td>
+      <td style="text-align:right">${(totalMinParadas/60).toFixed(1)}h</td>
+      <td style="text-align:right">100%</td><td></td>
+    </tr>`;
+    html += `</tbody></table></div>`;
+
+  } else {
+    html += `<div style="background:rgba(201,146,10,.06);border:1px solid rgba(201,146,10,.25);border-radius:5px;padding:12px 16px;font-family:var(--mono);font-size:12px;color:var(--warn);margin-bottom:20px;">
+      ℹ️ No se encontraron datos de paradas detallados. El desglose por P1-P18 aparecerá automáticamente después de publicar planillas con la versión actual — los datos se guardan en la hoja "Paradas" del Spreadsheet.
+    </div>`;
+  }
+
+  // ── TIEMPO NO PRODUCTIVO POR TELAR (siempre disponible) ──────────────────
   const paradasTelar = {};
   Object.keys(d.legajos).forEach(leg => {
     Object.entries(d.legajos[leg].telares).forEach(([t, td]) => {
@@ -2219,11 +2451,12 @@ function dashRenderParadas() {
     });
   });
   const telarList = Object.keys(paradasTelar).map(Number).sort((a,b)=>a-b);
-  const maxMnp = Math.max(...telarList.map(t => paradasTelar[t].mnp), 1);
-  let html = '<div class="dash-section-title">Tiempo no productivo por telar</div><div class="dash-bar-wrap">';
+  const maxMnpTelar = Math.max(...telarList.map(t => paradasTelar[t].mnp), 1);
+
+  html += `<div class="dash-section-title" style="margin-top:8px;">Tiempo no productivo por telar</div><div class="dash-bar-wrap">`;
   telarList.forEach(t => {
     const td = paradasTelar[t];
-    const pct = (td.mnp / maxMnp * 100).toFixed(1);
+    const pct = (td.mnp / maxMnpTelar * 100).toFixed(1);
     const cls = td.mnp > 300 ? 'orange' : 'green';
     html += `<div class="dash-bar-row">
       <div class="dash-bar-lbl">Telar ${t}</div>
@@ -2231,31 +2464,8 @@ function dashRenderParadas() {
       <div class="dash-bar-val">${Math.round(td.mnp)} min</div>
     </div>`;
   });
-  html += '</div>';
-  // Tabla operario × telar
-  const legsList = Object.keys(d.legajos).sort();
-  html += '<div class="dash-section-title">Minutos no productivos: operario × telar</div>';
-  html += `<div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Legajo</th>`;
-  telarList.forEach(t => html += `<th style="text-align:right">T${t}</th>`);
-  html += `<th style="text-align:right">Total</th></tr></thead><tbody>`;
-  legsList.forEach(leg => {
-    const ld = d.legajos[leg];
-    html += `<tr><td><span class="leg-badge">${leg}</span></td>`;
-    telarList.forEach(t => {
-      const v = Math.round(ld.telares[t]?.mnp || 0);
-      const style = v > 120 ? 'style="color:var(--danger);font-weight:700"' : v > 60 ? 'style="color:var(--warn)"' : '';
-      html += `<td style="text-align:right" ${style}>${v || '—'}</td>`;
-    });
-    html += `<td style="text-align:right" class="val">${Math.round(ld.totalMinNoProd)}</td></tr>`;
-  });
-  // Totales
-  html += `<tr style="background:var(--surface2);font-weight:700;"><td style="color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:1px;">TOTAL</td>`;
-  telarList.forEach(t => {
-    html += `<td style="text-align:right">${Math.round(paradasTelar[t].mnp)}</td>`;
-  });
-  html += `<td style="text-align:right;color:var(--danger)">${Math.round(legsList.reduce((s,l)=>s+(d.legajos[l]?.totalMinNoProd||0),0))}</td></tr>`;
-  html += '</tbody></table></div>';
-  html += `<div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:4px;font-size:11px;font-family:var(--mono);color:var(--text2);">ℹ️ Los minutos no productivos se leen de la columna I del Sheet (suma de paradas por turno registradas al publicar).</div>`;
+  html += `</div>`;
+
   document.getElementById('panel-paradas').innerHTML = html;
 }
 
