@@ -2210,9 +2210,10 @@ function dashRenderAll(q1, q2) {
   // KPIs
   // Metros extra — definir ANTES de usarlo en el subtítulo
   const totalMtsExtra = d.totalMtsExtra || 0;
-  const pctExtra = d.totalMetros > 0 ? (totalMtsExtra / d.totalMetros * 100).toFixed(1) : 0;
-  document.getElementById('kpi-metros').textContent = d.totalMetros >= 10000 ? (d.totalMetros/1000).toFixed(1)+'k' : d.totalMetros.toLocaleString('es-AR');
-  document.getElementById('kpi-metros-sub').textContent = d.totalMetros.toLocaleString('es-AR') + ' mts total' + (totalMtsExtra>0?' · incl. '+totalMtsExtra.toLocaleString('es-AR')+' mts extra':'');
+  const totalMtsCombinado = d.totalMetros + totalMtsExtra;
+  const pctExtra = totalMtsCombinado > 0 ? (totalMtsExtra / totalMtsCombinado * 100).toFixed(1) : 0;
+  document.getElementById('kpi-metros').textContent = totalMtsCombinado >= 10000 ? (totalMtsCombinado/1000).toFixed(1)+'k' : totalMtsCombinado.toLocaleString('es-AR');
+  document.getElementById('kpi-metros-sub').textContent = totalMtsCombinado.toLocaleString('es-AR') + ' mts total' + (totalMtsExtra>0?' · '+totalMtsExtra.toLocaleString('es-AR')+' extra ('+pctExtra+'%)':'');
   document.getElementById('kpi-operarios').textContent = legsList.length;
   document.getElementById('kpi-registros').textContent = d.totalRegistros;
   const totalMnp = legsList.reduce((s, l) => s + (d.legajos[l].totalMinNoProd || 0), 0);
@@ -2335,19 +2336,23 @@ function dashRenderOperarios() {
   if (!dashData) return;
   const d = dashData;
   const legsList = Object.keys(d.legajos).sort((a,b) => d.legajos[b].totalMetros - d.legajos[a].totalMetros);
-  const maxMts = Math.max(...legsList.map(l => d.legajos[l].totalMetros), 1);
+  const maxMts = Math.max(...legsList.map(l => d.legajos[l].totalMetros + (d.legajos[l].totalMtsExtra||0)), 1);
   let html = '<div class="dash-section-title">Producción total por operario</div><div class="dash-bar-wrap">';
   legsList.forEach(leg => {
     const ld = d.legajos[leg];
     const pct = (ld.totalMetros / maxMts * 100).toFixed(1);
     const mtsExBar = ld.totalMtsExtra || 0;
-    const pctExBar = ld.totalMetros > 0 ? (mtsExBar / ld.totalMetros * 100).toFixed(0) : 0;
+    const totalBarMts = ld.totalMetros + mtsExBar;
+    const pctExBar = totalBarMts > 0 ? (mtsExBar / totalBarMts * 100).toFixed(0) : 0;
     html += `<div class="dash-bar-row" style="grid-template-columns:80px 1fr 160px;">
       <div class="dash-bar-lbl"><span class="leg-badge">${leg}</span></div>
-      <div class="dash-bar-track"><div class="dash-bar-fill green" style="width:${pct}%"></div></div>
+      <div class="dash-bar-track">
+        <div class="dash-bar-fill green" style="width:${(ld.totalMetros/maxMts*100).toFixed(1)}%"></div>
+        ${mtsExBar>0?`<div class="dash-bar-fill orange" style="width:${(mtsExBar/maxMts*100).toFixed(1)}%;opacity:0.6;"></div>`:''}
+      </div>
       <div class="dash-bar-val" style="font-size:11px;">
-        ${ld.totalMetros.toLocaleString('es-AR')}
-        ${mtsExBar>0?`<span style="color:var(--warn);margin-left:4px;">+${mtsExBar.toLocaleString('es-AR')} extra</span>`:''}
+        ${totalBarMts.toLocaleString('es-AR')}
+        ${mtsExBar>0?`<span style="color:var(--warn);margin-left:4px;">(+${mtsExBar.toLocaleString('es-AR')})</span>`:''}
       </div>
     </div>`;
   });
@@ -2369,9 +2374,13 @@ function dashRenderOperarios() {
     const tels = Object.keys(ld.telares).sort((a,b)=>parseInt(a)-parseInt(b)).join(', ');
     const mtsEx = ld.totalMtsExtra || 0;
     const pctEx = ld.totalMetros > 0 ? (mtsEx / ld.totalMetros * 100).toFixed(1) : 0;
+    const totalLegMts = ld.totalMetros + mtsEx;
     html += `<tr>
       <td><span class="leg-badge">${leg}</span></td>
-      <td style="text-align:right" class="val good">${ld.totalMetros.toLocaleString('es-AR')}</td>
+      <td style="text-align:right" class="val good">
+        ${totalLegMts.toLocaleString('es-AR')}
+        ${mtsEx>0?`<span style="display:block;font-size:10px;color:var(--text3);font-weight:400;">${ld.totalMetros.toLocaleString('es-AR')} asig.</span>`:''}
+      </td>
       <td style="text-align:right;color:${mtsEx>0?'var(--warn)':'var(--text3)'}">
         ${mtsEx>0?mtsEx.toLocaleString('es-AR'):'—'}
       </td>
@@ -2387,10 +2396,11 @@ function dashRenderOperarios() {
   // Totales
   const totalEx = legsList.reduce((s,l)=>s+(d.legajos[l].totalMtsExtra||0),0);
   const totalMts = legsList.reduce((s,l)=>s+d.legajos[l].totalMetros,0);
-  const pctTotalEx = totalMts>0?(totalEx/totalMts*100).toFixed(1):0;
+  const totalMtsMasExtra = totalMts + totalEx;
+  const pctTotalEx = totalMtsMasExtra>0?(totalEx/totalMtsMasExtra*100).toFixed(1):0;
   html += `<tr style="background:var(--surface2);font-weight:700;">
     <td>TOTAL</td>
-    <td style="text-align:right">${totalMts.toLocaleString('es-AR')}</td>
+    <td style="text-align:right">${totalMtsMasExtra.toLocaleString('es-AR')}</td>
     <td style="text-align:right;color:var(--warn)">${totalEx>0?totalEx.toLocaleString('es-AR'):'—'}</td>
     <td style="text-align:right;color:var(--warn)">${totalEx>0?pctTotalEx+'%':'—'}</td>
     <td colspan="4"></td>
