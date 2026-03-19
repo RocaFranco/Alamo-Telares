@@ -2208,6 +2208,9 @@ function dashRenderAll(q1, q2) {
   const d = dashData;
   const legsList = Object.keys(d.legajos);
   // KPIs
+  // Metros extra — definir ANTES de usarlo en el subtítulo
+  const totalMtsExtra = d.totalMtsExtra || 0;
+  const pctExtra = d.totalMetros > 0 ? (totalMtsExtra / d.totalMetros * 100).toFixed(1) : 0;
   document.getElementById('kpi-metros').textContent = d.totalMetros >= 10000 ? (d.totalMetros/1000).toFixed(1)+'k' : d.totalMetros.toLocaleString('es-AR');
   document.getElementById('kpi-metros-sub').textContent = d.totalMetros.toLocaleString('es-AR') + ' mts total' + (totalMtsExtra>0?' · incl. '+totalMtsExtra.toLocaleString('es-AR')+' mts extra':'');
   document.getElementById('kpi-operarios').textContent = legsList.length;
@@ -2216,9 +2219,6 @@ function dashRenderAll(q1, q2) {
   document.getElementById('kpi-paradas').textContent = Math.round(totalMnp) + 'm';
   document.getElementById('kpi-paradas-sub').textContent = Math.round(totalMnp/60*10)/10 + ' horas sin producir';
   const prom = d.totalRegistros > 0 ? Math.round(d.totalMetros / d.totalRegistros) : 0;
-  // Metros extra
-  const totalMtsExtra = d.totalMtsExtra || 0;
-  const pctExtra = d.totalMetros > 0 ? (totalMtsExtra / d.totalMetros * 100).toFixed(1) : 0;
   document.getElementById('kpi-prom').textContent = prom.toLocaleString('es-AR');
   dashRenderOperarios();
   dashRenderTelares();
