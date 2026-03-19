@@ -2134,14 +2134,21 @@ async function dashLeerQuincena(q) {
       const hrs = parseFloat(row[1]) || 9;
       const minTurno = hrs >= 11 ? 720 : hrs >= 8 && hrs < 9 ? 510 : 540;
       const fecha = row[0] || '';
-      // Columna J: mtsExtra÷4 — solo sumar cuando hay fecha (= primera fila del turno)
-      const mtsExtraDiv4 = fecha ? (parseFloat(row[8]) || 0) : 0;
-      const mtsExtraTurno = mtsExtraDiv4 * 4; // total extra del turno
+      // Columna J: mtsExtra÷4 — la columna J repite el mismo valor en las 4 filas del turno.
+      // Para no sumar 4 veces, acumulamos en un Set de valores únicos por legajo,
+      // agrupando por fecha+valor. Solo sumamos si es un par fecha+mtsExtra nuevo.
+      const mtsExtraDiv4 = parseFloat(row[8]) || 0;
+      const mtsExtraTurno = mtsExtraDiv4 * 4;
+      // Clave única: fecha serializada + valor de mtsExtra — evita doble conteo
+      const claveExtra = fecha && mtsExtraDiv4 > 0 ? `${row[0]}_${mtsExtraDiv4}` : null;
+      if (!legajos[leg]._extraKeys) legajos[leg]._extraKeys = new Set();
+      const esNuevoExtra = claveExtra && !legajos[leg]._extraKeys.has(claveExtra);
+      if (esNuevoExtra) legajos[leg]._extraKeys.add(claveExtra);
       totalRegistros++;
       totalMetros += mtsVal;
       legajos[leg].totalMetros += mtsVal;
       legajos[leg].totalMinNoProd += mnp;
-      if (mtsExtraDiv4 > 0) legajos[leg].totalMtsExtra += mtsExtraTurno;
+      if (esNuevoExtra) legajos[leg].totalMtsExtra += mtsExtraTurno;
       if (!legajos[leg].telares[telar]) legajos[leg].telares[telar] = { metros: 0, turnos: 0, mnp: 0 };
       legajos[leg].telares[telar].metros += mtsVal;
       legajos[leg].telares[telar].turnos++;
@@ -2189,6 +2196,8 @@ async function dashLeerQuincena(q) {
     }
   } catch(e) { console.log('Hoja Paradas no encontrada o sin datos'); }
 
+  // Limpiar keys temporales
+  Object.values(legajos).forEach(l => delete l._extraKeys);
   const totalMtsExtra = Object.values(legajos).reduce((s,l) => s+(l.totalMtsExtra||0), 0);
   return { legajos, totalRegistros, totalMetros, totalMtsExtra, quincena: q, paradasDetalle };
 }
