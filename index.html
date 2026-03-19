@@ -452,7 +452,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
         <div class="dash-kpi"><div class="dash-kpi-label">Operarios</div><div class="dash-kpi-val" id="kpi-operarios">—</div><div class="dash-kpi-sub">con registros</div></div>
         <div class="dash-kpi"><div class="dash-kpi-label">Registros</div><div class="dash-kpi-val" id="kpi-registros">—</div><div class="dash-kpi-sub">filas de producción</div></div>
         <div class="dash-kpi orange"><div class="dash-kpi-label">Min no productivos</div><div class="dash-kpi-val" id="kpi-paradas">—</div><div class="dash-kpi-sub" id="kpi-paradas-sub"></div></div>
-        <div class="dash-kpi"><div class="dash-kpi-label">Promedio/turno</div><div class="dash-kpi-val" id="kpi-prom">—</div><div class="dash-kpi-sub">metros por telar/turno</div></div>
+        <div class="dash-kpi"><div class="dash-kpi-label">Prom. por hora</div><div class="dash-kpi-val" id="kpi-prom">—</div><div class="dash-kpi-sub">mts/hora · telares asignados</div></div>
       </div>
       <div class="dash-panel active" id="panel-historial">
         <div style="padding:24px;font-family:var(--mono);color:var(--text2);text-align:center;">Presioná <strong>Cargar →</strong> para ver el historial</div>
@@ -2219,7 +2219,11 @@ function dashRenderAll(q1, q2) {
   const totalMnp = legsList.reduce((s, l) => s + (d.legajos[l].totalMinNoProd || 0), 0);
   document.getElementById('kpi-paradas').textContent = Math.round(totalMnp) + 'm';
   document.getElementById('kpi-paradas-sub').textContent = Math.round(totalMnp/60*10)/10 + ' horas sin producir';
-  const prom = d.totalRegistros > 0 ? Math.round(d.totalMetros / d.totalRegistros) : 0;
+  // Prom/hora: metros asignados / horas reales (sin contar mts extra, solo 4 telares)
+  const totalHorasGlobal = Object.values(d.legajos).reduce((s,l) => {
+    return s + (l.registros||[]).reduce((rs,r) => rs + ((r.minTurno||540)/60/4), 0);
+  }, 0);
+  const prom = totalHorasGlobal > 0 ? Math.round(d.totalMetros / totalHorasGlobal) : 0;
   document.getElementById('kpi-prom').textContent = prom.toLocaleString('es-AR');
   dashRenderOperarios();
   dashRenderTelares();
@@ -2243,20 +2247,27 @@ function dashRenderHistorial() {
     const d = dashTodasQuincenas[nombre];
     const legs = Object.keys(d.legajos);
     const totalMnp = legs.reduce((s,l) => s + (d.legajos[l].totalMinNoProd||0), 0);
-    const prom = d.totalRegistros > 0 ? Math.round(d.totalMetros / d.totalRegistros) : 0;
-    return { nombre, totalMetros: d.totalMetros, totalRegistros: d.totalRegistros, legs: legs.length, mnp: Math.round(totalMnp), prom };
+    const mtsExtra = d.totalMtsExtra || 0;
+    const totalMtsComb = d.totalMetros + mtsExtra;
+    // Prom/hora: metros asignados / horas reales trabajadas (sin extras)
+    const totalHoras = legs.reduce((s,l) => {
+      return s + (d.legajos[l].registros||[]).reduce((rs,r) => rs + ((r.minTurno||540)/60/4), 0);
+    }, 0);
+    const promHora = totalHoras > 0 ? Math.round(d.totalMetros / totalHoras) : 0;
+    return { nombre, totalMetros: d.totalMetros, totalMtsComb, mtsExtra, totalRegistros: d.totalRegistros, legs: legs.length, mnp: Math.round(totalMnp), promHora };
   });
 
-  const maxMts = Math.max(...filas.map(f => f.totalMetros), 1);
-  const totalGlobal = filas.reduce((s,f) => s + f.totalMetros, 0);
+  const maxMts = Math.max(...filas.map(f => f.totalMtsComb), 1);
+  const totalGlobal = filas.reduce((s,f) => s + f.totalMtsComb, 0);
+  const totalGlobalAsig = filas.reduce((s,f) => s + f.totalMetros, 0);
 
   let html = `<div class="dash-section-title">Producción por quincena — visión histórica</div>`;
 
   // Barras por quincena
   html += '<div class="dash-bar-wrap" style="margin-bottom:28px;">';
   filas.forEach(f => {
-    const pct = (f.totalMetros / maxMts * 100).toFixed(1);
-    const mtsK = f.totalMetros >= 10000 ? (f.totalMetros/1000).toFixed(1)+'k' : f.totalMetros.toLocaleString('es-AR');
+    const pct = (f.totalMtsComb / maxMts * 100).toFixed(1);
+    const mtsK = f.totalMtsComb >= 10000 ? (f.totalMtsComb/1000).toFixed(1)+'k' : f.totalMtsComb.toLocaleString('es-AR');
     html += `<div class="dash-bar-row" style="grid-template-columns:200px 1fr 100px;">
       <div class="dash-bar-lbl" style="text-align:left;font-size:11px;">${f.nombre}</div>
       <div class="dash-bar-track"><div class="dash-bar-fill green" style="width:${pct}%"></div></div>
@@ -2271,20 +2282,22 @@ function dashRenderHistorial() {
   <table class="dash-table"><thead><tr>
     <th>Quincena</th>
     <th style="text-align:right">Total Mts</th>
+    <th style="text-align:right">Mts extra</th>
     <th style="text-align:right">Registros</th>
     <th style="text-align:right">Operarios</th>
-    <th style="text-align:right">Prom/turno</th>
+    <th style="text-align:right">Prom/hora</th>
     <th style="text-align:right">Min no prod</th>
   </tr></thead><tbody>`;
 
   filas.forEach(f => {
-    const mtsK = f.totalMetros >= 10000 ? (f.totalMetros/1000).toFixed(1)+'k' : f.totalMetros.toLocaleString('es-AR');
+    const mtsK = f.totalMtsComb >= 10000 ? (f.totalMtsComb/1000).toFixed(1)+'k' : f.totalMtsComb.toLocaleString('es-AR');
     html += `<tr>
       <td style="font-weight:700;">${f.nombre}</td>
-      <td style="text-align:right" class="val good">${mtsK} <span style="font-weight:400;color:var(--text3);font-size:10px;">(${f.totalMetros.toLocaleString('es-AR')})</span></td>
+      <td style="text-align:right" class="val good">${mtsK} <span style="font-weight:400;color:var(--text3);font-size:10px;">(${f.totalMtsComb.toLocaleString('es-AR')})</span></td>
+      <td style="text-align:right;color:${f.mtsExtra>0?'var(--warn)':'var(--text3)'};">${f.mtsExtra>0?f.mtsExtra.toLocaleString('es-AR'):'—'}</td>
       <td style="text-align:right">${f.totalRegistros}</td>
       <td style="text-align:right">${f.legs}</td>
-      <td style="text-align:right">${f.prom.toLocaleString('es-AR')}</td>
+      <td style="text-align:right">${f.promHora.toLocaleString('es-AR')}</td>
       <td style="text-align:right;color:${f.mnp>300?'var(--warn)':'var(--text2)'}">${f.mnp} min</td>
     </tr>`;
   });
@@ -2292,13 +2305,21 @@ function dashRenderHistorial() {
   // Fila de totales
   const totalRegistros = filas.reduce((s,f)=>s+f.totalRegistros,0);
   const totalMnp = filas.reduce((s,f)=>s+f.mnp,0);
-  const promGlobal = totalRegistros>0?Math.round(totalGlobal/totalRegistros):0;
+  const totalExtraGlobal = filas.reduce((s,f)=>s+f.mtsExtra,0);
+  // Prom/hora global: metros asignados / horas totales
+  const totalHorasGlobal = Object.values(dashTodasQuincenas).reduce((s,d) => {
+    return s + Object.values(d.legajos).reduce((ls,l) => {
+      return ls + (l.registros||[]).reduce((rs,r) => rs + ((r.minTurno||540)/60/4), 0);
+    }, 0);
+  }, 0);
+  const promHoraGlobal = totalHorasGlobal > 0 ? Math.round(totalGlobalAsig / totalHorasGlobal) : 0;
   html += `<tr style="background:var(--surface2);font-weight:700;border-top:2px solid var(--border);">
     <td>TOTAL HISTÓRICO</td>
     <td style="text-align:right;color:var(--accent2)">${(totalGlobal/1000).toFixed(1)}k <span style="font-weight:400;font-size:10px;color:var(--text3)">(${totalGlobal.toLocaleString('es-AR')})</span></td>
+    <td style="text-align:right;color:${totalExtraGlobal>0?'var(--warn)':'var(--text3)'};">${totalExtraGlobal>0?totalExtraGlobal.toLocaleString('es-AR'):'—'}</td>
     <td style="text-align:right">${totalRegistros}</td>
     <td style="text-align:right">—</td>
-    <td style="text-align:right">${promGlobal.toLocaleString('es-AR')}</td>
+    <td style="text-align:right">${promHoraGlobal.toLocaleString('es-AR')}</td>
     <td style="text-align:right">${totalMnp} min</td>
   </tr>`;
   html += '</tbody></table></div>';
@@ -2364,13 +2385,15 @@ function dashRenderOperarios() {
     <th style="text-align:right">Mts Extra</th>
     <th style="text-align:right">% Extra</th>
     <th style="text-align:right">Turnos</th>
-    <th style="text-align:right">Prom/turno</th>
+    <th style="text-align:right">Prom/hora</th>
     <th style="text-align:right">Min no prod</th>
     <th style="text-align:right">Telares</th>
   </tr></thead><tbody>`;
   legsList.forEach(leg => {
     const ld = d.legajos[leg];
-    const prom = ld.registros.length > 0 ? Math.round(ld.totalMetros / ld.registros.length) : 0;
+    // Prom/hora: metros asignados / horas reales trabajadas
+    const horasOp = (ld.registros||[]).reduce((s,r) => s + ((r.minTurno||540)/60/4), 0);
+    const prom = horasOp > 0 ? Math.round(ld.totalMetros / horasOp) : 0;
     const tels = Object.keys(ld.telares).sort((a,b)=>parseInt(a)-parseInt(b)).join(', ');
     const mtsEx = ld.totalMtsExtra || 0;
     const pctEx = ld.totalMetros > 0 ? (mtsEx / ld.totalMetros * 100).toFixed(1) : 0;
