@@ -356,7 +356,7 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
   <div id="maqBlocks"></div>
   <div class="actions" style="margin-top:16px;">
     <button class="btn-s" onclick="back1()">← Volver</button>
-    <button class="btn-p" onclick="irP3()">Publicar en Sheets →</button>
+    <button class="btn-p" onclick="irP3()">Revisar resumen →</button>
   </div>
 </div>
 
@@ -1109,8 +1109,8 @@ function memAprender(legajo, datosIA, datosEditados) {
     }
   });
 
-  // Mantener solo los últimos 20 errores (los más recientes son los más relevantes)
-  if (mem.errores.length > 20) mem.errores = mem.errores.slice(-20);
+  // Mantener solo los últimos 50 errores (los más recientes son los más relevantes)
+  if (mem.errores.length > 50) mem.errores = mem.errores.slice(-50);
 
   memSaveLegajo(legajo, mem);
   console.log(`[Memoria] Legajo ${legajo}: ${mem.total_planillas} planillas, ${mem.errores.length} errores acumulados`);
@@ -1137,10 +1137,10 @@ async function leerPlanillaIA(tarea) {
   if (legajosConMemoria.length > 0) {
     contextoMemoria += `\n=== MEMORIA ACUMULADA DE PLANILLAS ANTERIORES ===\n`;
     contextoMemoria += `Se han aprendido patrones de estos legajos: ${legajosConMemoria.join(', ')}\n`;
-    // Inyectar contexto individual por legajo (máx 3 para no exceder tokens)
+    // Inyectar contexto individual por legajo (máx 10 para cubrir más operarios)
     const legsConErrores = legajosConMemoria
       .filter(l => todaMemoria[l]?.errores?.length > 0)
-      .slice(0, 5);
+      .slice(0, 10);
     legsConErrores.forEach(l => {
       contextoMemoria += memGenerarContexto(l);
     });
@@ -2836,7 +2836,7 @@ function dashRenderMemoria() {
           <th style="text-align:left;color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 6px;border-bottom:1px solid var(--border);">Fecha</th>
         </tr></thead><tbody>`;
 
-      m.errores.slice(-8).reverse().forEach(e => {
+      m.errores.slice(-15).reverse().forEach(e => {
         const campo = e.campo==='mts_iniciales'?`Mts inicio T${e.telar}`:e.campo==='mts_finales'?`Mts fin T${e.telar}`:e.campo==='er'?`E/R T${e.telar}`:e.campo==='motivo_parada'?`Motivo parada T${e.telar}`:e.campo==='hora_parada'?`Hora parada T${e.telar}`:e.campo;
         html += `<tr>
           <td style="padding:4px 6px;border-bottom:1px solid rgba(0,0,0,.04);">${campo}</td>
