@@ -1895,9 +1895,75 @@ async function publicarSheets(){
 }
 
 function irP3(){
-  syncDom();const q=quinceActual;
-  document.getElementById('p3preview').innerHTML=`<div class="erow"><span class="el">Quincena</span><span class="ev">${q?.nombre||'Sin seleccionar'}</span></div><div class="erow"><span class="el">Spreadsheet ID</span><span class="ev" style="font-size:11px">${q?.sheetId?.substring(0,20)||'—'}...</span></div><div class="erow"><span class="el">Maquinistas</span><span class="ev">${maquinistas.length}</span></div><div class="erow"><span class="el">Total alertas</span><span class="ev" style="color:${maquinistas.reduce((s,m)=>s+m.alertas.length,0)>0?'var(--warn)':'var(--accent2)'}">${maquinistas.reduce((s,m)=>s+m.alertas.length,0)}</span></div>${!q?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No hay quincena seleccionada.</div>':''}${!gToken?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No estás conectado a Google.</div>':''}`;
-  document.getElementById('btnPublicar').disabled=!gToken||!q;
+  syncDom(); const q = quinceActual;
+  let totalMts = 0, totalParadas = 0, totalAlertas = 0, totalMtsExtra = 0;
+  const filas = maquinistas.map(m => {
+    const telAsig = m.telares.filter(t => !t.es_extra);
+    let mtsM = 0;
+    telAsig.forEach(t => {
+      const ini = parseFloat(t.mts_iniciales), fin = parseFloat(t.mts_finales);
+      if (!isNaN(ini) && !isNaN(fin)) mtsM += Math.max(fin < ini ? (65535-ini)+fin : fin-ini, 0);
+    });
+    totalMts += mtsM; totalParadas += m.paradas.length; totalAlertas += m.alertas.length; totalMtsExtra += (m.mtsExtra||0);
+    const turnoIcon = {manana:'🌅 Mañana',tarde:'🌆 Tarde',extra:'⚡ 12hs'}[m.turno]||'—';
+    const telaresStr = telAsig.map(t=>t.numero).filter(Boolean).join(', ');
+    const alertIcon = m.alertas.length > 0 ? `<span style="color:var(--warn)">⚠️ ${m.alertas.length}</span>` : '<span style="color:var(--accent2)">✓</span>';
+    const auxBadge = m.sinAuxiliar ? ' <span style="color:var(--danger);font-size:10px;">Sin aux</span>' : '';
+    return `<tr>
+      <td><span class="mbadge">${m.legajo}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;">${m.fecha||'—'}</td>
+      <td>${turnoIcon}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${telaresStr||'—'}</td>
+      <td style="text-align:right;font-weight:700;color:var(--accent2);font-family:var(--mono);">${mtsM.toLocaleString('es-AR')}</td>
+      <td style="text-align:right;font-family:var(--mono);">${m.mtsExtra>0?m.mtsExtra.toLocaleString('es-AR'):'—'}</td>
+      <td style="text-align:right;font-family:var(--mono);">${m.paradas.length}</td>
+      <td style="text-align:center;">${alertIcon}${auxBadge}</td>
+    </tr>`;
+  }).join('');
+  const alertasBanner = totalAlertas > 0
+    ? `<div style="margin:12px 0;padding:10px 12px;background:rgba(201,146,10,.08);border:1px solid rgba(201,146,10,.3);border-radius:5px;font-family:var(--mono);font-size:12px;color:var(--warn);">⚠️ Hay ${totalAlertas} alerta${totalAlertas!==1?'s':''} sin resolver — podés volver a corregir antes de publicar.</div>`
+    : `<div style="margin:12px 0;padding:10px 12px;background:rgba(42,122,42,.08);border:1px solid rgba(42,122,42,.3);border-radius:5px;font-family:var(--mono);font-size:12px;color:var(--accent2);">✅ Sin alertas — todo listo para publicar.</div>`;
+  document.getElementById('p3preview').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:12px 14px;">
+        <div style="font-size:9px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Quincena</div>
+        <div style="font-size:14px;font-weight:700;">${q?.nombre||'Sin seleccionar'}</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:12px 14px;">
+        <div style="font-size:9px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Planillas</div>
+        <div style="font-size:22px;font-weight:800;color:var(--accent2);font-family:var(--mono);">${maquinistas.length}</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:12px 14px;">
+        <div style="font-size:9px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total metros</div>
+        <div style="font-size:22px;font-weight:800;color:var(--accent2);font-family:var(--mono);">${totalMts.toLocaleString('es-AR')}</div>
+        ${totalMtsExtra>0?`<div style="font-size:10px;font-family:var(--mono);color:var(--warn);margin-top:2px;">+${totalMtsExtra.toLocaleString('es-AR')} extra</div>`:''}
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:12px 14px;">
+        <div style="font-size:9px;font-family:var(--mono);color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Paradas</div>
+        <div style="font-size:22px;font-weight:800;font-family:var(--mono);">${totalParadas}</div>
+      </div>
+    </div>
+    ${alertasBanner}
+    <div style="overflow-x:auto;">
+    <table class="tt" style="font-size:12px;">
+      <thead><tr>
+        <th>Legajo</th><th>Fecha</th><th>Turno</th><th>Telares</th>
+        <th style="text-align:right">Metros</th><th style="text-align:right">Extra</th>
+        <th style="text-align:right">Paradas</th><th style="text-align:center">Estado</th>
+      </tr></thead>
+      <tbody>${filas}</tbody>
+      <tfoot><tr style="background:var(--surface2);font-weight:700;">
+        <td colspan="4">TOTAL</td>
+        <td style="text-align:right;color:var(--accent2);font-family:var(--mono);">${totalMts.toLocaleString('es-AR')}</td>
+        <td style="text-align:right;color:var(--warn);font-family:var(--mono);">${totalMtsExtra>0?totalMtsExtra.toLocaleString('es-AR'):'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);">${totalParadas}</td>
+        <td></td>
+      </tr></tfoot>
+    </table></div>
+    ${!q?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No hay quincena seleccionada.</div>':''}
+    ${!gToken?'<div style="margin-top:10px;color:var(--danger);font-family:var(--mono);font-size:12px;">⚠️ No estás conectado a Google.</div>':''}
+  `;
+  document.getElementById('btnPublicar').disabled = !gToken || !q;
   document.getElementById('paso2').classList.add('hidden');document.getElementById('paso3').classList.remove('hidden');setStep(3);
 }
 
