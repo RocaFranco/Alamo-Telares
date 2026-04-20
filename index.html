@@ -1174,15 +1174,18 @@ REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
 
 === CÓMO LEER EL ENCABEZADO ===
 
-- "Turno" — hay 3 opciones impresas con círculo al lado: MAÑANA · TARDE · 12HS
-  * El operario marca el círculo de la opción correcta.
-  * Buscá cuál círculo está relleno/marcado/tachado.
-  * MAÑANA → "manana" (540 min productivos, 06:00–15:00)
-  * TARDE  → "tarde"  (510 min, 14:30–23:00)
-  * 12HS   → "extra"  (720 min)
+- "Turno" — en la primera fila del encabezado hay 3 opciones: MAÑANA · TARDE · 12HS, cada una con su círculo.
+  * El operario rellena/marca el círculo de la opción correcta. Solo uno puede estar marcado.
+  * ATENCIÓN: justo debajo hay otra fila con "Falta Auxiliar (+40 min)" que TAMBIÉN tiene un círculo.
+    Ese círculo de Falta Auxiliar es INDEPENDIENTE del turno. NO lo confundas con el turno.
+    La línea del turno está en la MISMA FILA que dice "MAÑANA", "TARDE" y los tres textos juntos.
+  * MAÑANA → "manana" (06:00–15:00)
+  * TARDE  → "tarde"  (14:30–23:00)
+  * 12HS   → "extra"  (todo el día)
   * Si no podés determinarlo → "manana" como default.
 
-- "Falta Auxiliar (+40 min)" — hay un círculo al lado de este texto.
+- "Falta Auxiliar (+40 min)" — línea SEPARADA del turno, más abajo en el encabezado.
+  * Tiene su propio círculo, independiente de los círculos del turno.
   * Si el círculo está marcado → falta_auxiliar: true
   * Si NO está marcado → falta_auxiliar: false
 
@@ -1190,10 +1193,14 @@ REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
   * Leé cada casillero individualmente y armá la fecha.
   * Devolvé siempre formato "DD/MM/AAAA" (ej: "17/03/2026").
   * Si el año tiene 2 dígitos (ej: "26") → "2026".
+  * CONFUSIÓN FRECUENTE DE DÍGITOS en el año: el "6" escrito a mano se parece al "3" — si el año
+    parece ser "2023" o "2021" revisá si el último dígito puede ser un 6 → "2026".
   * Si el campo está vacío o ilegible → null.
 
 - "N° Legajo Maquinista" — el operario escribe el número en casilleros en blanco, dígito por dígito.
   * SOLO leer los dígitos escritos en tinta oscura. Casilleros grises vacíos = ignorar (REGLA 0).
+  * CONFUSIÓN FRECUENTE: el "8" escrito a mano se parece al "9" — si el legajo no está en la lista
+    válida (REGLA 3), intentá cambiar cada "9" por "8" y verificá si el resultado es válido.
   * REGLA 3 aplica: solo puede ser uno de los legajos válidos.
   * Leé dígito por dígito con precisión.
 
@@ -1217,6 +1224,10 @@ Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Ve
   * El tope exacto es 65535 — luego el contador se resetea a 0.
   * Ejemplos válidos: 4085, 6706, 38194, 40808, 21333, 23864
   * Menos de 3 dígitos o más de 5 → error de lectura probable, revisá.
+  * IMPORTANTE — Mts Iniciales ≠ Mts Finales en casi todos los casos: si los dos valores son iguales
+    → muy probable que hayas leído mal uno de los dos. Revisá especialmente Mts Iniciales.
+  * Si Mts Iniciales parece tener pocos dígitos (ej: 10, 520) es válido — el telar puede ser nuevo
+    y tener un contador bajo. NO copies el valor de Mts Finales para "completar" Iniciales.
   * VALIDACIÓN FÍSICA CRÍTICA: la diferencia (fin - ini) representa los metros producidos en el turno.
     Con el E/R podés saber si es físicamente posible:
     → Metros máximos posibles = E/R × minutos del turno (turno normal = 540 min, tarde = 510 min, 12hs = 720 min)
@@ -1253,11 +1264,17 @@ Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
   * Si falta cualquiera de esos 4 datos → no incluir esa fila.
 - Incluí SOLO las filas que tengan los 4 campos completos y visibles.
 - ATENCIÓN CON LAS HORAS: leé cada dígito de la hora con mucho cuidado.
-  * Error frecuente detectado: confundir el 0 con el 1 en la decena de las horas
-    (ej: leer "11:45" cuando realmente dice "10:45", o "09:05" cuando dice "08:05")
-  * Si el turno es mañana (desde 06:00), las paradas no pueden ser después de las 15:00
-  * Si el turno es tarde (desde 14:30), las paradas no pueden ser antes de las 14:00
-  * Usá el contexto del turno para validar si las horas tienen sentido
+  * REGLA ABSOLUTA: "Desde" SIEMPRE debe ser MENOR que "Hasta". Si Desde >= Hasta → error de lectura.
+    Revisá los dígitos uno por uno antes de devolver una parada con horas inválidas.
+  * CONFUSIONES FRECUENTES EN HORAS:
+    - "0" y "9" se parecen → "09:15" puede ser leído como "09:15" (correcto) o erróneamente como "09"/"9"
+    - "1" y "4" se parecen → "14:30" puede ser leído como "04:30" — si estás en turno mañana y ves "04:xx", probablemente sea "14:xx"
+    - "1" y "7" se parecen → "17:00" puede leerse como "71:00" (imposible) → siempre es "17:00"
+    - "3" y "8" se parecen en los minutos → "9:38" puede leerse como "9:33" o "9:88"
+  * VALIDACIÓN POR TURNO — si una hora está fuera del rango del turno, es un error de lectura:
+    - Turno mañana (manana): paradas entre 06:00 y 15:00. Si ves "04:xx" o "19:xx" → error, re-leé.
+    - Turno tarde: paradas entre 14:00 y 23:30. Si ves "04:xx" o "08:xx" → error, re-leé.
+    - Turno 12hs (extra): paradas entre 06:00 y 23:00.
 
 OBSERVACIONES: copiá textualmente lo escrito.
 
