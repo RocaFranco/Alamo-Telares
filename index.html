@@ -1174,15 +1174,17 @@ REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
 
 === CÓMO LEER EL ENCABEZADO ===
 
-- "Turno" — en la primera fila del encabezado hay 3 opciones: MAÑANA · TARDE · 12HS, cada una con su círculo.
-  * El operario rellena/marca el círculo de la opción correcta. Solo uno puede estar marcado.
-  * ATENCIÓN: justo debajo hay otra fila con "Falta Auxiliar (+40 min)" que TAMBIÉN tiene un círculo.
-    Ese círculo de Falta Auxiliar es INDEPENDIENTE del turno. NO lo confundas con el turno.
-    La línea del turno está en la MISMA FILA que dice "MAÑANA", "TARDE" y los tres textos juntos.
+- "Turno" — en la primera fila del encabezado hay exactamente 3 textos en una misma línea:
+    "MAÑANA"  [círculo]    "TARDE"  [círculo]    "12HS"  [círculo]
+  * Identificá cuál de los 3 TEXTOS tiene el círculo relleno/marcado JUSTO AL LADO de ese texto.
+  * En la línea DE ABAJO aparece "Falta Auxiliar (+40 min)" con otro círculo completamente distinto.
+    ESE círculo de Falta Auxiliar NO cuenta para el turno — está en otra línea con otro propósito.
+  * Procedimiento: primero localizá el texto "MAÑANA" en la imagen → mirá si el círculo al lado está
+    relleno → si sí: turno = "manana". Si no, mirá el círculo al lado de "TARDE", etc.
   * MAÑANA → "manana" (06:00–15:00)
   * TARDE  → "tarde"  (14:30–23:00)
   * 12HS   → "extra"  (todo el día)
-  * Si no podés determinarlo → "manana" como default.
+  * Si genuinamente no podés ver qué círculo está marcado → "manana" como default.
 
 - "Falta Auxiliar (+40 min)" — línea SEPARADA del turno, más abajo en el encabezado.
   * Tiene su propio círculo, independiente de los círculos del turno.
@@ -1193,8 +1195,8 @@ REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
   * Leé cada casillero individualmente y armá la fecha.
   * Devolvé siempre formato "DD/MM/AAAA" (ej: "17/03/2026").
   * Si el año tiene 2 dígitos (ej: "26") → "2026".
-  * CONFUSIÓN FRECUENTE DE DÍGITOS en el año: el "6" escrito a mano se parece al "3" — si el año
-    parece ser "2023" o "2021" revisá si el último dígito puede ser un 6 → "2026".
+  * CONFUSIÓN FRECUENTE DE DÍGITOS en el año: el "6" escrito a mano se parece al "3" y al "5" —
+    si el año parece ser "2023", "2025" o "2021" revisá si el último dígito puede ser un 6 → "2026".
   * Si el campo está vacío o ilegible → null.
 
 - "N° Legajo Maquinista" — el operario escribe el número en casilleros en blanco, dígito por dígito.
@@ -1216,6 +1218,8 @@ Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Ve
   * SOLO leer lo escrito en tinta oscura. Los casilleros grises vacíos son parte del formulario impreso, no son datos.
 - Ancho Trama: SOLO puede ser uno de estos 3 valores: 3, 5 o 5.5.
   * Si podés leerlo claramente → usá el valor correcto.
+  * CONFUSIÓN FRECUENTE: "5.5" escrito a mano puede leerse como "5,5", "5,!", "5,1", "5.I" → siempre es 5.5.
+    Si ves cualquier variante de "5" seguido de un punto/coma y otro carácter → es 5.5.
   * Si el campo está vacío o ilegible → devolvé null (NO uses 5 como default).
 - E/R (velocidad): decimal entre 4.0 y 6.4. Valores típicos: 5.5, 5.6, 5.7, 5.8, 5.9, 6.0
   * Si el campo está vacío o ilegible → devolvé null (NO uses 5.5 como default).
@@ -1249,6 +1253,14 @@ Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Ve
 
 Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
 - Horarios HH:MM (24hs). Motivo: P1 a P18.
+- CRÍTICO — CÓMO LEER EL MOTIVO:
+  * A la IZQUIERDA de la tabla hay una leyenda impresa con P1-P18 y sus descripciones (ej: "P3 Falta de Aceite").
+    Esos textos son ETIQUETAS DE REFERENCIA del formulario. NO son datos de la parada. IGNORARLOS.
+  * El motivo real de cada parada es el NÚMERO escrito a mano por el operario en la columna "Motivo (P)"
+    al extremo DERECHO de cada fila de datos (último campo antes de "Firma").
+  * Ese número puede ser 1, 2, 3, ... 11, 12, ... 18. Luego vos lo formateas como "P1", "P11", "P18", etc.
+  * NO asumas que el motivo es siempre P1 — cada fila puede tener un motivo distinto.
+  * Si no podés leer el número escrito en esa columna → omitir la parada.
 - REGLA 1 aplica aquí también para el número de telar.
 - REGLA CRÍTICA — TELARES VÁLIDOS EN PARADAS:
   * Las paradas SOLO pueden ser de telares que el maquinista tiene asignados en la tabla de producción.
@@ -1267,12 +1279,14 @@ Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
   * REGLA ABSOLUTA: "Desde" SIEMPRE debe ser MENOR que "Hasta". Si Desde >= Hasta → error de lectura.
     Revisá los dígitos uno por uno antes de devolver una parada con horas inválidas.
   * CONFUSIONES FRECUENTES EN HORAS:
-    - "0" y "9" se parecen → "09:15" puede ser leído como "09:15" (correcto) o erróneamente como "09"/"9"
-    - "1" y "4" se parecen → "14:30" puede ser leído como "04:30" — si estás en turno mañana y ves "04:xx", probablemente sea "14:xx"
+    - "9" y "0" se parecen → si el casillero de la hora parece "0" pero el turno es mañana → probablemente es "9" (ej: "00:15" → "09:15")
+    - "9" y "4" se parecen → "9:30" puede leerse como "04:30" — si ves "04:xx" en turno mañana → probablemente es "09:xx" o "14:xx"
+    - "1" y "4" se parecen → "14:30" puede ser leído como "04:30"
     - "1" y "7" se parecen → "17:00" puede leerse como "71:00" (imposible) → siempre es "17:00"
-    - "3" y "8" se parecen en los minutos → "9:38" puede leerse como "9:33" o "9:88"
+    - "2" y "8" se parecen → "43271" puede leerse como "43871"
+    - "3" y "8" se parecen en los minutos
   * VALIDACIÓN POR TURNO — si una hora está fuera del rango del turno, es un error de lectura:
-    - Turno mañana (manana): paradas entre 06:00 y 15:00. Si ves "04:xx" o "19:xx" → error, re-leé.
+    - Turno mañana (manana): paradas entre 06:00 y 15:00. Si ves "00:xx", "01:xx", "02:xx", "03:xx", "04:xx", "05:xx" → error seguro, re-leé.
     - Turno tarde: paradas entre 14:00 y 23:30. Si ves "04:xx" o "08:xx" → error, re-leé.
     - Turno 12hs (extra): paradas entre 06:00 y 23:00.
 
