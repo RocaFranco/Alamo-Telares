@@ -1283,6 +1283,8 @@ Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
     - "9" y "4" se parecen → "9:30" puede leerse como "04:30" — si ves "04:xx" en turno mañana → probablemente es "09:xx" o "14:xx"
     - "1" y "4" se parecen → "14:30" puede ser leído como "04:30"
     - "1" y "7" se parecen → "17:00" puede leerse como "71:00" (imposible) → siempre es "17:00"
+    - "8" y "0" se parecen → "15:18" puede leerse como "15:10"; "P18" puede leerse como "P10"
+      Si ves minutos ":10" o ":30" al final de una hora, verificá si podría ser ":18" o ":38"
     - "2" y "8" se parecen → "43271" puede leerse como "43871"
     - "3" y "8" se parecen en los minutos
   * VALIDACIÓN POR TURNO — si una hora está fuera del rango del turno, es un error de lectura:
