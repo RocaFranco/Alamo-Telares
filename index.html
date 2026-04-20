@@ -1135,6 +1135,20 @@ Esta es una foto o scan de una planilla de control diario de producción. Extra�
 
 === REGLAS ABSOLUTAS — NO HAY EXCEPCIONES ===
 
+REGLA 0 — PREIMPRESO vs ESCRITO A MANO (MUY IMPORTANTE):
+  El formulario tiene casilleros grises impresos como guía visual. NO son datos.
+  → Un casillero gris SIN número escrito encima = vacío = ignorarlo o tratarlo como 0.
+  → SOLO leer los números escritos en tinta oscura/negra por el operario.
+  → NUNCA leer el fondo gris de un casillero vacío como un número (no es "8", no es "0", es VACÍO).
+  → En la tabla "Tiempo Perdido" los números 1 al 16 impresos a la IZQUIERDA son identificadores
+    de fila del formulario. Son parte del diseño impreso. NO son el N° Telar de la parada.
+    El N° Telar real de cada parada es el número escrito en tinta negra dentro de la columna "N° Telar".
+  → En la tabla "Tiempo Perdido" los códigos P1-P18 con sus descripciones (ej: "P3 Falta de Aceite")
+    son etiquetas impresas del formulario. El Motivo real es el número escrito por el operario
+    en la columna "Motivo (P)" al final de cada fila (puede ser 1, 2, 3... 18).
+  → Para Mts Iniciales y Mts Finales: hay 5 casilleros por valor. Si los primeros están vacíos,
+    son ceros a la izquierda. Ej: [vacío][vacío][5][2][0] = 520. [vacío][vacío][vacío][1][0] = 10.
+
 REGLA 1 — TELARES VÁLIDOS: La fábrica tiene exactamente 16 telares, numerados del 1 al 16.
   → Cualquier número fuera de ese rango es un error de lectura. Corregilo usando el contexto.
   → PROBLEMA CONOCIDO: las celdas de N° Telar son angostas. Si el telar es de 2 dígitos (10 al 16),
@@ -1178,7 +1192,8 @@ REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
   * Si el año tiene 2 dígitos (ej: "26") → "2026".
   * Si el campo está vacío o ilegible → null.
 
-- "N° Legajo Maquinista" — números pre-impresos en casilleros, el operario remarca el dígito correcto.
+- "N° Legajo Maquinista" — el operario escribe el número en casilleros en blanco, dígito por dígito.
+  * SOLO leer los dígitos escritos en tinta oscura. Casilleros grises vacíos = ignorar (REGLA 0).
   * REGLA 3 aplica: solo puede ser uno de los legajos válidos.
   * Leé dígito por dígito con precisión.
 
@@ -1188,8 +1203,10 @@ REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
 
 Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
 
-- N° Telar: números pre-impresos del 1 al 16, el operario remarca el correcto. Aplicar REGLA 1 si hay dudas.
-- FTO: números pre-impresos (40,47,53,57,60,71,82,102,120), el operario remarca el correcto. REGLA 2 aplica.
+- N° Telar: el operario escribe el número en casilleros en blanco. Aplicar REGLA 1 si hay dudas.
+  * SOLO leer lo escrito en tinta oscura. Los casilleros grises vacíos son parte del formulario impreso, no son datos.
+- FTO: el operario escribe el número en casilleros en blanco. REGLA 2 aplica.
+  * SOLO leer lo escrito en tinta oscura. Los casilleros grises vacíos son parte del formulario impreso, no son datos.
 - Ancho Trama: SOLO puede ser uno de estos 3 valores: 3, 5 o 5.5.
   * Si podés leerlo claramente → usá el valor correcto.
   * Si el campo está vacío o ilegible → devolvé null (NO uses 5 como default).
