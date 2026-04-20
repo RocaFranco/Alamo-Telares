@@ -1129,28 +1129,10 @@ async function leerPlanillaIA(tarea) {
   // El contexto se inyecta ANTES de saber el legajo — usamos todos los legajos conocidos
   // como fallback, y luego post-proceso inyecta el contexto del legajo detectado.
 
-  const todaMemoria = memGetTodos();
-  const legajosConMemoria = Object.keys(todaMemoria);
-
-  // Construir bloque de contexto global (para cuando aún no sabemos el legajo)
-  let contextoMemoria = '';
-  if (legajosConMemoria.length > 0) {
-    contextoMemoria += `\n=== MEMORIA ACUMULADA DE PLANILLAS ANTERIORES ===\n`;
-    contextoMemoria += `Se han aprendido patrones de estos legajos: ${legajosConMemoria.join(', ')}\n`;
-    // Inyectar contexto individual por legajo (máx 10 para cubrir más operarios)
-    const legsConErrores = legajosConMemoria
-      .filter(l => todaMemoria[l]?.errores?.length > 0)
-      .slice(0, 10);
-    legsConErrores.forEach(l => {
-      contextoMemoria += memGenerarContexto(l);
-    });
-    contextoMemoria += `=== FIN DE MEMORIA ===\n`;
-  }
-
   const prompt = `Sos un sistema OCR industrial especializado en planillas de producción de telares de Álamo Bolsas Industriales, Argentina.
 
 Esta es una foto o scan de una planilla de control diario de producción. Extraé TODOS los datos visibles con máxima precisión.
-${contextoMemoria}
+
 === REGLAS ABSOLUTAS — NO HAY EXCEPCIONES ===
 
 REGLA 1 — TELARES VÁLIDOS: La fábrica tiene exactamente 16 telares, numerados del 1 al 16.
@@ -1178,31 +1160,36 @@ REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
 
 === CÓMO LEER EL ENCABEZADO ===
 
-- "Turno" — puede estar indicado de distintas formas en la planilla:
-  * CÍRCULO rodeando la opción correcta (ej: un círculo en "Tarde")
-  * TACHANDO la opción incorrecta (ej: "Mañana" tachado → el turno es Tarde)
-  * ESCRITO A MANO al costado (ej: "tarde" escrito cerca del campo Turno)
-  * Con el HORARIO solamente → usá las horas para determinarlo
-  Valores posibles:
-  * Mañana (06:00–15:00 aprox.) → "manana" (540 min productivos)
-  * Tarde (14:30–23:00 aprox.) → "tarde" (510 min, produce desde las 15:00)
-  * 12 horas de diferencia → "extra" (720 min)
-  * Si no podés determinarlo → "manana" como default
-- "Telares: X/Y/Z/W" → los 4 telares asignados. USALO para validar los números de la tabla.
-- "Fecha": formato argentino DD/MM/AAAA. Leé con cuidado cada dígito.
-  * Ejemplos válidos: "17/03/2026", "5/3/2026", "05/03/26" → siempre devolvé "17/03/2026"
-  * Si ves "17/3" → es 17/03/2026 (año actual = 2026)
-  * Si ves "17.03" o "17-03" → igual, convertir a 17/03/2026
-  * Si el año tiene 2 dígitos (ej: "26") → agregar "20" adelante → 2026
-  * Si el campo está vacío o ilegible → null (NO inventes una fecha)
-- "N° Legajo Auxiliar" → puede estar vacío → null.
+- "Turno" — hay 3 opciones impresas con círculo al lado: MAÑANA · TARDE · 12HS
+  * El operario marca el círculo de la opción correcta.
+  * Buscá cuál círculo está relleno/marcado/tachado.
+  * MAÑANA → "manana" (540 min productivos, 06:00–15:00)
+  * TARDE  → "tarde"  (510 min, 14:30–23:00)
+  * 12HS   → "extra"  (720 min)
+  * Si no podés determinarlo → "manana" como default.
+
+- "Falta Auxiliar (+40 min)" — hay un círculo al lado de este texto.
+  * Si el círculo está marcado → falta_auxiliar: true
+  * Si NO está marcado → falta_auxiliar: false
+
+- "Fecha" — hay casilleros separados para DÍA / MES / AÑO (DD/MM/AAAA).
+  * Leé cada casillero individualmente y armá la fecha.
+  * Devolvé siempre formato "DD/MM/AAAA" (ej: "17/03/2026").
+  * Si el año tiene 2 dígitos (ej: "26") → "2026".
+  * Si el campo está vacío o ilegible → null.
+
+- "N° Legajo Maquinista" — números pre-impresos en casilleros, el operario remarca el dígito correcto.
+  * REGLA 3 aplica: solo puede ser uno de los legajos válidos.
+  * Leé dígito por dígito con precisión.
+
+- "N° Legajo Auxiliar" — igual que el maquinista pero puede estar vacío → null.
 
 === CÓMO LEER LA TABLA DE PRODUCCIÓN ===
 
 Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
 
-- N° Telar: número del 1 al 16. Aplicar REGLA 1 si hay dudas con telares de 2 dígitos.
-- FTO: REGLA 2 — solo los 9 números válidos o "SIN FTO". Nunca letras.
+- N° Telar: números pre-impresos del 1 al 16, el operario remarca el correcto. Aplicar REGLA 1 si hay dudas.
+- FTO: números pre-impresos (40,47,53,57,60,71,82,102,120), el operario remarca el correcto. REGLA 2 aplica.
 - Ancho Trama: SOLO puede ser uno de estos 3 valores: 3, 5 o 5.5.
   * Si podés leerlo claramente → usá el valor correcto.
   * Si el campo está vacío o ilegible → devolvé null (NO uses 5 como default).
@@ -1260,7 +1247,7 @@ OBSERVACIONES: copiá textualmente lo escrito.
 === FORMATO DE RESPUESTA ===
 JSON válido únicamente, sin texto ni bloques de código:
 
-{"legajo_maquinista":"405","legajo_auxiliar":null,"fecha":"12/03/2026","turno":"tarde","telares":[{"numero":11,"fto":60,"ancho_trama":5,"mts_iniciales":4085,"mts_finales":6706,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":12,"fto":60,"ancho_trama":5,"mts_iniciales":38194,"mts_finales":40808,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":13,"fto":60,"ancho_trama":5,"mts_iniciales":28941,"mts_finales":29814,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":14,"fto":60,"ancho_trama":5,"mts_iniciales":21333,"mts_finales":23864,"er":5.8,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":13,"desde":"18:30","hasta":"19:55","motivo":"P18"}],"observaciones":""}
+{"legajo_maquinista":"405","legajo_auxiliar":null,"falta_auxiliar":false,"fecha":"12/03/2026","turno":"tarde","telares":[{"numero":11,"fto":60,"ancho_trama":5,"mts_iniciales":4085,"mts_finales":6706,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":12,"fto":60,"ancho_trama":5,"mts_iniciales":38194,"mts_finales":40808,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":13,"fto":60,"ancho_trama":5,"mts_iniciales":28941,"mts_finales":29814,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":14,"fto":60,"ancho_trama":5,"mts_iniciales":21333,"mts_finales":23864,"er":5.8,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":13,"desde":"18:30","hasta":"19:55","motivo":"P18"}],"observaciones":""}
 
 Si algún campo no es legible usá null. NO inventes datos.`;
 
@@ -1344,7 +1331,7 @@ function agruparPorLegajo(resultados) {
         mtsExtra: 0,
         obs: d.observaciones||'',
         alertas: [],
-        sinAuxiliar: false,
+        sinAuxiliar: d.falta_auxiliar === true,
         _paginaOrigen: r.pagina || (idxOriginal + 1),
         _paginas: [{
           telares: (d.telares||[]).filter(t => { const n=parseInt(t.numero); return !isNaN(n)&&n>=1&&n<=16; }).map(t => ({
