@@ -1129,177 +1129,67 @@ async function leerPlanillaIA(tarea) {
   // El contexto se inyecta ANTES de saber el legajo — usamos todos los legajos conocidos
   // como fallback, y luego post-proceso inyecta el contexto del legajo detectado.
 
-  const prompt = `Sos un sistema OCR industrial especializado en planillas de producción de telares de Álamo Bolsas Industriales, Argentina.
+  const prompt = `Sos un sistema OCR especializado en planillas de producción de telares de Álamo Bolsas Industriales, Argentina.
+Leé con máxima precisión cada campo escrito a mano. El formulario tiene casilleros grises impresos como guía — son diseño, no datos. Solo leer lo escrito en tinta oscura por el operario.
 
-Esta es una foto o scan de una planilla de control diario de producción. Extraé TODOS los datos visibles con máxima precisión.
+=== ESTRUCTURA DEL FORMULARIO ===
 
-=== REGLAS ABSOLUTAS — NO HAY EXCEPCIONES ===
+ENCABEZADO:
 
-REGLA 0 — PREIMPRESO vs ESCRITO A MANO (MUY IMPORTANTE):
-  El formulario tiene casilleros grises impresos como guía visual. NO son datos.
-  → Un casillero gris SIN número escrito encima = vacío = ignorarlo o tratarlo como 0.
-  → SOLO leer los números escritos en tinta oscura/negra por el operario.
-  → NUNCA leer el fondo gris de un casillero vacío como un número (no es "8", no es "0", es VACÍO).
-  → En la tabla "Tiempo Perdido" los números 1 al 16 impresos a la IZQUIERDA son identificadores
-    de fila del formulario. Son parte del diseño impreso. NO son el N° Telar de la parada.
-    El N° Telar real de cada parada es el número escrito en tinta negra dentro de la columna "N° Telar".
-  → En la tabla "Tiempo Perdido" los códigos P1-P18 con sus descripciones (ej: "P3 Falta de Aceite")
-    son etiquetas impresas del formulario. El Motivo real es el número escrito por el operario
-    en la columna "Motivo (P)" al final de cada fila (puede ser 1, 2, 3... 18).
-  → Para Mts Iniciales y Mts Finales: hay 5 casilleros por valor. Si los primeros están vacíos,
-    son ceros a la izquierda. Ej: [vacío][vacío][5][2][0] = 520. [vacío][vacío][vacío][1][0] = 10.
+1. TURNO — una fila con 3 opciones: MAÑANA · TARDE · 12HS, cada una con su círculo.
+   El operario remarca el círculo de la opción elegida. Identificá cuál círculo está relleno.
+   MAÑANA → "manana" | TARDE → "tarde" | 12HS → "extra"
+   La línea de abajo "Falta Auxiliar (+40 min)" tiene su propio círculo separado — no confundir con el turno.
 
-REGLA 1 — TELARES VÁLIDOS: La fábrica tiene exactamente 16 telares, numerados del 1 al 16.
-  → Cualquier número fuera de ese rango es un error de lectura. Corregilo usando el contexto.
-  → PROBLEMA CONOCIDO: las celdas de N° Telar son angostas. Si el telar es de 2 dígitos (10 al 16),
-    el segundo dígito puede quedar cortado fuera del recuadro y solo se ve el primer dígito ("1").
-    Cómo resolverlo:
-    * PRIMERO mirá el campo "Telares: X/Y/Z/W" del encabezado — esos son los 4 telares asignados.
-      Ejemplo: si dice "Telares: 11/12/13/14", las 4 filas de la tabla corresponden a 11, 12, 13, 14.
-    * Si el encabezado no es claro, usá la secuencia: los telares van en orden correlativo.
-      Ejemplo: si ves 9, 10, 1, 1 → los dos últimos son 11 y 12 (no 1 y 1).
-    * En la sección de paradas también aplica: si ves telar "1" pero los asignados son 11-14 → es 11.
+2. FALTA AUXILIAR — línea separada con un círculo. Si está marcado → falta_auxiliar: true, si no → false.
 
-REGLA 2 — FORMATOS (FTO) VÁLIDOS: Los únicos formatos que existen son estos números: 40, 47, 53, 57, 60, 71, 82, 102, 120
-  → Son SOLO números enteros. NO existen formatos con letras ("lo2", "b3", "L02", etc. son errores).
-  → Si ves algo que parece letras, interpretalo como el número más cercano visualmente:
-    "lo2" o "L02" o "l02" → 102 | "b0" o "G0" → 60 | "s7" → 57 | "4o" → 40 | "4?" → 47 | "b7" → 47
-  → Si no podés determinarlo con certeza → devolvé el número como string "SIN FTO".
-  → NUNCA devuelvas un valor que no sea uno de esos 9 números o "SIN FTO".
+3. FECHA — casilleros para DÍA / MES / AÑO. Formato de salida: "DD/MM/AAAA". Si el año tiene 2 dígitos (ej: "26") → "2026".
 
-REGLA 3 — LEGAJOS VÁLIDOS: Solo puede ser uno de estos:
-  ${legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441'}
-  → Si leés un número que NO está en esa lista, buscá el más parecido visualmente.
-  → NUNCA devuelvas un legajo que no esté en esa lista.
+4. N° LEGAJO MAQUINISTA — número escrito dígito por dígito. Solo puede ser uno de estos:
+   ${legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441'}
+   Si lo que leés no está en esa lista → usá el más parecido visualmente.
 
-=== CÓMO LEER EL ENCABEZADO ===
+5. N° LEGAJO AUXILIAR — igual al maquinista. Puede estar vacío → null.
 
-- "Turno" — en la primera fila del encabezado hay exactamente 3 textos en una misma línea:
-    "MAÑANA"  [círculo]    "TARDE"  [círculo]    "12HS"  [círculo]
-  * Identificá cuál de los 3 TEXTOS tiene el círculo relleno/marcado JUSTO AL LADO de ese texto.
-  * En la línea DE ABAJO aparece "Falta Auxiliar (+40 min)" con otro círculo completamente distinto.
-    ESE círculo de Falta Auxiliar NO cuenta para el turno — está en otra línea con otro propósito.
-  * Procedimiento: primero localizá el texto "MAÑANA" en la imagen → mirá si el círculo al lado está
-    relleno → si sí: turno = "manana". Si no, mirá el círculo al lado de "TARDE", etc.
-  * MAÑANA → "manana" (06:00–15:00)
-  * TARDE  → "tarde"  (14:30–23:00)
-  * 12HS   → "extra"  (todo el día)
-  * Si genuinamente no podés ver qué círculo está marcado → "manana" como default.
+TABLA DE PRODUCCIÓN — columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
 
-- "Falta Auxiliar (+40 min)" — línea SEPARADA del turno, más abajo en el encabezado.
-  * Tiene su propio círculo, independiente de los círculos del turno.
-  * Si el círculo está marcado → falta_auxiliar: true
-  * Si NO está marcado → falta_auxiliar: false
+6. N° TELAR — número del telar donde trabaja el maquinista. Valores válidos: 1 al 16.
+   Si ves un número fuera de ese rango → error de lectura, corregí usando contexto.
+   Si el telar es de 2 dígitos (10-16) y la celda es angosta, el segundo dígito puede verse cortado.
+   Los 4 telares de la tabla principal → es_extra: false. El 5° telar (si existe) → es_extra: true.
 
-- "Fecha" — hay casilleros separados para DÍA / MES / AÑO (DD/MM/AAAA).
-  * Leé cada casillero individualmente y armá la fecha.
-  * Devolvé siempre formato "DD/MM/AAAA" (ej: "17/03/2026").
-  * Si el año tiene 2 dígitos (ej: "26") → "2026".
-  * CONFUSIÓN FRECUENTE DE DÍGITOS en el año: el "6" escrito a mano se parece al "3" y al "5" —
-    si el año parece ser "2023", "2025" o "2021" revisá si el último dígito puede ser un 6 → "2026".
-  * Si el campo está vacío o ilegible → null.
+7. FTO — formato de la tela. Solo puede ser uno de estos: 40, 47, 53, 57, 60, 71, 82, 102, 120.
+   Si no podés determinarlo → "SIN FTO". Nunca devolver un valor que no esté en esa lista.
 
-- "N° Legajo Maquinista" — el operario escribe el número en casilleros en blanco, dígito por dígito.
-  * SOLO leer los dígitos escritos en tinta oscura. Casilleros grises vacíos = ignorar (REGLA 0).
-  * CONFUSIÓN FRECUENTE: el "8" escrito a mano se parece al "9" — si el legajo no está en la lista
-    válida (REGLA 3), intentá cambiar cada "9" por "8" y verificá si el resultado es válido.
-  * REGLA 3 aplica: solo puede ser uno de los legajos válidos.
-  * Leé dígito por dígito con precisión.
+8. ANCHO TRAMA — ancho en metros. Solo puede ser: 3, 5 o 5.5.
 
-- "N° Legajo Auxiliar" — igual que el maquinista pero puede estar vacío → null.
+9. MTS INICIALES y MTS FINALES — contador de metros entre 0 y 65535.
+   Hay 5 casilleros por valor. Los casilleros vacíos al inicio son ceros implícitos (ej: □□□10 = 10).
+   Si fin < ini → rollover válido solo si ini > 50000 (el contador llegó a 65535 y se resetó a 0).
+   La diferencia (fin - ini) son los metros producidos en el turno. Máximo posible = E/R × minutos del turno
+   (mañana=540, tarde=510, 12hs=720). Si la diferencia supera ese máximo → algún valor está mal leído.
 
-=== CÓMO LEER LA TABLA DE PRODUCCIÓN ===
+10. E/R — velocidad del telar en metros por minuto. Decimal entre 4.0 y 6.4.
 
-Columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
+TABLA DE TIEMPO PERDIDO — columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
 
-- N° Telar: el operario escribe el número en casilleros en blanco. Aplicar REGLA 1 si hay dudas.
-  * SOLO leer lo escrito en tinta oscura. Los casilleros grises vacíos son parte del formulario impreso, no son datos.
-- FTO: el operario escribe el número en casilleros en blanco. REGLA 2 aplica.
-  * SOLO leer lo escrito en tinta oscura. Los casilleros grises vacíos son parte del formulario impreso, no son datos.
-- Ancho Trama: SOLO puede ser uno de estos 3 valores: 3, 5 o 5.5.
-  * Si podés leerlo claramente → usá el valor correcto.
-  * CONFUSIÓN FRECUENTE: "5.5" escrito a mano puede leerse como "5,5", "5,!", "5,1", "5.I" → siempre es 5.5.
-    Si ves cualquier variante de "5" seguido de un punto/coma y otro carácter → es 5.5.
-  * Si el campo está vacío o ilegible → devolvé null (NO uses 5 como default).
-- E/R (velocidad): decimal entre 4.0 y 6.4. Valores típicos: 5.5, 5.6, 5.7, 5.8, 5.9, 6.0
-  * Si el campo está vacío o ilegible → devolvé null (NO uses 5.5 como default).
-- Mts Iniciales y Mts Finales: contadores entre 0 y 65535 INCLUSIVE.
-  * NUNCA puede haber un valor mayor a 65535 — si leés algo así (ej: 165535, 265000) es error de lectura.
-  * El tope exacto es 65535 — luego el contador se resetea a 0.
-  * Ejemplos válidos: 4085, 6706, 38194, 40808, 21333, 23864
-  * Menos de 3 dígitos o más de 5 → error de lectura probable, revisá.
-  * IMPORTANTE — Mts Iniciales ≠ Mts Finales en casi todos los casos: si los dos valores son iguales
-    → muy probable que hayas leído mal uno de los dos. Revisá especialmente Mts Iniciales.
-  * Si Mts Iniciales parece tener pocos dígitos (ej: 10, 520) es válido — el telar puede ser nuevo
-    y tener un contador bajo. NO copies el valor de Mts Finales para "completar" Iniciales.
-  * VALIDACIÓN FÍSICA CRÍTICA: la diferencia (fin - ini) representa los metros producidos en el turno.
-    Con el E/R podés saber si es físicamente posible:
-    → Metros máximos posibles = E/R × minutos del turno (turno normal = 540 min, tarde = 510 min, 12hs = 720 min)
-    → Ejemplo con E/R=5.9 en turno normal: máximo = 5.9 × 540 = 3186 mts
-    → NUNCA puede producir más que ese máximo (ni siquiera cerca, ya que las máquinas siempre paran algo)
-    → Si la diferencia supera ese máximo → al menos uno de los dos valores está mal leído
-    → Caso típico de error: si ini=10526, fin=22860, E/R=5.9 → diferencia=12334 mts → imposible
-      El error probablemente sea en las decenas de miles: ini correcto es probablemente 20526
-      (el "1" al inicio fue leído en vez de "2")
-    → Revisá especialmente el primer dígito de los valores cuando la diferencia parece imposible
-    → ROLLOVER DEL CONTADOR: el único caso válido donde inicio > final.
-      El contador llega a 65535 y se resetea a 0.
-      Ejemplo válido: ini=64323, fin=265 → metros=(65535-64323)+265=1477 mts ✓
-      Si inicio > final Y ini < 50000 → ERROR DE LECTURA (no es rollover).
-      En ese caso un dígito fue mal leído — intentá corregirlo antes de devolver el JSON.
-- Los 4 telares del encabezado → es_extra: false. 5° telar en adelante → es_extra: true.
+11. PARADAS — cada fila es una parada de un telar.
+    - N° Telar: debe ser uno de los telares de la tabla de producción.
+    - Desde / Hasta: horario HH:MM en formato 24hs. Desde SIEMPRE menor que Hasta.
+    - Motivo: número escrito a mano en la columna "Motivo (P)" al extremo derecho de la fila.
+      A la izquierda de la tabla hay una leyenda impresa P1-P18 con descripciones — es solo referencia, NO son datos.
+      El número escrito puede ser 1-18. Formatearlo como "P1", "P11", "P18", etc.
+    - Solo incluir filas con los 4 datos completos y visibles (telar + desde + hasta + motivo).
+    - Si no hay paradas escritas → "paradas": [].
 
-=== CÓMO LEER TIEMPO PERDIDO ===
-
-Columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
-- Horarios HH:MM (24hs). Motivo: P1 a P18.
-- CRÍTICO — CÓMO LEER EL MOTIVO:
-  * A la IZQUIERDA de la tabla hay una leyenda impresa con P1-P18 y sus descripciones (ej: "P3 Falta de Aceite").
-    Esos textos son ETIQUETAS DE REFERENCIA del formulario. NO son datos de la parada. IGNORARLOS.
-  * El motivo real de cada parada es el NÚMERO escrito a mano por el operario en la columna "Motivo (P)"
-    al extremo DERECHO de cada fila de datos (último campo antes de "Firma").
-  * Ese número puede ser 1, 2, 3, ... 11, 12, ... 18. Luego vos lo formateas como "P1", "P11", "P18", etc.
-  * NO asumas que el motivo es siempre P1 — cada fila puede tener un motivo distinto.
-  * Si no podés leer el número escrito en esa columna → omitir la parada.
-- REGLA 1 aplica aquí también para el número de telar.
-- REGLA CRÍTICA — TELARES VÁLIDOS EN PARADAS:
-  * Las paradas SOLO pueden ser de telares que el maquinista tiene asignados en la tabla de producción.
-  * Ejemplo: si la tabla tiene telares 10, 11, 12, 13 → paradas SOLO de telar 10, 11, 12 o 13.
-  * Si ves una parada con telar 5 pero el maquinista trabaja en 10-13 → error de lectura, revisá el número.
-  * Probablemente el 5 sea un 15, o el primer dígito fue cortado por la celda angosta.
-  * NUNCA incluyas una parada de un telar que no figure en la tabla de producción.
-- CRÍTICO — ANTI-INVENTADO: SOLO copiá filas que tengan datos VISIBLES Y ESCRITOS.
-  * Si una fila está vacía o en blanco → NO la incluyas.
-  * Si no hay ninguna parada escrita → devolvé "paradas": []
-  * NO completes ni inferís paradas que no estén explícitamente escritas.
-  * Una parada válida tiene: número de telar + hora desde + hora hasta + motivo P1-P18.
-  * Si falta cualquiera de esos 4 datos → no incluir esa fila.
-- Incluí SOLO las filas que tengan los 4 campos completos y visibles.
-- ATENCIÓN CON LAS HORAS: leé cada dígito de la hora con mucho cuidado.
-  * REGLA ABSOLUTA: "Desde" SIEMPRE debe ser MENOR que "Hasta". Si Desde >= Hasta → error de lectura.
-    Revisá los dígitos uno por uno antes de devolver una parada con horas inválidas.
-  * CONFUSIONES FRECUENTES EN HORAS:
-    - "9" y "0" se parecen → si el casillero de la hora parece "0" pero el turno es mañana → probablemente es "9" (ej: "00:15" → "09:15")
-    - "9" y "4" se parecen → "9:30" puede leerse como "04:30" — si ves "04:xx" en turno mañana → probablemente es "09:xx" o "14:xx"
-    - "1" y "4" se parecen → "14:30" puede ser leído como "04:30"
-    - "1" y "7" se parecen → "17:00" puede leerse como "71:00" (imposible) → siempre es "17:00"
-    - "8" y "0" se parecen → "15:18" puede leerse como "15:10"; "P18" puede leerse como "P10"
-      Si ves minutos ":10" o ":30" al final de una hora, verificá si podría ser ":18" o ":38"
-    - "2" y "8" se parecen → "43271" puede leerse como "43871"
-    - "3" y "8" se parecen en los minutos
-  * VALIDACIÓN POR TURNO — si una hora está fuera del rango del turno, es un error de lectura:
-    - Turno mañana (manana): paradas entre 06:00 y 15:00. Si ves "00:xx", "01:xx", "02:xx", "03:xx", "04:xx", "05:xx" → error seguro, re-leé.
-    - Turno tarde: paradas entre 14:00 y 23:30. Si ves "04:xx" o "08:xx" → error, re-leé.
-    - Turno 12hs (extra): paradas entre 06:00 y 23:00.
-
-OBSERVACIONES: copiá textualmente lo escrito.
+OBSERVACIONES — copiar textualmente lo escrito por el operario.
 
 === FORMATO DE RESPUESTA ===
-JSON válido únicamente, sin texto ni bloques de código:
+JSON válido únicamente, sin texto adicional ni bloques de código:
 
 {"legajo_maquinista":"405","legajo_auxiliar":null,"falta_auxiliar":false,"fecha":"12/03/2026","turno":"tarde","telares":[{"numero":11,"fto":60,"ancho_trama":5,"mts_iniciales":4085,"mts_finales":6706,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":12,"fto":60,"ancho_trama":5,"mts_iniciales":38194,"mts_finales":40808,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":13,"fto":60,"ancho_trama":5,"mts_iniciales":28941,"mts_finales":29814,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":14,"fto":60,"ancho_trama":5,"mts_iniciales":21333,"mts_finales":23864,"er":5.8,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":13,"desde":"18:30","hasta":"19:55","motivo":"P18"}],"observaciones":""}
 
-Si algún campo no es legible usá null. NO inventes datos.`;
+Si algún campo no es legible → null. NO inventes datos.`;
 
   const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
