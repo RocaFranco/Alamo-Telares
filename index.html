@@ -444,7 +444,6 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
       <div class="dash-tab" onclick="dashTab('paradas')" id="dt-paradas">Paradas</div>
       <div class="dash-tab" onclick="dashTab('evolucion')" id="dt-evolucion">Evolución</div>
       <div class="dash-tab" onclick="dashTab('comparativa')" id="dt-comparativa">Comparativa</div>
-      <div class="dash-tab" onclick="dashTab('memoria')" id="dt-memoria">🧠 Memoria IA</div>
     </div>
     <div class="dash-body">
       <div id="dashKpis" class="dash-kpis" style="display:none;">
@@ -471,11 +470,6 @@ input.err{border-color:var(--danger)!important;background:rgba(192,48,48,.07)!im
       </div>
       <div class="dash-panel" id="panel-comparativa">
         <div class="dash-empty">Seleccioná modo "Comparar dos quincenas" y cargá.</div>
-      </div>
-      <div class="dash-panel" id="panel-memoria">
-        <div id="mem-content">
-          <div class="dash-loading"><div class="dl-spin"></div>Cargando memoria...</div>
-        </div>
       </div>
     </div>
   </div>
@@ -825,7 +819,7 @@ async function pdfAImagenes(dataUrl) {
   if (!window.pdfjsLib) { await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
   const pdfDoc = await pdfjsLib.getDocument({ data: atob(dataUrl.split(',')[1]) }).promise;
   const imagenes = [];
-  for (let i=1; i<=pdfDoc.numPages; i++) { const page=await pdfDoc.getPage(i); const vp=page.getViewport({scale:2.2}); const canvas=document.createElement('canvas'); canvas.width=vp.width; canvas.height=vp.height; await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise; imagenes.push({b64:canvas.toDataURL('image/jpeg',0.92).split(',')[1],pagina:i,total:pdfDoc.numPages}); }
+  for (let i=1; i<=pdfDoc.numPages; i++) { const page=await pdfDoc.getPage(i); const vp=page.getViewport({scale:3.5}); const canvas=document.createElement('canvas'); canvas.width=vp.width; canvas.height=vp.height; await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise; imagenes.push({b64:canvas.toDataURL('image/png').split(',')[1],pagina:i,total:pdfDoc.numPages}); }
   return imagenes;
 }
 
@@ -1197,7 +1191,7 @@ Si algún campo no es legible → null. NO inventes datos.`;
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       messages: [{ role: 'user', content: [
-        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: tarea.b64 } },
+        { type: 'image', source: { type: 'base64', media_type: 'image/png', data: tarea.b64 } },
         { type: 'text', text: prompt }
       ]}]
     })
