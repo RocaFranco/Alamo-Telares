@@ -1202,7 +1202,7 @@ Responder SOLO con JSON válido, sin texto adicional:
   const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-opus-4-7',
       max_tokens: 2000,
       messages: [{ role: 'user', content: [
         tarea.tipo==='pdf'
@@ -1283,7 +1283,7 @@ Responder SOLO con array JSON válido, sin texto adicional:
   const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-opus-4-7',
       max_tokens: 8000,
       messages: [{ role: 'user', content: [
         { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: tarea.b64 } },
