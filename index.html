@@ -829,23 +829,27 @@ async function leerTodas() {
   for (const a of archivos) {
     for(let w=0;w<50&&!a.b64;w++){await new Promise(r=>setTimeout(r,100));}
     if(a.tipo==='pdf'){
-      // Contar páginas sin renderizar
+      // Separar cada página como PDF individual y mandar nativo (sin pérdida de calidad)
       setFileSt(a.id,'proc','⏳ analizando...');
       try {
-        if (!window.pdfjsLib) { await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
-        const pdfDoc = await pdfjsLib.getDocument({ data: atob(a.b64) }).promise;
-        if (pdfDoc.numPages === 1) {
-          // 1 página → mandar PDF directo (máxima calidad)
+        if (!window.PDFLib) { await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+        const pdfBytes = Uint8Array.from(atob(a.b64), c=>c.charCodeAt(0));
+        const srcDoc = await PDFLib.PDFDocument.load(pdfBytes);
+        const numPages = srcDoc.getPageCount();
+        if (numPages === 1) {
           tareas.push({b64:a.b64, tipo:'pdf', nombre:a.nombre, archId:a.id, pagina:1});
           setFileSt(a.id,'proc','⏳ 1 pág.');
         } else {
-          // Varias páginas → renderizar cada una como PNG y mandar por separado
-          setFileSt(a.id,'proc',`⏳ dividiendo ${pdfDoc.numPages} pág.`);
-          for (let i=1; i<=pdfDoc.numPages; i++) {
-            const page=await pdfDoc.getPage(i); const vp=page.getViewport({scale:3.5});
-            const canvas=document.createElement('canvas'); canvas.width=vp.width; canvas.height=vp.height;
-            await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-            tareas.push({b64:canvas.toDataURL('image/jpeg',0.93).split(',')[1], tipo:'image', nombre:`${a.nombre} — pág ${i}/${pdfDoc.numPages}`, archId:a.id, pagina:i});
+          setFileSt(a.id,'proc',`⏳ dividiendo ${numPages} pág.`);
+          for (let i=0; i<numPages; i++) {
+            const pageDoc = await PDFLib.PDFDocument.create();
+            const [copied] = await pageDoc.copyPages(srcDoc,[i]);
+            pageDoc.addPage(copied);
+            const pb = await pageDoc.save();
+            // Uint8Array → base64 en chunks para evitar stack overflow
+            let b64=''; const chunk=8192;
+            for(let j=0;j<pb.length;j+=chunk) b64+=String.fromCharCode(...pb.slice(j,j+chunk));
+            tareas.push({b64:btoa(b64), tipo:'pdf', nombre:`${a.nombre} — pág ${i+1}/${numPages}`, archId:a.id, pagina:i+1});
           }
         }
       } catch(err) {
