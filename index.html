@@ -1489,7 +1489,7 @@ function buildBlock(m,mi){
   const alertBadge=m.alertas.length>0?`<span class="tag orange">⚠️ ${m.alertas.length}</span>`:'<span class="tag green">✓ OK</span>';
   const turnoBadge=m.turno==='extra'?'<span class="tag orange">⚡ 12hs</span>':m.turno==='tarde'?'<span class="tag">🌆 Tarde</span>':'<span class="tag">🌅 Mañana</span>';
   const fechaBadge=m.fecha?`<span class="tag" style="color:var(--accent2);border-color:var(--accent2);">📅 ${m.fecha}</span>`:'<span class="tag" style="color:var(--danger);border-color:rgba(192,48,48,.3);">⚠️ sin fecha</span>';
-  wrap.innerHTML=`<div class="mhdr" onclick="toggleBlock(${mi})"><div class="mbadge">${m.legajo}</div><div class="mname">${m.legajo}</div><div class="mmeta" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${fechaBadge}${turnoBadge}${alertBadge}<span style="color:var(--text3)">${asig.length} telares · ${m.paradas.length} paradas</span></div><div class="mtog" id="tog-${mi}">▼</div></div>
+  wrap.innerHTML=`<div class="mhdr" onclick="toggleBlock(${mi})"><div class="mbadge">${m.legajo}</div><div class="mname">${m.legajo}</div><div class="mmeta" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${fechaBadge}${turnoBadge}${alertBadge}<span style="color:var(--text3)">${asig.length} telares · ${m.paradas.length} paradas</span></div><div style="margin-left:auto;display:flex;align-items:center;gap:6px;"><button onclick="event.stopPropagation();eliminarMaq(${mi})" style="background:rgba(192,48,48,.18);border:1px solid rgba(192,48,48,.4);color:#f87171;border-radius:6px;padding:2px 8px;font-size:13px;cursor:pointer;" title="Eliminar planilla">🗑️</button><div class="mtog" id="tog-${mi}">▼</div></div></div>
     <div class="mbody" id="body-${mi}">
       ${m.alertas.length>0?`<div class="apanel"><div class="aptitle">⚠️ Datos a revisar</div>${m.alertas.map(a=>`<div class="aitem"><span>${a.nivel==='error'?'🔴':'🟡'}</span><span>${a.msg}</span></div>`).join('')}</div>`:''}
       <div class="fgrid">
@@ -1612,7 +1612,17 @@ function toggleAuxiliar(mi) {
 }
 
 function toggleBlock(mi){const b=document.getElementById(`body-${mi}`),t=document.getElementById(`tog-${mi}`);const h=b.style.display==='none';b.style.display=h?'':'none';t.textContent=h?'▼':'▶';}
-function setT(mi,t){maquinistas[mi].turno=t;document.getElementById(`mb-${mi}`).replaceWith(buildBlock(maquinistas[mi],mi));}
+function setT(mi,t){
+  maquinistas[mi].legajo=document.getElementById(`l-${mi}`)?.value??maquinistas[mi].legajo;
+  maquinistas[mi].fecha=document.getElementById(`f-${mi}`)?.value??maquinistas[mi].fecha;
+  maquinistas[mi].turno=t;
+  document.getElementById(`mb-${mi}`).replaceWith(buildBlock(maquinistas[mi],mi));
+}
+function eliminarMaq(mi){
+  if(!confirm('¿Eliminar esta planilla?'))return;
+  maquinistas.splice(mi,1);
+  renderMaquinistas();
+}
 function reval(mi){
   const trows=document.querySelectorAll(`#tb-${mi} tr`);
   maquinistas[mi].telares=Array.from(trows).map((tr,i)=>{const ins=tr.querySelectorAll('input');return{numero:parseInt(ins[0]?.value)||(i+1),fto:ins[1]?.value||'',ancho_trama:parseFloat(ins[2]?.value)||null,mts_iniciales:parseFloat(ins[3]?.value),mts_finales:parseFloat(ins[4]?.value),er:parseFloat(ins[5]?.value)||null,es_extra:false,_w:null};});
