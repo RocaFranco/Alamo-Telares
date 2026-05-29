@@ -1154,67 +1154,37 @@ async function leerPlanillaIA(tarea) {
   // El contexto se inyecta ANTES de saber el legajo — usamos todos los legajos conocidos
   // como fallback, y luego post-proceso inyecta el contexto del legajo detectado.
 
-  const prompt = `Sos un sistema OCR especializado en planillas de producción de telares de Álamo Bolsas Industriales, Argentina.
-Leé con máxima precisión cada campo escrito a mano. El formulario tiene casilleros grises impresos como guía — son diseño, no datos. Solo leer lo escrito en tinta oscura por el operario.
+  const legajos = legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441';
+  const prompt = `Sos un sistema OCR para planillas de producción de telares de Álamo Bolsas Industriales.
+Leé exactamente lo que está escrito a mano. NO corrijas ni supongas valores. Campo ilegible → null.
 
-=== ESTRUCTURA DEL FORMULARIO ===
+CAMPOS:
 
-ENCABEZADO:
+TURNO — primer renglón del encabezado, tiene 3 círculos: MAÑANA / TARDE / 12HS.
+  El que tiene el círculo relleno o marcado es el turno elegido → "manana" / "tarde" / "extra".
+  El círculo de "Falta Auxiliar" está en el renglón de abajo — ignorarlo para el turno.
 
-1. TURNO — una fila con 3 opciones: MAÑANA · TARDE · 12HS, cada una con su círculo.
-   El operario remarca el círculo de la opción elegida. Identificá cuál círculo está relleno.
-   MAÑANA → "manana" | TARDE → "tarde" | 12HS → "extra"
-   La línea de abajo "Falta Auxiliar (+40 min)" tiene su propio círculo separado — no confundir con el turno.
+FALTA AUXILIAR — renglón separado con su propio círculo → true / false.
 
-2. FALTA AUXILIAR — línea separada con un círculo. Si está marcado → falta_auxiliar: true, si no → false.
+FECHA → formato "DD/MM/AAAA". Año de 2 dígitos: "26" → "2026".
 
-3. FECHA — casilleros para DÍA / MES / AÑO. Formato de salida: "DD/MM/AAAA". Si el año tiene 2 dígitos (ej: "26") → "2026".
+LEGAJO MAQUINISTA — número escrito. Legajos posibles: ${legajos}.
+  Si no podés leerlo con certeza → null. NO sustituyas por otro.
 
-4. N° LEGAJO MAQUINISTA — número escrito dígito por dígito. Solo puede ser uno de estos:
-   ${legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441'}
-   Si lo que leés no está en esa lista → usá el más parecido visualmente.
+LEGAJO AUXILIAR — puede estar vacío → null.
 
-5. N° LEGAJO AUXILIAR — igual al maquinista. Puede estar vacío → null.
+TABLA DE PRODUCCIÓN (4 filas principales es_extra:false; 5ta fila si existe es_extra:true):
+  N°Telar (1-16) | FTO (valores válidos: 40,47,53,57,60,71,82,102,120) | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
 
-TABLA DE PRODUCCIÓN — columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
+TABLA TIEMPO PERDIDO:
+  N°Telar | Desde Hr (HH:MM) | Hasta Hr (HH:MM) | Motivo: número escrito en la columna derecha "Motivo (P)" → "P9", "P13", etc.
+  La leyenda P1-P18 impresa a la izquierda es solo referencia — NO son datos.
+  Solo incluir filas donde se ven los 4 datos (telar, desde, hasta, motivo). Sin datos → "paradas":[].
 
-6. N° TELAR — número del telar donde trabaja el maquinista. Valores válidos: 1 al 16.
-   Si ves un número fuera de ese rango → error de lectura, corregí usando contexto.
-   Si el telar es de 2 dígitos (10-16) y la celda es angosta, el segundo dígito puede verse cortado.
-   Los 4 telares de la tabla principal → es_extra: false. El 5° telar (si existe) → es_extra: true.
+OBSERVACIONES — copiar textualmente.
 
-7. FTO — formato de la tela. Solo puede ser uno de estos: 40, 47, 53, 57, 60, 71, 82, 102, 120.
-   Si no podés determinarlo → "SIN FTO". Nunca devolver un valor que no esté en esa lista.
-
-8. ANCHO TRAMA — ancho en metros. Solo puede ser: 3, 5 o 5.5.
-
-9. MTS INICIALES y MTS FINALES — contador de metros entre 0 y 65535.
-   Hay 5 casilleros por valor. Los casilleros vacíos al inicio son ceros implícitos (ej: □□□10 = 10).
-   Si fin < ini → rollover válido solo si ini > 50000 (el contador llegó a 65535 y se resetó a 0).
-   La diferencia (fin - ini) son los metros producidos en el turno. Máximo posible = E/R × minutos del turno
-   (mañana=540, tarde=510, 12hs=720). Si la diferencia supera ese máximo → algún valor está mal leído.
-
-10. E/R — velocidad del telar en metros por minuto. Decimal entre 4.0 y 6.4.
-
-TABLA DE TIEMPO PERDIDO — columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
-
-11. PARADAS — cada fila es una parada de un telar.
-    - N° Telar: debe ser uno de los telares de la tabla de producción.
-    - Desde / Hasta: horario HH:MM en formato 24hs. Desde SIEMPRE menor que Hasta.
-    - Motivo: número escrito a mano en la columna "Motivo (P)" al extremo derecho de la fila.
-      A la izquierda de la tabla hay una leyenda impresa P1-P18 con descripciones — es solo referencia, NO son datos.
-      El número escrito puede ser 1-18. Formatearlo como "P1", "P11", "P18", etc.
-    - Solo incluir filas con los 4 datos completos y visibles (telar + desde + hasta + motivo).
-    - Si no hay paradas escritas → "paradas": [].
-
-OBSERVACIONES — copiar textualmente lo escrito por el operario.
-
-=== FORMATO DE RESPUESTA ===
-JSON válido únicamente, sin texto adicional ni bloques de código:
-
-{"legajo_maquinista":"405","legajo_auxiliar":null,"falta_auxiliar":false,"fecha":"12/03/2026","turno":"tarde","telares":[{"numero":11,"fto":60,"ancho_trama":5,"mts_iniciales":4085,"mts_finales":6706,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":12,"fto":60,"ancho_trama":5,"mts_iniciales":38194,"mts_finales":40808,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":13,"fto":60,"ancho_trama":5,"mts_iniciales":28941,"mts_finales":29814,"er":5.9,"velocidad":1010,"es_extra":false},{"numero":14,"fto":60,"ancho_trama":5,"mts_iniciales":21333,"mts_finales":23864,"er":5.8,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":13,"desde":"18:30","hasta":"19:55","motivo":"P18"}],"observaciones":""}
-
-Si algún campo no es legible → null. NO inventes datos.`;
+Responder SOLO con JSON válido, sin texto adicional:
+{"legajo_maquinista":"419","legajo_auxiliar":"408","falta_auxiliar":true,"fecha":"28/05/2026","turno":"tarde","telares":[{"numero":1,"fto":102,"ancho_trama":5,"mts_iniciales":34441,"mts_finales":36931,"er":5.7,"velocidad":1010,"es_extra":false},{"numero":2,"fto":102,"ancho_trama":5,"mts_iniciales":14596,"mts_finales":16875,"er":5.6,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":1,"desde":"18:00","hasta":"18:35","motivo":"P9"},{"telar":2,"desde":"22:49","hasta":"23:16","motivo":"P12"}],"observaciones":""}`;
 
   const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1249,68 +1219,40 @@ Si algún campo no es legible → null. NO inventes datos.`;
 
 async function leerPDFMultiPageIA(tarea) {
   const N = tarea.totalPag;
-  const prompt = `Sos un sistema OCR especializado en planillas de producción de telares de Álamo Bolsas Industriales, Argentina.
-Leé con máxima precisión cada campo escrito a mano. El formulario tiene casilleros grises impresos como guía — son diseño, no datos. Solo leer lo escrito en tinta oscura por el operario.
+  const legajos = legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441';
+  const prompt = `Sos un sistema OCR para planillas de producción de telares de Álamo Bolsas Industriales.
+Leé exactamente lo que está escrito a mano. NO corrijas ni supongas valores. Campo ilegible → null.
 
-=== ESTRUCTURA DEL FORMULARIO ===
+CAMPOS:
 
-ENCABEZADO:
+TURNO — primer renglón del encabezado, tiene 3 círculos: MAÑANA / TARDE / 12HS.
+  El que tiene el círculo relleno o marcado es el turno elegido → "manana" / "tarde" / "extra".
+  El círculo de "Falta Auxiliar" está en el renglón de abajo — ignorarlo para el turno.
 
-1. TURNO — una fila con 3 opciones: MAÑANA · TARDE · 12HS, cada una con su círculo.
-   El operario remarca el círculo de la opción elegida. Identificá cuál círculo está relleno.
-   MAÑANA → "manana" | TARDE → "tarde" | 12HS → "extra"
-   La línea de abajo "Falta Auxiliar (+40 min)" tiene su propio círculo separado — no confundir con el turno.
+FALTA AUXILIAR — renglón separado con su propio círculo → true / false.
 
-2. FALTA AUXILIAR — línea separada con un círculo. Si está marcado → falta_auxiliar: true, si no → false.
+FECHA → formato "DD/MM/AAAA". Año de 2 dígitos: "26" → "2026".
 
-3. FECHA — casilleros para DÍA / MES / AÑO. Formato de salida: "DD/MM/AAAA". Si el año tiene 2 dígitos (ej: "26") → "2026".
+LEGAJO MAQUINISTA — número escrito. Legajos posibles: ${legajos}.
+  Si no podés leerlo con certeza → null. NO sustituyas por otro.
 
-4. N° LEGAJO MAQUINISTA — número escrito dígito por dígito. Solo puede ser uno de estos:
-   ${legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441'}
-   Si lo que leés no está en esa lista → usá el más parecido visualmente.
+LEGAJO AUXILIAR — puede estar vacío → null.
 
-5. N° LEGAJO AUXILIAR — igual al maquinista. Puede estar vacío → null.
+TABLA DE PRODUCCIÓN (4 filas principales es_extra:false; 5ta fila si existe es_extra:true):
+  N°Telar (1-16) | FTO (valores válidos: 40,47,53,57,60,71,82,102,120) | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
 
-TABLA DE PRODUCCIÓN — columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
+TABLA TIEMPO PERDIDO:
+  N°Telar | Desde Hr (HH:MM) | Hasta Hr (HH:MM) | Motivo: número escrito en la columna derecha "Motivo (P)" → "P9", "P13", etc.
+  La leyenda P1-P18 impresa a la izquierda es solo referencia — NO son datos.
+  Solo incluir filas donde se ven los 4 datos (telar, desde, hasta, motivo). Sin datos → "paradas":[].
 
-6. N° TELAR — número del telar donde trabaja el maquinista. Valores válidos: 1 al 16.
-   Si ves un número fuera de ese rango → error de lectura, corregí usando contexto.
-   Los 4 telares de la tabla principal → es_extra: false. El 5° telar (si existe) → es_extra: true.
+OBSERVACIONES — copiar textualmente.
 
-7. FTO — formato de la tela. Solo puede ser uno de estos: 40, 47, 53, 57, 60, 71, 82, 102, 120.
-   Si no podés determinarlo → "SIN FTO". Nunca devolver un valor que no esté en esa lista.
+TAREA: Este PDF tiene ${N} páginas. Cada página es una planilla distinta.
+Leé TODAS y devolvé un array JSON con EXACTAMENTE ${N} objetos, uno por página, en el mismo orden.
 
-8. ANCHO TRAMA — ancho en metros. Solo puede ser: 3, 5 o 5.5.
-
-9. MTS INICIALES y MTS FINALES — contador de metros entre 0 y 65535.
-   Hay 5 casilleros por valor. Los casilleros vacíos al inicio son ceros implícitos (ej: □□□10 = 10).
-   Si fin < ini → rollover válido solo si ini > 50000 (el contador llegó a 65535 y se resetó a 0).
-
-10. E/R — velocidad del telar en metros por minuto. Decimal entre 4.0 y 6.4.
-
-TABLA DE TIEMPO PERDIDO — columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
-
-11. PARADAS — cada fila es una parada de un telar.
-    - N° Telar: debe ser uno de los telares de la tabla de producción.
-    - Desde / Hasta: horario HH:MM en formato 24hs. Desde SIEMPRE menor que Hasta.
-    - Motivo: número escrito a mano en la columna "Motivo (P)" al extremo derecho de la fila.
-      A la izquierda hay una leyenda impresa P1-P18 — es solo referencia, NO son datos.
-      El número escrito puede ser 1-18. Formatearlo como "P1", "P11", "P18", etc.
-    - Solo incluir filas con los 4 datos completos y visibles (telar + desde + hasta + motivo).
-    - Si no hay paradas escritas → "paradas": [].
-
-OBSERVACIONES — copiar textualmente lo escrito por el operario.
-
-=== TAREA ===
-Este PDF tiene ${N} páginas. Cada página es una planilla distinta de un operario diferente.
-Leé TODAS las páginas y devolvé un array JSON con EXACTAMENTE ${N} objetos, uno por página, en el mismo orden.
-
-=== FORMATO DE RESPUESTA ===
-Array JSON válido únicamente, sin texto adicional ni bloques de código:
-
-[{"legajo_maquinista":"405","legajo_auxiliar":null,"falta_auxiliar":false,"fecha":"12/03/2026","turno":"tarde","telares":[{"numero":11,"fto":60,"ancho_trama":5,"mts_iniciales":4085,"mts_finales":6706,"er":5.9,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":11,"desde":"18:30","hasta":"19:55","motivo":"P9"}],"observaciones":""},{"legajo_maquinista":"408",...}]
-
-Si algún campo no es legible → null. NO inventes datos.`;
+Responder SOLO con array JSON válido, sin texto adicional:
+[{"legajo_maquinista":"419","legajo_auxiliar":"408","falta_auxiliar":true,"fecha":"28/05/2026","turno":"tarde","telares":[{"numero":1,"fto":102,"ancho_trama":5,"mts_iniciales":34441,"mts_finales":36931,"er":5.7,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":1,"desde":"18:00","hasta":"18:35","motivo":"P9"}],"observaciones":""},{"legajo_maquinista":"408",...}]`;
 
   const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
