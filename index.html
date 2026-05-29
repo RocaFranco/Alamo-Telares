@@ -1158,6 +1158,12 @@ async function leerPlanillaIA(tarea) {
   const prompt = `Sos un sistema OCR para planillas de producción de telares de Álamo Bolsas Industriales.
 Leé exactamente lo que está escrito a mano. NO corrijas ni supongas valores. Campo ilegible → null.
 
+LECTURA DE DÍGITOS — estos pares se confunden en escritura manuscrita, prestar atención:
+  · 1 vs 7: el 1 es trazo recto, el 7 tiene trazo diagonal
+  · 4 / 7 / 9: son distintos — el 4 tiene ángulo, el 7 diagonal, el 9 tiene cola hacia abajo
+  · 3 / 5 / 8: el 3 tiene dos curvas abiertas, el 5 tiene segmento recto arriba, el 8 es cerrado
+  · 0 / 6: el 0 es oval sin apertura, el 6 tiene apertura abajo
+
 CAMPOS:
 
 TURNO — primer renglón del encabezado, tiene 3 círculos: MAÑANA / TARDE / 12HS.
@@ -1177,14 +1183,21 @@ TABLA DE PRODUCCIÓN (4 filas principales es_extra:false; 5ta fila si existe es_
   N°Telar (1-16) | FTO (valores válidos: 40,47,53,57,60,71,82,102,120) | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
 
 TABLA TIEMPO PERDIDO:
-  N°Telar | Desde Hr (HH:MM) | Hasta Hr (HH:MM) | Motivo: número escrito en la columna derecha "Motivo (P)" → "P9", "P13", etc.
-  La leyenda P1-P18 impresa a la izquierda es solo referencia — NO son datos.
-  Solo incluir filas donde se ven los 4 datos (telar, desde, hasta, motivo). Sin datos → "paradas":[].
+  N°Telar | Desde Hr (HH:MM) | Hasta Hr (HH:MM) | Motivo (columna derecha)
+
+  IMPORTANTE sobre la columna MOTIVO:
+  · El operario escribe SOLO un número entre 1 y 18. Ese número ES el motivo completo.
+  · El encabezado dice "Motivo (P)" pero la P es el nombre de la columna, NO es parte del dato.
+  · A la izquierda hay una leyenda impresa "P1 Falta de Urdimbre / P2 Falta de Trama / ..." — es decoración, NO son los datos.
+  · Motivos de DOS dígitos (10 al 18) son muy frecuentes. Si ves "16" es dieciséis → "P16". Si ves "18" es dieciocho → "P18". NO leer el 1 como parte de la P impresa.
+  · Formato de salida: "P9", "P13", "P16", "P18", etc.
+
+  Solo incluir filas con los 4 datos visibles (telar, desde, hasta, motivo). Sin datos → "paradas":[].
 
 OBSERVACIONES — copiar textualmente.
 
 Responder SOLO con JSON válido, sin texto adicional:
-{"legajo_maquinista":"419","legajo_auxiliar":"408","falta_auxiliar":true,"fecha":"28/05/2026","turno":"tarde","telares":[{"numero":1,"fto":102,"ancho_trama":5,"mts_iniciales":34441,"mts_finales":36931,"er":5.7,"velocidad":1010,"es_extra":false},{"numero":2,"fto":102,"ancho_trama":5,"mts_iniciales":14596,"mts_finales":16875,"er":5.6,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":1,"desde":"18:00","hasta":"18:35","motivo":"P9"},{"telar":2,"desde":"22:49","hasta":"23:16","motivo":"P12"}],"observaciones":""}`;
+{"legajo_maquinista":"419","legajo_auxiliar":"408","falta_auxiliar":true,"fecha":"28/05/2026","turno":"tarde","telares":[{"numero":1,"fto":102,"ancho_trama":5,"mts_iniciales":34441,"mts_finales":36931,"er":5.7,"velocidad":1010,"es_extra":false},{"numero":2,"fto":102,"ancho_trama":5,"mts_iniciales":14596,"mts_finales":16875,"er":5.6,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":1,"desde":"18:00","hasta":"18:35","motivo":"P9"},{"telar":2,"desde":"22:49","hasta":"23:16","motivo":"P16"},{"telar":4,"desde":"03:37","hasta":"03:58","motivo":"P18"}],"observaciones":""}`;
 
   const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1223,6 +1236,12 @@ async function leerPDFMultiPageIA(tarea) {
   const prompt = `Sos un sistema OCR para planillas de producción de telares de Álamo Bolsas Industriales.
 Leé exactamente lo que está escrito a mano. NO corrijas ni supongas valores. Campo ilegible → null.
 
+LECTURA DE DÍGITOS — estos pares se confunden en escritura manuscrita, prestar atención:
+  · 1 vs 7: el 1 es trazo recto, el 7 tiene trazo diagonal
+  · 4 / 7 / 9: son distintos — el 4 tiene ángulo, el 7 diagonal, el 9 tiene cola hacia abajo
+  · 3 / 5 / 8: el 3 tiene dos curvas abiertas, el 5 tiene segmento recto arriba, el 8 es cerrado
+  · 0 / 6: el 0 es oval sin apertura, el 6 tiene apertura abajo
+
 CAMPOS:
 
 TURNO — primer renglón del encabezado, tiene 3 círculos: MAÑANA / TARDE / 12HS.
@@ -1242,9 +1261,16 @@ TABLA DE PRODUCCIÓN (4 filas principales es_extra:false; 5ta fila si existe es_
   N°Telar (1-16) | FTO (valores válidos: 40,47,53,57,60,71,82,102,120) | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
 
 TABLA TIEMPO PERDIDO:
-  N°Telar | Desde Hr (HH:MM) | Hasta Hr (HH:MM) | Motivo: número escrito en la columna derecha "Motivo (P)" → "P9", "P13", etc.
-  La leyenda P1-P18 impresa a la izquierda es solo referencia — NO son datos.
-  Solo incluir filas donde se ven los 4 datos (telar, desde, hasta, motivo). Sin datos → "paradas":[].
+  N°Telar | Desde Hr (HH:MM) | Hasta Hr (HH:MM) | Motivo (columna derecha)
+
+  IMPORTANTE sobre la columna MOTIVO:
+  · El operario escribe SOLO un número entre 1 y 18. Ese número ES el motivo completo.
+  · El encabezado dice "Motivo (P)" pero la P es el nombre de la columna, NO es parte del dato.
+  · A la izquierda hay una leyenda impresa "P1 Falta de Urdimbre / P2 Falta de Trama / ..." — es decoración, NO son los datos.
+  · Motivos de DOS dígitos (10 al 18) son muy frecuentes. Si ves "16" es dieciséis → "P16". Si ves "18" es dieciocho → "P18". NO leer el 1 como parte de la P impresa.
+  · Formato de salida: "P9", "P13", "P16", "P18", etc.
+
+  Solo incluir filas con los 4 datos visibles (telar, desde, hasta, motivo). Sin datos → "paradas":[].
 
 OBSERVACIONES — copiar textualmente.
 
@@ -1252,7 +1278,7 @@ TAREA: Este PDF tiene ${N} páginas. Cada página es una planilla distinta.
 Leé TODAS y devolvé un array JSON con EXACTAMENTE ${N} objetos, uno por página, en el mismo orden.
 
 Responder SOLO con array JSON válido, sin texto adicional:
-[{"legajo_maquinista":"419","legajo_auxiliar":"408","falta_auxiliar":true,"fecha":"28/05/2026","turno":"tarde","telares":[{"numero":1,"fto":102,"ancho_trama":5,"mts_iniciales":34441,"mts_finales":36931,"er":5.7,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":1,"desde":"18:00","hasta":"18:35","motivo":"P9"}],"observaciones":""},{"legajo_maquinista":"408",...}]`;
+[{"legajo_maquinista":"419","legajo_auxiliar":"408","falta_auxiliar":true,"fecha":"28/05/2026","turno":"tarde","telares":[{"numero":1,"fto":102,"ancho_trama":5,"mts_iniciales":34441,"mts_finales":36931,"er":5.7,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":1,"desde":"18:00","hasta":"18:35","motivo":"P9"},{"telar":2,"desde":"22:49","hasta":"23:16","motivo":"P16"},{"telar":4,"desde":"03:37","hasta":"03:58","motivo":"P18"}],"observaciones":""},{"legajo_maquinista":"408",...}]`;
 
   const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
