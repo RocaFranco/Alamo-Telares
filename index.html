@@ -828,7 +828,7 @@ async function leerTodas() {
   const tareas=[];
   for (const a of archivos) {
     for(let w=0;w<50&&!a.b64;w++){await new Promise(r=>setTimeout(r,100));}
-    if(a.tipo==='pdf'){ setFileSt(a.id,'proc','⏳ dividiendo páginas...'); try{ const imgs=await pdfAImagenes(a.dataUrl); imgs.forEach((img,i)=>{tareas.push({b64:img.b64,tipo:'image',nombre:`${a.nombre} — pág ${img.pagina}/${img.total}`,archId:a.id,pagina:img.pagina});}); setFileSt(a.id,'proc',`⏳ ${imgs.length} pág.`); }catch(err){ setFileSt(a.id,'err','❌ error PDF'); tareas.push({b64:a.b64,tipo:'pdf',nombre:a.nombre,archId:a.id,pagina:1}); } }
+    if(a.tipo==='pdf'){ tareas.push({b64:a.b64,tipo:'pdf',nombre:a.nombre,archId:a.id,pagina:1}); }
     else { tareas.push({b64:a.b64,tipo:'image',nombre:a.nombre,archId:a.id,pagina:1}); }
   }
   const resultados=[];
@@ -1191,7 +1191,9 @@ Si algún campo no es legible → null. NO inventes datos.`;
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       messages: [{ role: 'user', content: [
-        { type: 'image', source: { type: 'base64', media_type: 'image/png', data: tarea.b64 } },
+        tarea.tipo==='pdf'
+          ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: tarea.b64 } }
+          : { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: tarea.b64 } },
         { type: 'text', text: prompt }
       ]}]
     })
