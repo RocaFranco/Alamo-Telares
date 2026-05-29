@@ -829,7 +829,7 @@ async function leerTodas() {
   for (const a of archivos) {
     for(let w=0;w<50&&!a.b64;w++){await new Promise(r=>setTimeout(r,100));}
     if(a.tipo==='pdf'){
-      // Separar cada página como PDF individual y mandar nativo (sin pérdida de calidad)
+      // Contar páginas y mandar el PDF completo como un solo documento (máxima calidad)
       setFileSt(a.id,'proc','⏳ analizando...');
       try {
         if (!window.PDFLib) { await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
@@ -837,31 +837,35 @@ async function leerTodas() {
         const srcDoc = await PDFLib.PDFDocument.load(pdfBytes);
         const numPages = srcDoc.getPageCount();
         if (numPages === 1) {
-          tareas.push({b64:a.b64, tipo:'pdf', nombre:a.nombre, archId:a.id, pagina:1});
+          tareas.push({b64:a.b64, tipo:'pdf', nombre:a.nombre, archId:a.id, pagina:1, totalPag:1});
           setFileSt(a.id,'proc','⏳ 1 pág.');
         } else {
-          setFileSt(a.id,'proc',`⏳ dividiendo ${numPages} pág.`);
-          for (let i=0; i<numPages; i++) {
-            const pageDoc = await PDFLib.PDFDocument.create();
-            const [copied] = await pageDoc.copyPages(srcDoc,[i]);
-            pageDoc.addPage(copied);
-            const pb = await pageDoc.save();
-            // Uint8Array → base64 en chunks para evitar stack overflow
-            let b64=''; const chunk=8192;
-            for(let j=0;j<pb.length;j+=chunk) b64+=String.fromCharCode(...pb.slice(j,j+chunk));
-            tareas.push({b64:btoa(b64), tipo:'pdf', nombre:`${a.nombre} — pág ${i+1}/${numPages}`, archId:a.id, pagina:i+1});
-          }
+          // PDF completo → 1 sola llamada a la API, Claude lee todas las páginas de una
+          tareas.push({b64:a.b64, tipo:'pdf-multi', nombre:a.nombre, archId:a.id, pagina:1, totalPag:numPages});
+          setFileSt(a.id,'proc',`⏳ ${numPages} páginas`);
         }
       } catch(err) {
-        setFileSt(a.id,'err','❌ error PDF'); tareas.push({b64:a.b64,tipo:'pdf',nombre:a.nombre,archId:a.id,pagina:1});
+        setFileSt(a.id,'err','❌ error PDF'); tareas.push({b64:a.b64,tipo:'pdf',nombre:a.nombre,archId:a.id,pagina:1,totalPag:1});
       }
     }
     else { tareas.push({b64:a.b64,tipo:'image',nombre:a.nombre,archId:a.id,pagina:1}); }
   }
   const resultados=[];
   for(let i=0;i<tareas.length;i++){
-    const t=tareas[i]; setFileSt(t.archId,'proc',`⏳ leyendo pág. ${t.pagina}...`); document.getElementById('progBar').style.width=`${(i/tareas.length)*100}%`;
-    try{ const datos=await leerPlanillaIA(t); setFileSt(t.archId,'ok',`✅ leg. ${datos.legajo_maquinista||'?'}`); resultados.push({datos,nombre:t.nombre,pagina:t.pagina,archId:t.archId}); }
+    const t=tareas[i];
+    setFileSt(t.archId,'proc', t.tipo==='pdf-multi'?`⏳ leyendo ${t.totalPag} páginas...`:`⏳ leyendo pág. ${t.pagina}...`);
+    document.getElementById('progBar').style.width=`${(i/tareas.length)*100}%`;
+    try{
+      if(t.tipo==='pdf-multi'){
+        const arrayDatos = await leerPDFMultiPageIA(t);
+        setFileSt(t.archId,'ok',`✅ ${arrayDatos.length} planillas`);
+        arrayDatos.forEach((datos,idx)=>{ if(datos) resultados.push({datos,nombre:`${t.nombre} — pág ${idx+1}`,pagina:idx+1,archId:t.archId}); });
+      } else {
+        const datos=await leerPlanillaIA(t);
+        setFileSt(t.archId,'ok',`✅ leg. ${datos.legajo_maquinista||'?'}`);
+        resultados.push({datos,nombre:t.nombre,pagina:t.pagina,archId:t.archId});
+      }
+    }
     catch(err){ console.error('Error lectura:',err); setFileSt(t.archId,'err','❌ '+err.message.substring(0,50)); showSB('error','❌ '+err.message.substring(0,150)); resultados.push({datos:null,nombre:t.nombre,error:err.message}); }
     document.getElementById('progBar').style.width=`${((i+1)/tareas.length)*100}%`;
   }
@@ -1241,6 +1245,99 @@ Si algún campo no es legible → null. NO inventes datos.`;
   if (legIA) _lecturaIA_original[claveIA] = JSON.parse(JSON.stringify(resultado));
 
   return resultado;
+}
+
+async function leerPDFMultiPageIA(tarea) {
+  const N = tarea.totalPag;
+  const prompt = `Sos un sistema OCR especializado en planillas de producción de telares de Álamo Bolsas Industriales, Argentina.
+Leé con máxima precisión cada campo escrito a mano. El formulario tiene casilleros grises impresos como guía — son diseño, no datos. Solo leer lo escrito en tinta oscura por el operario.
+
+=== ESTRUCTURA DEL FORMULARIO ===
+
+ENCABEZADO:
+
+1. TURNO — una fila con 3 opciones: MAÑANA · TARDE · 12HS, cada una con su círculo.
+   El operario remarca el círculo de la opción elegida. Identificá cuál círculo está relleno.
+   MAÑANA → "manana" | TARDE → "tarde" | 12HS → "extra"
+   La línea de abajo "Falta Auxiliar (+40 min)" tiene su propio círculo separado — no confundir con el turno.
+
+2. FALTA AUXILIAR — línea separada con un círculo. Si está marcado → falta_auxiliar: true, si no → false.
+
+3. FECHA — casilleros para DÍA / MES / AÑO. Formato de salida: "DD/MM/AAAA". Si el año tiene 2 dígitos (ej: "26") → "2026".
+
+4. N° LEGAJO MAQUINISTA — número escrito dígito por dígito. Solo puede ser uno de estos:
+   ${legajosValidos.length > 0 ? legajosValidos.join(', ') : '381, 383, 396, 398, 399, 402, 405, 406, 408, 419, 427, 432, 437, 441'}
+   Si lo que leés no está en esa lista → usá el más parecido visualmente.
+
+5. N° LEGAJO AUXILIAR — igual al maquinista. Puede estar vacío → null.
+
+TABLA DE PRODUCCIÓN — columnas: N° Telar | FTO | Ancho Trama | Mts Iniciales | Mts Finales | E/R | Velocidad
+
+6. N° TELAR — número del telar donde trabaja el maquinista. Valores válidos: 1 al 16.
+   Si ves un número fuera de ese rango → error de lectura, corregí usando contexto.
+   Los 4 telares de la tabla principal → es_extra: false. El 5° telar (si existe) → es_extra: true.
+
+7. FTO — formato de la tela. Solo puede ser uno de estos: 40, 47, 53, 57, 60, 71, 82, 102, 120.
+   Si no podés determinarlo → "SIN FTO". Nunca devolver un valor que no esté en esa lista.
+
+8. ANCHO TRAMA — ancho en metros. Solo puede ser: 3, 5 o 5.5.
+
+9. MTS INICIALES y MTS FINALES — contador de metros entre 0 y 65535.
+   Hay 5 casilleros por valor. Los casilleros vacíos al inicio son ceros implícitos (ej: □□□10 = 10).
+   Si fin < ini → rollover válido solo si ini > 50000 (el contador llegó a 65535 y se resetó a 0).
+
+10. E/R — velocidad del telar en metros por minuto. Decimal entre 4.0 y 6.4.
+
+TABLA DE TIEMPO PERDIDO — columnas: N° Telar | Desde Hr | Hasta Hr | Motivo (P) | Firma
+
+11. PARADAS — cada fila es una parada de un telar.
+    - N° Telar: debe ser uno de los telares de la tabla de producción.
+    - Desde / Hasta: horario HH:MM en formato 24hs. Desde SIEMPRE menor que Hasta.
+    - Motivo: número escrito a mano en la columna "Motivo (P)" al extremo derecho de la fila.
+      A la izquierda hay una leyenda impresa P1-P18 — es solo referencia, NO son datos.
+      El número escrito puede ser 1-18. Formatearlo como "P1", "P11", "P18", etc.
+    - Solo incluir filas con los 4 datos completos y visibles (telar + desde + hasta + motivo).
+    - Si no hay paradas escritas → "paradas": [].
+
+OBSERVACIONES — copiar textualmente lo escrito por el operario.
+
+=== TAREA ===
+Este PDF tiene ${N} páginas. Cada página es una planilla distinta de un operario diferente.
+Leé TODAS las páginas y devolvé un array JSON con EXACTAMENTE ${N} objetos, uno por página, en el mismo orden.
+
+=== FORMATO DE RESPUESTA ===
+Array JSON válido únicamente, sin texto adicional ni bloques de código:
+
+[{"legajo_maquinista":"405","legajo_auxiliar":null,"falta_auxiliar":false,"fecha":"12/03/2026","turno":"tarde","telares":[{"numero":11,"fto":60,"ancho_trama":5,"mts_iniciales":4085,"mts_finales":6706,"er":5.9,"velocidad":1010,"es_extra":false}],"paradas":[{"telar":11,"desde":"18:30","hasta":"19:55","motivo":"P9"}],"observaciones":""},{"legajo_maquinista":"408",...}]
+
+Si algún campo no es legible → null. NO inventes datos.`;
+
+  const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: tarea.b64 } },
+        { type: 'text', text: prompt }
+      ]}]
+    })
+  });
+  if (!res.ok) { const errText=await res.text(); throw new Error(`HTTP ${res.status}: ${errText.substring(0,200)}`); }
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  const raw = data.content.map(b=>b.text||'').join('').trim();
+  let clean = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+  if (!clean.startsWith('[')) { const match=clean.match(/\[[\s\S]*\]/); if(match)clean=match[0]; else throw new Error('No se encontró array JSON: '+clean.substring(0,200)); }
+  const array = JSON.parse(clean);
+  // Guardar lecturas originales
+  array.forEach((r,idx) => {
+    const legIA=String(r?.legajo_maquinista||'').trim();
+    const fechaIA=String(r?.fecha||'').trim();
+    const claveIA=fechaIA?`${legIA}|${fechaIA}`:`${legIA}|pag_${idx+1}`;
+    if(legIA) _lecturaIA_original[claveIA]=JSON.parse(JSON.stringify(r));
+  });
+  return array;
 }
 
 function agruparPorLegajo(resultados) {
