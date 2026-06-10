@@ -1339,6 +1339,7 @@ function agruparPorLegajo(resultados) {
       obs:         d.observaciones||'',
       alertas:     [],
       sinAuxiliar: d.falta_auxiliar === true,
+      ausencia:    {desde:'',hasta:'',motivo:''},
     });
   });
 
@@ -1376,7 +1377,7 @@ function agruparPorLegajo(resultados) {
 function calcAlertas() {
   maquinistas.forEach((m,mi)=>{
     m.alertas=[];
-    const minT = m.turno==='extra'?720 : m.turno==='tarde'?510 : 540;
+    const _ausMinCA=(()=>{const a=m.ausencia;if(!a?.desde||!a?.hasta)return 0;return calcMinutos(a.desde,a.hasta)||0;})();const minT=(m.turno==='extra'?720:m.turno==='tarde'?510:540)-_ausMinCA;
 
     // Detectar paradas de telares no asignados
     const telaresAsignados = new Set(m.telares.map(t=>parseInt(t.numero)).filter(n=>!isNaN(n)));
@@ -1502,6 +1503,16 @@ function buildBlock(m,mi){
       <div class="sdiv"><span>paradas</span></div>
       <div class="plist" id="pl-${mi}">${m.paradas.map(p=>prow(p,mi)).join('')}</div>
       <button class="btn-add" onclick="addP(${mi})">+ Agregar parada</button>
+      <div class="sdiv"><span>ausencia del maquinista</span></div>
+      <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">Período fuera de los 18 tipos de parada — se descuenta de todos los telares</div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;">
+          <div class="fg"><label>De</label><input type="time" id="aus-d-${mi}" value="${m.ausencia?.desde||''}" oninput="updateAus(${mi})"></div>
+          <div class="fg"><label>Hasta</label><input type="time" id="aus-h-${mi}" value="${m.ausencia?.hasta||''}" oninput="updateAus(${mi})"></div>
+          <div id="aus-min-${mi}" style="font-size:13px;font-weight:600;color:var(--accent2);padding-bottom:4px;">${(()=>{const a=m.ausencia;if(!a?.desde||!a?.hasta)return'';const mn=calcMinutos(a.desde,a.hasta);return mn?`⏱ ${mn} min descontados`:'';})()}</div>
+        </div>
+        <div class="fg"><label>Motivo</label><input type="text" id="aus-m-${mi}" value="${m.ausencia?.motivo||''}" placeholder="Ej: Asistencia médica, relevo a compañero, abandono de puesto..."></div>
+      </div>
       <div class="sdiv"><span>metros extra</span></div>
       <div id="extbody-${mi}">${buildExtrasTable(m.telares.filter(t=>t.es_extra),mi)}</div>
       <div class="sdiv"><span>observaciones</span></div>
@@ -1603,6 +1614,7 @@ function toggleBlock(mi){const b=document.getElementById(`body-${mi}`),t=documen
 function setT(mi,t){
   maquinistas[mi].legajo=document.getElementById(`l-${mi}`)?.value??maquinistas[mi].legajo;
   maquinistas[mi].fecha=document.getElementById(`f-${mi}`)?.value??maquinistas[mi].fecha;
+  maquinistas[mi].ausencia={desde:document.getElementById(`aus-d-${mi}`)?.value||'',hasta:document.getElementById(`aus-h-${mi}`)?.value||'',motivo:document.getElementById(`aus-m-${mi}`)?.value||''};
   maquinistas[mi].turno=t;
   document.getElementById(`mb-${mi}`).replaceWith(buildBlock(maquinistas[mi],mi));
 }
@@ -1616,10 +1628,20 @@ function reval(mi){
   maquinistas[mi].telares=Array.from(trows).map((tr,i)=>{const ins=tr.querySelectorAll('input');return{numero:parseInt(ins[0]?.value)||(i+1),fto:ins[1]?.value||'',ancho_trama:parseFloat(ins[2]?.value)||null,mts_iniciales:parseFloat(ins[3]?.value),mts_finales:parseFloat(ins[4]?.value),er:parseFloat(ins[5]?.value)||null,es_extra:false,_w:null};});
   const prows=document.querySelectorAll(`#pl-${mi} .prow`);
   maquinistas[mi].paradas=Array.from(prows).map(pr=>({telar:parseInt(pr.querySelector('.p-t').value)||null,desde:pr.querySelector('.p-d').value,hasta:pr.querySelector('.p-h').value,motivo:pr.querySelector('.motsel').value})).filter(p=>p.telar&&p.desde&&p.hasta);
-  maquinistas[mi].alertas=[];const minT=maquinistas[mi].turno==='extra'?720:maquinistas[mi].turno==='tarde'?510:540;
+  maquinistas[mi].alertas=[];const _ausMin=(()=>{const a=maquinistas[mi].ausencia;if(!a?.desde||!a?.hasta)return 0;return calcMinutos(a.desde,a.hasta)||0;})();const minT=(maquinistas[mi].turno==='extra'?720:maquinistas[mi].turno==='tarde'?510:540)-_ausMin;
   maquinistas[mi].telares.forEach(t=>{if(!t.er)return;const ini=t.mts_iniciales,fin=t.mts_finales;if(isNaN(ini)||isNaN(fin))return;const mts=fin<ini?(65535-ini)+fin:fin-ini;if(mts<=0)return;const minP=maquinistas[mi].paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d){const cm=1440-d+h;h=cm<=720?d+cm:d;}return s+(h-d);},0);const teo=t.er*(minT-minP);const cells=document.querySelectorAll(`#tb-${mi} tr`)[maquinistas[mi].telares.indexOf(t)]?.querySelectorAll('input');if(cells){cells[3].classList.remove('warn','err');cells[4].classList.remove('warn','err');}if(mts<teo*0.15&&minP===0){t._w='err';maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`});if(cells){cells[3].classList.add('err');cells[4].classList.add('err');}}else if(mts<teo*0.35&&minP<30){t._w='warn';maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`});if(cells){cells[3].classList.add('warn');cells[4].classList.add('warn');}}});
 }
-function addMaqManual(){const leg=prompt('N° de Legajo:');if(!leg)return;maquinistas.push({legajo:leg,fecha:'',turno:'manana',telares:[{},{},{},{}],paradas:[],mtsExtra:0,obs:'',alertas:[],sinAuxiliar:false});const mi=maquinistas.length-1;document.getElementById('maqBlocks').appendChild(buildBlock(maquinistas[mi],mi));}
+function updateAus(mi){
+  const desde=document.getElementById(`aus-d-${mi}`)?.value||'';
+  const hasta=document.getElementById(`aus-h-${mi}`)?.value||'';
+  const motivo=document.getElementById(`aus-m-${mi}`)?.value||'';
+  maquinistas[mi].ausencia={desde,hasta,motivo};
+  const mn=desde&&hasta?calcMinutos(desde,hasta):null;
+  const el=document.getElementById(`aus-min-${mi}`);
+  if(el)el.textContent=mn?`⏱ ${mn} min descontados`:'';
+  reval(mi);
+}
+function addMaqManual(){const leg=prompt('N° de Legajo:');if(!leg)return;maquinistas.push({legajo:leg,fecha:'',turno:'manana',telares:[{},{},{},{}],paradas:[],mtsExtra:0,obs:'',alertas:[],sinAuxiliar:false,ausencia:{desde:'',hasta:'',motivo:''}});const mi=maquinistas.length-1;document.getElementById('maqBlocks').appendChild(buildBlock(maquinistas[mi],mi));}
 
 function syncDom(){
   maquinistas.forEach((m,mi)=>{
@@ -1630,6 +1652,7 @@ function syncDom(){
     m.obs=document.getElementById(`ob-${mi}`)?.value.trim()||'';
     const trows=document.querySelectorAll(`#tb-${mi} tr`);m.telares=Array.from(trows).map((tr,i)=>{const ins=tr.querySelectorAll('input');return{numero:parseInt(ins[0]?.value)||(i+1),fto:ins[1]?.value||'',ancho_trama:parseFloat(ins[2]?.value)||null,mts_iniciales:parseFloat(ins[3]?.value),mts_finales:parseFloat(ins[4]?.value),er:parseFloat(ins[5]?.value)||null,es_extra:false};});
     const prows=document.querySelectorAll(`#pl-${mi} .prow`);m.paradas=Array.from(prows).map(pr=>({telar:parseInt(pr.querySelector('.p-t').value)||null,desde:pr.querySelector('.p-d').value,hasta:pr.querySelector('.p-h').value,motivo:pr.querySelector('.motsel').value})).filter(p=>p.telar&&p.desde&&p.hasta);
+    m.ausencia={desde:document.getElementById(`aus-d-${mi}`)?.value||'',hasta:document.getElementById(`aus-h-${mi}`)?.value||'',motivo:document.getElementById(`aus-m-${mi}`)?.value||''};
   });
 }
 
@@ -1679,6 +1702,10 @@ async function publicarSheets(){
         if(mins>0)mnp[telarP]=(mnp[telarP]||0)+mins;
       });
 
+      // ── AUSENCIA DEL MAQUINISTA ─────────────────────────────────────────
+      const ausMinutos=(()=>{const a=m.ausencia;if(!a?.desde||!a?.hasta)return 0;return calcMinutos(a.desde,a.hasta)||0;})();
+      const ausStr=m.ausencia?.desde&&m.ausencia?.hasta?`${m.ausencia.desde}-${m.ausencia.hasta}${m.ausencia.motivo?': '+m.ausencia.motivo:''}`:'';
+
       // ── CONSTRUIR FILAS PARA SHEETS ─────────────────────────────────────
       const writeRows=[]; let firstTelar=true; let mtsMaquinista=0;
       m.telares.filter(t=>!t.es_extra).forEach((t,idx)=>{
@@ -1690,7 +1717,7 @@ async function publicarSheets(){
         mtsMaquinista+=mtsVal;
         // parseInt para asegurar match con las claves de mnp
         const telarReal=parseInt(t.numero);
-        const np=((!isNaN(telarReal)&&mnp[telarReal])||0) + (m.sinAuxiliar ? 40 : 0);
+        const np=((!isNaN(telarReal)&&mnp[telarReal])||0) + (m.sinAuxiliar ? 40 : 0) + ausMinutos;
         const hrsT=m.turno==='extra'?12:m.turno==='tarde'?8.5:9;
         // Columna J (mtsExtra÷4) solo en la PRIMERA fila del maquinista
         const mtsExtraCol=m.mtsExtra>0?Math.round(m.mtsExtra/4):'';
@@ -1701,8 +1728,9 @@ async function publicarSheets(){
           t.mts_iniciales,         // E - Mts iniciales
           t.mts_finales,           // F - Mts finales
           t.er?String(t.er).replace('.',','):'', // G - E/R
-          np||'',                  // I - Min no productivos (suma de paradas de ese telar)
-          mtsExtraCol              // J - Mts extra ÷ 4
+          np||'',                  // I - Min no productivos
+          mtsExtraCol,             // J - Mts extra ÷ 4
+          firstTelar?ausStr:'',    // O - Ausencia del maquinista (solo primera fila)
         ]);
         firstTelar=false;
       });
@@ -1734,6 +1762,7 @@ async function publicarSheets(){
         {range:`${leg}!I${firstEmptyRow}:I${firstEmptyRow+nRows-1}`,values:dataI},
         {range:`${leg}!J${firstEmptyRow}:J${firstEmptyRow+nRows-1}`,values:dataJ},
       ];
+      if(ausStr)batchData.push({range:`${leg}!O${firstEmptyRow}`,values:[[ausStr]]});
       const writeRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
         method:'POST',
         headers:{Authorization:`Bearer ${gToken}`,'Content-Type':'application/json'},
