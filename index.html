@@ -1503,15 +1503,15 @@ function buildBlock(m,mi){
       <div class="sdiv"><span>paradas</span></div>
       <div class="plist" id="pl-${mi}">${m.paradas.map(p=>prow(p,mi)).join('')}</div>
       <button class="btn-add" onclick="addP(${mi})">+ Agregar parada</button>
-      <div class="sdiv"><span>ausencia del maquinista</span></div>
-      <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:12px;margin-bottom:12px;">
+      <button class="btn-add" id="aus-btn-${mi}" onclick="toggleAus(${mi})" style="${(m.ausencia?.desde||m.ausencia?.motivo)?'display:none':''}">+ Agregar ausencia</button>
+      <div id="aus-section-${mi}" style="${(m.ausencia?.desde||m.ausencia?.motivo)?'':'display:none;'}background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:12px;margin-bottom:12px;">
         <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">Período fuera de los 18 tipos de parada — se descuenta de todos los telares</div>
-        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
           <div class="fg"><label>De</label><input type="time" id="aus-d-${mi}" value="${m.ausencia?.desde||''}" oninput="updateAus(${mi})"></div>
           <div class="fg"><label>Hasta</label><input type="time" id="aus-h-${mi}" value="${m.ausencia?.hasta||''}" oninput="updateAus(${mi})"></div>
-          <div id="aus-min-${mi}" style="font-size:13px;font-weight:600;color:var(--accent2);padding-bottom:4px;">${(()=>{const a=m.ausencia;if(!a?.desde||!a?.hasta)return'';const mn=calcMinutos(a.desde,a.hasta);return mn?`⏱ ${mn} min descontados`:'';})()}</div>
+          <div class="fg" style="flex:1;min-width:180px;"><label>Motivo</label><input type="text" id="aus-m-${mi}" value="${m.ausencia?.motivo||''}" placeholder="Ej: Asistencia médica, relevo a compañero..."></div>
+          <div id="aus-min-${mi}" style="font-size:13px;font-weight:600;color:var(--accent2);padding-bottom:6px;white-space:nowrap;">${(()=>{const a=m.ausencia;if(!a?.desde||!a?.hasta)return'';const mn=calcMinutos(a.desde,a.hasta);return mn?`⏱ ${mn} min`:''})()}</div>
         </div>
-        <div class="fg"><label>Motivo</label><input type="text" id="aus-m-${mi}" value="${m.ausencia?.motivo||''}" placeholder="Ej: Asistencia médica, relevo a compañero, abandono de puesto..."></div>
       </div>
       <div class="sdiv"><span>metros extra</span></div>
       <div id="extbody-${mi}">${buildExtrasTable(m.telares.filter(t=>t.es_extra),mi)}</div>
@@ -1631,6 +1631,10 @@ function reval(mi){
   maquinistas[mi].alertas=[];const _ausMin=(()=>{const a=maquinistas[mi].ausencia;if(!a?.desde||!a?.hasta)return 0;return calcMinutos(a.desde,a.hasta)||0;})();const minT=(maquinistas[mi].turno==='extra'?720:maquinistas[mi].turno==='tarde'?510:540)-_ausMin;
   maquinistas[mi].telares.forEach(t=>{if(!t.er)return;const ini=t.mts_iniciales,fin=t.mts_finales;if(isNaN(ini)||isNaN(fin))return;const mts=fin<ini?(65535-ini)+fin:fin-ini;if(mts<=0)return;const minP=maquinistas[mi].paradas.reduce((s,p)=>{if(p.telar!==t.numero)return s;const[dh,dm]=(p.desde||'0:0').split(':').map(Number);const[hh,hm]=(p.hasta||'0:0').split(':').map(Number);let d=dh*60+dm,h=hh*60+hm;if(h<d){const cm=1440-d+h;h=cm<=720?d+cm:d;}return s+(h-d);},0);const teo=t.er*(minT-minP);const cells=document.querySelectorAll(`#tb-${mi} tr`)[maquinistas[mi].telares.indexOf(t)]?.querySelectorAll('input');if(cells){cells[3].classList.remove('warn','err');cells[4].classList.remove('warn','err');}if(mts<teo*0.15&&minP===0){t._w='err';maquinistas[mi].alertas.push({nivel:'error',telar:t.numero,msg:`Telar ${t.numero}: ${mts.toLocaleString()} mts sin paradas.`});if(cells){cells[3].classList.add('err');cells[4].classList.add('err');}}else if(mts<teo*0.35&&minP<30){t._w='warn';maquinistas[mi].alertas.push({nivel:'warning',telar:t.numero,msg:`Telar ${t.numero}: bajo. Verificar.`});if(cells){cells[3].classList.add('warn');cells[4].classList.add('warn');}}});
 }
+function toggleAus(mi){
+  document.getElementById(`aus-btn-${mi}`).style.display='none';
+  document.getElementById(`aus-section-${mi}`).style.display='';
+}
 function updateAus(mi){
   const desde=document.getElementById(`aus-d-${mi}`)?.value||'';
   const hasta=document.getElementById(`aus-h-${mi}`)?.value||'';
@@ -1730,7 +1734,7 @@ async function publicarSheets(){
           t.er?String(t.er).replace('.',','):'', // G - E/R
           np||'',                  // I - Min no productivos
           mtsExtraCol,             // J - Mts extra ÷ 4
-          firstTelar?ausStr:'',    // O - Ausencia del maquinista (solo primera fila)
+          ausStr,                  // O - Ausencia del maquinista (todos los telares del día)
         ]);
         firstTelar=false;
       });
@@ -1762,7 +1766,7 @@ async function publicarSheets(){
         {range:`${leg}!I${firstEmptyRow}:I${firstEmptyRow+nRows-1}`,values:dataI},
         {range:`${leg}!J${firstEmptyRow}:J${firstEmptyRow+nRows-1}`,values:dataJ},
       ];
-      if(ausStr)batchData.push({range:`${leg}!O${firstEmptyRow}`,values:[[ausStr]]});
+      if(ausStr)batchData.push({range:`${leg}!O${firstEmptyRow}:O${firstEmptyRow+nRows-1}`,values:writeRows.map(r=>[r[8]])});
       const writeRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,{
         method:'POST',
         headers:{Authorization:`Bearer ${gToken}`,'Content-Type':'application/json'},
