@@ -750,7 +750,10 @@ async function mostrarConectado(verificar) {
   document.getElementById('isConnected').classList.remove('hidden');
   document.getElementById('hConnStatus').textContent = '● Conectado';
   document.getElementById('hConnStatus').style.color = 'var(--accent2)';
-  hideStatus(); renderQuincenas();
+  hideStatus();
+  // Cargar quincenas desde el Sheet central SIEMPRE al conectarse
+  const cargado = await cargarConfigDesdeSheet();
+  renderQuincenas();
   if (quinceActual) cargarLegajosDelSheet(quinceActual.sheetId);
   if (verificar) {
     try { const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${gToken || localStorage.getItem('alamo_gtoken')}` } }); if (r.ok) { const u = await r.json(); document.getElementById('connUser').textContent = u.email || ''; if (u.email) localStorage.setItem('alamo_user_email', u.email); } } catch(e) {}
@@ -790,7 +793,64 @@ function guardarQuince() {
   else { quincenas.push({ nombre: n, sheetId: id }); quinceActual = { nombre: n, sheetId: id }; }
   guardarQuincenas(); renderQuincenas(); cerrarModalQuince();
 }
-function guardarQuincenas() { localStorage.setItem('alamo_quincenas', JSON.stringify(quincenas)); }
+function guardarQuincenas() {
+  localStorage.setItem('alamo_quincenas', JSON.stringify(quincenas));
+  if (gToken) sincronizarConfigSheet().catch(()=>{});
+}
+
+const CONFIG_SHEET_ID = DEFAULT_SHEET_ID;
+
+async function asegurarHojaConfig() {
+  try {
+    const check = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG_SHEET_ID}?fields=sheets(properties(title))`);
+    if (!check.ok) return;
+    const meta = await check.json();
+    const existe = (meta.sheets||[]).some(s=>s.properties.title==='Config');
+    if (!existe) {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG_SHEET_ID}:batchUpdate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title: 'Config' } } }] })
+      });
+    }
+  } catch(e) {}
+}
+
+async function sincronizarConfigSheet() {
+  await asegurarHojaConfig();
+  const rows = [['Nombre','SheetId','Activa']].concat(
+    quincenas.map(q => [q.nombre, q.sheetId, quinceActual?.nombre===q.nombre?'SI':''])
+  );
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG_SHEET_ID}/values/${encodeURIComponent('Config!A1:C50')}?valueInputOption=USER_ENTERED`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${gToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values: rows })
+  });
+}
+
+async function cargarConfigDesdeSheet() {
+  if (!gToken) return false;
+  try {
+    const res = await gFetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG_SHEET_ID}/values/${encodeURIComponent('Config!A2:C50')}`);
+    if (!res.ok) return false;
+    const data = await res.json();
+    const rows = data.values || [];
+    if (rows.length === 0) return false;
+    const quincesCargadas = rows.filter(r => r[0] && r[1]).map(r => ({ nombre: r[0], sheetId: r[1] }));
+    if (quincesCargadas.length === 0) return false;
+    const nombresSheet = new Set(quincesCargadas.map(q=>q.nombre));
+    const soloLocales = quincenas.filter(q => !nombresSheet.has(q.nombre));
+    quincenas = [...quincesCargadas, ...soloLocales];
+    localStorage.setItem('alamo_quincenas', JSON.stringify(quincenas));
+    const activa = rows.find(r => r[2]==='SI');
+    if (activa) quinceActual = quincenas.find(q=>q.nombre===activa[0]) || quincenas[quincenas.length-1];
+    else quinceActual = quincenas[quincenas.length-1];
+    return true;
+  } catch(e) {
+    console.log('No se pudo leer Config del Sheet:', e.message);
+    return false;
+  }
+}
 
 const dz = document.getElementById('dropZone');
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
@@ -2901,6 +2961,23 @@ function dashRenderMemoria() {
 
 // INIT
 checkTokenFromURL();
+
+// Leer parámetros de URL para configuración automática
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const sheetParam = params.get('sheet');
+  const nombreParam = params.get('nombre') || params.get('q');
+  if (sheetParam && nombreParam) {
+    const yaExiste = quincenas.find(q => q.sheetId === sheetParam);
+    if (!yaExiste) {
+      quincenas.push({ nombre: decodeURIComponent(nombreParam), sheetId: sheetParam });
+      guardarQuincenas();
+      quinceActual = quincenas[quincenas.length-1];
+    }
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+})();
+
 renderQuincenas();
 </script>
 </div>
