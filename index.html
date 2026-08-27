@@ -756,7 +756,16 @@ async function mostrarConectado(verificar) {
   document.getElementById('isConnected').classList.remove('hidden');
   document.getElementById('hConnStatus').textContent = '● Conectado';
   document.getElementById('hConnStatus').style.color = 'var(--accent2)';
-  hideStatus(); renderQuincenas();
+  hideStatus();
+
+  // Cargar quincenas desde el Sheet central SIEMPRE al conectarse
+  const cargado = await cargarConfigDesdeSheet();
+  if (cargado) {
+    showSB('success', '✅ Quincenas sincronizadas');
+    setTimeout(hideStatus, 3000);
+  }
+
+  renderQuincenas();
   if (quinceActual) cargarLegajosDelSheet(quinceActual.sheetId);
   if (verificar) {
     try { const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${gToken || localStorage.getItem('alamo_gtoken')}` } }); if (r.ok) { const u = await r.json(); document.getElementById('connUser').textContent = u.email || ''; if (u.email) localStorage.setItem('alamo_user_email', u.email); } } catch(e) {}
