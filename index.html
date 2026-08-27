@@ -1343,7 +1343,7 @@ Si algún campo no es legible usá null. NO inventes datos.`;
   const res = await fetch('https://lucky-smoke-1641.franco-bauer98.workers.dev', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       messages: [{ role: 'user', content: [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: tarea.b64 } },
